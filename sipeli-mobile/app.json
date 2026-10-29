@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "LelangIkan.id",
+    "slug": "sipeli-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F1F5F8",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "id.lelangikan.app"
+    },
+    "android": {
+      "package": "id.lelangikan.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B4F6C",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "@react-native-community/datetimepicker",
+      "expo-sharing",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "LelangIkan.id memerlukan kamera untuk memindai QR kedatangan dan label lot.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0B4F6C",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200
+        }
+      ]
+    ]
+  }
+}
