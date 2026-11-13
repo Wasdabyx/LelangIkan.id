@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\KodePeran;
+use App\Models\Konfigurasi;
 use App\Models\Pengguna;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -10,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * Kelas kendali AutentikasiService (DPPL Tabel 3.55)
  * masuk(), keluar(), dataPengguna(), catatPercobaanGagal()
+ * daftarPembeli() ditambahkan untuk Tugas Week 9 (Registrasi Pembeli, UC-11 / AS-03)
  * Pemeriksaan kata sandi, status aktif, dan data pengguna memakai metode kelas Pengguna.
  */
 class AutentikasiService
@@ -43,7 +46,7 @@ class AutentikasiService
         // 3. Akun nonaktif tidak boleh masuk
         if (! $pengguna->isStatusAktif()) {
             throw ValidationException::withMessages([
-                'nama_pengguna' => 'Akun Anda dinonaktifkan. Hubungi administrator.',
+                'nama_pengguna' => 'Akun Anda belum aktif atau sedang dinonaktifkan. Hubungi petugas TPI.',
             ])->status(403);
         }
 
@@ -55,6 +58,25 @@ class AutentikasiService
             'token'    => $token,
             'pengguna' => $this->dataPengguna($pengguna),
         ];
+    }
+
+    /**
+     * Registrasi Pembeli (peran A4). Data sudah lolos validasi RegEx di RegistrasiPembeliRequest.
+     * Sesuai AS-03 SKPL, akun dibuat NONAKTIF sampai identitas (NIK) pembeli diverifikasi.
+     */
+    public function daftarPembeli(array $data): Pengguna
+    {
+        return Pengguna::create([
+            'nama_lengkap'  => $data['nama_lengkap'],
+            'nama_pengguna' => $data['nama_pengguna'],
+            'surel'         => $data['surel'],
+            'nik'           => $data['nik'],
+            'no_hp'         => $data['no_hp'],
+            'kata_sandi'    => $data['kata_sandi'],   // di-hash otomatis oleh model
+            'id_peran'      => KodePeran::PEMBELI->value,
+            'id_tpi'        => (int) Konfigurasi::nilai('id_tpi_aktif', 1),
+            'status_aktif'  => false,
+        ]);
     }
 
     public function keluar(Pengguna $pengguna): void

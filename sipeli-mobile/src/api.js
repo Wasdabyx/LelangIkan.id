@@ -65,7 +65,9 @@ async function permintaan(metode, jalur, data) {
       }
     }
     const pesan =
-      respons.status === 401
+      respons.status === 429 && !galatKolom.nama_pengguna
+        ? 'Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.'
+        : respons.status === 401
         ? 'Sesi berakhir. Silakan masuk kembali.'
         : Object.values(galatKolom)[0] ||
           (isi && (isi.pesan || isi.message)) ||
@@ -83,6 +85,9 @@ export const masuk = (namaPengguna, kataSandi) =>
     kata_sandi: kataSandi,
     perangkat: `expo-${Platform.OS}`,
   });
+
+// Tugas Week 9: Registrasi Pembeli (tanpa token)
+export const daftar = (data) => permintaan('POST', '/registrasi', data);
 
 export const ambilSaya = () => permintaan('GET', '/saya');
 export const keluar = () => permintaan('POST', '/keluar');

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 // Tanpa token
 Route::post('/masuk', [AutentikasiController::class, 'masuk']);
+Route::post('/registrasi', [AutentikasiController::class, 'daftar']); // Week 9: Registrasi Pembeli (UC-11)
 
 // Wajib token (header: Authorization: Bearer <token>)
 Route::middleware('auth:sanctum')->group(function () {

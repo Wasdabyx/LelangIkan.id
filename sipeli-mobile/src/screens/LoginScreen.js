@@ -14,17 +14,20 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { masuk } from '../api';
 import { ukuran, warna } from '../tema';
+import { validasiMasuk } from '../validasi';
 
 /**
  * Tampilan 1 - FormMasukUI (DPPL Tabel 3.77)
  * Atribut: namaPengguna, kataSandi, pesanKesalahan
  * Metode : masuk(namaPengguna, kataSandi), tampilkanKesalahan(pesan)
+ * Week 9: format nama pengguna diperiksa dengan RegEx (src/validasi.js) dan ada tautan ke Registrasi Pembeli.
  */
-export default function LoginScreen({ onBerhasil, pesanAwal }) {
-  const [namaPengguna, setNamaPengguna] = useState('');
+export default function LoginScreen({ onBerhasil, pesanAwal, infoAwal, namaAwal, onDaftar }) {
+  const [namaPengguna, setNamaPengguna] = useState(namaAwal || '');
   const [kataSandi, setKataSandi] = useState('');
   const [lihatSandi, setLihatSandi] = useState(false);
   const [galat, setGalat] = useState(pesanAwal ? { umum: pesanAwal } : {}); // { nama_pengguna, kata_sandi, kredensial, umum }
+  const [info, setInfo] = useState(infoAwal || null); // pesan hijau, misalnya setelah registrasi berhasil
   const [memuat, setMemuat] = useState(false);
   const [keyboardTampil, setKeyboardTampil] = useState(false);
   const inputSandi = useRef(null);
@@ -45,16 +48,16 @@ export default function LoginScreen({ onBerhasil, pesanAwal }) {
 
   // Hapus sorotan merah ketika pengguna mulai mengetik ulang
   function bersihkanGalat(kolom) {
+    if (info) setInfo(null);
     if (galat[kolom] || galat.kredensial || galat.umum) {
       setGalat({ ...galat, [kolom]: null, kredensial: null, umum: null });
     }
   }
 
   async function tekanMasuk() {
-    // 1. Validasi bentuk isian di perangkat
-    const g = {};
-    if (!namaPengguna.trim()) g.nama_pengguna = 'Nama pengguna wajib diisi.';
-    if (!kataSandi) g.kata_sandi = 'Kata sandi wajib diisi.';
+    // 1. Validasi bentuk isian di perangkat (RegEx nama pengguna, kata sandi wajib)
+    const g = validasiMasuk(namaPengguna, kataSandi);
+    setInfo(null);
     setGalat(g);
     if (Object.keys(g).length > 0) return;
 
@@ -114,6 +117,12 @@ export default function LoginScreen({ onBerhasil, pesanAwal }) {
           {/* Kartu formulir */}
           <View style={gaya.kartu}>
             <Text style={gaya.judulKartu}>Masuk</Text>
+
+            {info ? (
+              <View style={gaya.kotakInfo}>
+                <Text style={gaya.teksKotakInfo}>{info}</Text>
+              </View>
+            ) : null}
 
             {galat.umum ? (
               <View style={gaya.kotakGalat}>
@@ -189,6 +198,13 @@ export default function LoginScreen({ onBerhasil, pesanAwal }) {
                 <Text style={gaya.teksTombol}>MASUK</Text>
               )}
             </Pressable>
+
+            {/* Tautan ke Registrasi Pembeli (Tugas Week 9) */}
+            <Pressable onPress={onDaftar} disabled={memuat} style={gaya.tautan} hitSlop={8}>
+              <Text style={gaya.teksTautan}>
+                Belum punya akun? <Text style={gaya.teksTautanTebal}>Daftar sebagai Pembeli</Text>
+              </Text>
+            </Pressable>
           </View>
 
         </ScrollView>
@@ -225,6 +241,14 @@ const gaya = StyleSheet.create({
     borderRadius: ukuran.radius, padding: 12, marginBottom: 16,
   },
   teksKotakGalat: { color: warna.galat, fontSize: 15, fontWeight: '600' },
+  kotakInfo: {
+    backgroundColor: warna.suksesLatar, borderColor: warna.sukses, borderWidth: 1,
+    borderRadius: ukuran.radius, padding: 12, marginBottom: 16,
+  },
+  teksKotakInfo: { color: warna.sukses, fontSize: 15, fontWeight: '600', lineHeight: 21 },
+  tautan: { alignItems: 'center', minHeight: 44, justifyContent: 'center', marginTop: 12 },
+  teksTautan: { color: warna.teksRedup, fontSize: 15 },
+  teksTautanTebal: { color: warna.utama, fontWeight: '800' },
   tombol: {
     height: ukuran.tinggiTombol, backgroundColor: warna.utama, borderRadius: ukuran.radius,
     alignItems: 'center', justifyContent: 'center', marginTop: 24,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\PolaInput;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -10,6 +11,7 @@ use Illuminate\Validation\Validator;
 /**
  * Validasi UC-01 (FR-01, FR-03, FR-04) dan DPPL Tabel 3.2
  * Dipakai untuk simpan baru (POST) dan menyunting draf (PUT).
+ * Week 9: nama_kapten dan nomor_surat diperiksa dengan RegEx (App\Support\PolaInput).
  */
 class SimpanKedatanganRequest extends FormRequest
 {
@@ -26,10 +28,10 @@ class SimpanKedatanganRequest extends FormRequest
             'id_kapal'     => ['required', 'integer', Rule::exists('kapal', 'id_kapal')->where('status', 'AKTIF')],
             'tanggal'      => ['required', 'date_format:Y-m-d'],
             'jam'          => ['required', 'date_format:H:i'],
-            'nama_kapten'  => ['required', 'string', 'max:100'],
+            'nama_kapten'  => ['required', 'string', 'max:100', 'regex:' . PolaInput::NAMA_ORANG],
             'jumlah_abk'   => ['required', 'integer', 'between:0,60'],
             // Saat menyunting draf (PUT /kedatangan/{id}), nomor surat milik draf itu sendiri tidak dihitung ganda
-            'nomor_surat'  => ['required', 'string', 'max:50',
+            'nomor_surat'  => ['required', 'string', 'max:50', 'regex:' . PolaInput::NOMOR_SURAT,
                 Rule::unique('kedatangan_kapal', 'nomor_surat')->ignore($this->route('id'), 'id_kedatangan')],
             'status'       => ['nullable', 'in:DRAF,TERDAFTAR'],
 
@@ -69,12 +71,14 @@ class SimpanKedatanganRequest extends FormRequest
             'jam.date_format'      => 'Format jam harus JJ:MM.',
             'nama_kapten.required' => 'Nama kapten wajib diisi.',
             'nama_kapten.max'      => 'Nama kapten maksimal 100 karakter.',
+            'nama_kapten.regex'    => 'Nama kapten hanya boleh huruf, spasi, titik, koma, petik, dan strip (minimal 3 karakter).',
             'jumlah_abk.required'  => 'Jumlah ABK wajib diisi.',
             'jumlah_abk.integer'   => 'Jumlah ABK harus bilangan bulat.',
             'jumlah_abk.between'   => 'Jumlah ABK harus antara 0 dan 60.',
             'nomor_surat.required' => 'Nomor surat wajib diisi.',
             'nomor_surat.unique'   => 'Nomor surat ini sudah pernah dipakai.',
             'nomor_surat.max'      => 'Nomor surat maksimal 50 karakter.',
+            'nomor_surat.regex'    => 'Format nomor surat harus SPB/KODE/TTBBHH/NN, contoh: SPB/PLR/261014/01.',
             'tangkapan.required'   => 'Tambahkan minimal satu baris tangkapan.',
             'tangkapan.min'        => 'Tambahkan minimal satu baris tangkapan.',
 

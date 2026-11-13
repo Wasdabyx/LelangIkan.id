@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RegistrasiPembeliRequest;
 use App\Services\AutentikasiService;
+use App\Support\PolaInput;
 use Illuminate\Http\Request;
 
 class AutentikasiController extends Controller
@@ -16,11 +18,12 @@ class AutentikasiController extends Controller
     public function masuk(Request $request)
     {
         $data = $request->validate([
-            'nama_pengguna' => 'required|string|max:50',
+            'nama_pengguna' => ['required', 'string', 'max:50', 'regex:' . PolaInput::NAMA_PENGGUNA_MASUK],
             'kata_sandi'    => 'required|string|max:255',
             'perangkat'     => 'nullable|string|max:100',
         ], [
             'nama_pengguna.required' => 'Nama pengguna wajib diisi.',
+            'nama_pengguna.regex'    => 'Format nama pengguna tidak valid.',
             'kata_sandi.required'    => 'Kata sandi wajib diisi.',
         ]);
 
@@ -31,6 +34,23 @@ class AutentikasiController extends Controller
         );
 
         return response()->json(['pesan' => 'Berhasil masuk.'] + $hasil);
+    }
+
+    /** POST /api/registrasi - Registrasi Pembeli (Tugas Week 9) */
+    public function daftar(RegistrasiPembeliRequest $request)
+    {
+        $pengguna = $this->autentikasi->daftarPembeli($request->validated());
+
+        return response()->json([
+            'pesan'    => 'Pendaftaran berhasil. Akun Anda belum aktif dan menunggu verifikasi identitas oleh petugas TPI.',
+            'pengguna' => [
+                'nama_lengkap'  => $pengguna->getNamaLengkap(),
+                'nama_pengguna' => $pengguna->getNamaPengguna(),
+                'surel'         => $pengguna->getSurel(),
+                'no_hp'         => $pengguna->getNoHp(),
+                'status_aktif'  => $pengguna->isStatusAktif(),
+            ],
+        ], 201);
     }
 
     /** GET /api/saya - data pengguna pemilik token */

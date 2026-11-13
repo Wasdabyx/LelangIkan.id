@@ -8,10 +8,12 @@ import PilihJenisIkan from '../../components/PilihJenisIkan';
 import PilihWaktu from '../../components/PilihWaktu';
 import { formatKg, keAngka, keJam, keTanggalServer, tanggalPendek } from '../../format';
 import { ukuran, warna } from '../../tema';
+import { filterNomorSurat, periksaNamaOrang, periksaNomorSurat, rapikanSpasi } from '../../validasi';
 
 /**
  * Tampilan 2 - FormKedatanganUI (UC-01, DPPL Gambar 3.1 & Tabel 3.2)
  * Tanpa idDraf: kedatangan baru (POST). Dengan idDraf: lengkapi draf (alur A2, PUT).
+ * Week 9: nama kapten dan nomor surat divalidasi dengan RegEx (src/validasi.js).
  */
 let nomorBaris = 0;
 const barisBaru = () => ({ kunci: ++nomorBaris, id_jenis: null, id_grade: null, berat: '', keranjang: '' });
@@ -200,12 +202,14 @@ export default function FormKedatangan({ idDraf, onBatal, onTersimpan }) {
     if (waktu.getTime() > Date.now() + 5 * 60 * 1000) {
       g.jam = 'Tanggal dan jam kedatangan tidak boleh melebihi waktu sekarang.';
     }
-    if (!kapten.trim()) g.nama_kapten = 'Nama kapten wajib diisi.';
+    const galatKapten = periksaNamaOrang(kapten, 'Nama kapten');
+    if (galatKapten) g.nama_kapten = galatKapten;
     const a = abk.trim();
     if (!a) g.jumlah_abk = 'Jumlah ABK wajib diisi.';
     else if (!/^\d+$/.test(a)) g.jumlah_abk = 'Jumlah ABK harus bilangan bulat.';
     else if (Number(a) > 60) g.jumlah_abk = 'Jumlah ABK harus antara 0 dan 60.';
-    if (!nomorSurat.trim()) g.nomor_surat = 'Nomor surat wajib diisi.';
+    const galatSurat = periksaNomorSurat(nomorSurat);
+    if (galatSurat) g.nomor_surat = galatSurat;
 
     const gb = {};
     const dikirim = baris.filter((b) => !barisKosong(b)); // baris yang benar-benar kosong diabaikan
@@ -239,7 +243,7 @@ export default function FormKedatangan({ idDraf, onBatal, onTersimpan }) {
       id_kapal: kapal.id_kapal,
       tanggal: keTanggalServer(waktu),
       jam: keJam(waktu),
-      nama_kapten: kapten.trim(),
+      nama_kapten: rapikanSpasi(kapten),
       jumlah_abk: Number(abk),
       nomor_surat: nomorSurat.trim(),
       status: draf ? 'DRAF' : 'TERDAFTAR',
@@ -459,10 +463,10 @@ export default function FormKedatangan({ idDraf, onBatal, onTersimpan }) {
             inputRef={refSurat}
             value={nomorSurat}
             onChangeText={(t) => {
-              setNomorSurat(t);
+              setNomorSurat(filterNomorSurat(t)); // otomatis huruf besar, buang karakter selain A-Z, 0-9, "/"
               hapusGalat('nomor_surat');
             }}
-            placeholder="contoh: SPB/001/X/2026"
+            placeholder="contoh: SPB/PLR/261014/01"
             autoCapitalize="characters"
             autoCorrect={false}
             maxLength={50}

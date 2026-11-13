@@ -8,6 +8,7 @@ import BerandaSementara from './src/screens/BerandaSementara';
 import KedatanganScreen from './src/screens/kedatangan/KedatanganScreen';
 import PenimbanganScreen from './src/screens/penimbangan/PenimbanganScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import RegistrasiScreen from './src/screens/RegistrasiScreen';
 import { ambilSesi, hapusSesi, simpanSesi } from './src/sesi';
 import { warna } from './src/tema';
 
@@ -19,6 +20,10 @@ export default function App() {
   const [memuat, setMemuat] = useState(true);
   const [pengguna, setPengguna] = useState(null);
   const [pesanMasuk, setPesanMasuk] = useState(null);
+  // Week 9: layar untuk tamu (belum masuk): 'masuk' atau 'registrasi'
+  const [layarTamu, setLayarTamu] = useState('masuk');
+  const [namaAwal, setNamaAwal] = useState('');
+  const [infoMasuk, setInfoMasuk] = useState(null);
 
   useEffect(() => {
     // Bila server membalas 401 di layar mana pun: hapus sesi & kembali ke layar masuk
@@ -52,7 +57,16 @@ export default function App() {
     aturToken(token);
     await simpanSesi(token, dataPengguna);
     setPesanMasuk(null);
+    setInfoMasuk(null);
     setPengguna(dataPengguna);
+  }
+
+  // Registrasi selesai: kembali ke layar Masuk dengan nama pengguna terisi
+  function saatDaftarSelesai(namaPengguna) {
+    setNamaAwal(namaPengguna);
+    setInfoMasuk('Pendaftaran berhasil. Anda dapat masuk setelah akun diaktifkan petugas TPI.');
+    setPesanMasuk(null);
+    setLayarTamu('masuk');
   }
 
   async function saatKeluar() {
@@ -76,8 +90,22 @@ export default function App() {
         <Text style={gaya.teksMemuat}>Memuat LelangIkan.id...</Text>
       </View>
     );
+  } else if (!pengguna && layarTamu === 'registrasi') {
+    layar = <RegistrasiScreen onKembali={() => setLayarTamu('masuk')} onSelesai={saatDaftarSelesai} />;
   } else if (!pengguna) {
-    layar = <LoginScreen onBerhasil={saatMasuk} pesanAwal={pesanMasuk} />;
+    layar = (
+      <LoginScreen
+        key={namaAwal + (infoMasuk || '')}
+        onBerhasil={saatMasuk}
+        pesanAwal={pesanMasuk}
+        infoAwal={infoMasuk}
+        namaAwal={namaAwal}
+        onDaftar={() => {
+          setInfoMasuk(null);
+          setLayarTamu('registrasi');
+        }}
+      />
+    );
   } else if (pengguna.id_peran === PERAN_PENDATAAN) {
     layar = <KedatanganScreen pengguna={pengguna} onKeluar={saatKeluar} />;
   } else if (pengguna.id_peran === PERAN_TIMBANG) {

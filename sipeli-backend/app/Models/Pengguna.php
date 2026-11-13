@@ -29,7 +29,7 @@ class Pengguna extends Authenticatable
     protected $rememberTokenName = '';
 
     protected $fillable = [
-        'nama_lengkap', 'nama_pengguna', 'surel', 'kata_sandi',
+        'nama_lengkap', 'nama_pengguna', 'surel', 'nik', 'no_hp', 'kata_sandi',
         'id_peran', 'id_tpi', 'status_aktif',
     ];
 
@@ -79,6 +79,26 @@ class Pengguna extends Authenticatable
     public function setSurel(string $surel): void
     {
         $this->surel = $surel;
+    }
+
+    public function getNik(): ?string
+    {
+        return $this->nik;
+    }
+
+    public function setNik(?string $nik): void
+    {
+        $this->nik = $nik;
+    }
+
+    public function getNoHp(): ?string
+    {
+        return $this->no_hp;
+    }
+
+    public function setNoHp(?string $noHp): void
+    {
+        $this->no_hp = $noHp;
     }
 
     /** Tidak ada getKataSandi(): hash kata sandi tidak boleh dibaca dari luar kelas. */
