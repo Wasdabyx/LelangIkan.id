@@ -49,7 +49,7 @@ export default function DetailKedatangan({ kedatangan, onMuatUlang, onTimbang, o
           </View>
           <Text style={s.namaKapal}>{k.nama_kapal}</Text>
           <Text style={s.redup}>
-            {k.nomor_registrasi} - Kapten {k.nama_kapten}
+            {k.nomor_registrasi} | Kapten {k.nama_kapten}
           </Text>
           <Text style={s.redup}>
             {tanggalPendek(k.tanggal)}, {k.jam}
@@ -62,12 +62,12 @@ export default function DetailKedatangan({ kedatangan, onMuatUlang, onTimbang, o
           </Text>
         </View>
 
-        <KotakPesan teks={galat} gaya={{ marginBottom: 12 }} />
+        <KotakPesan teks={galat} gaya={{ marginHorizontal: 16, marginBottom: 8 }} />
         {jumlah > 0 && sudah === jumlah ? (
           <KotakPesan
             jenis="sukses"
             teks="Semua baris kedatangan ini sudah ditimbang dan dibuat lot."
-            gaya={{ marginBottom: 12 }}
+            gaya={{ marginHorizontal: 16, marginBottom: 8 }}
           />
         ) : null}
 
@@ -76,16 +76,16 @@ export default function DetailKedatangan({ kedatangan, onMuatUlang, onTimbang, o
           return (
             <View key={t.id_tangkapan} style={[s.kartu, lot && s.kartuSelesai]}>
               <View style={s.barisAtas}>
-                <Text style={s.nomorBaris}>BARIS {i + 1}</Text>
+                <Text style={s.nomorBaris}>Baris {i + 1}</Text>
                 {lot ? <LencanaLot status={lot.status} /> : (
-                  <Lencana teks="Belum ditimbang" latar={warna.peringatanLatar} warnaTeks={warna.peringatan} />
+                  <Text style={s.belum}>Belum ditimbang</Text>
                 )}
               </View>
               <Text style={s.jenis}>
-                {t.nama_jenis} <Text style={s.grade}>- Grade {t.kode_grade}</Text>
+                {t.nama_jenis} <Text style={s.grade}>Grade {t.kode_grade}</Text>
               </Text>
               <Text style={s.redup}>
-                Estimasi {formatKg(t.berat_estimasi)} - {t.jumlah_keranjang} keranjang
+                Estimasi {formatKg(t.berat_estimasi)} | {t.jumlah_keranjang} keranjang
               </Text>
 
               {lot ? (
@@ -94,23 +94,22 @@ export default function DetailKedatangan({ kedatangan, onMuatUlang, onTimbang, o
                     <Text style={s.kodeLot}>{lot.kode_lot}</Text>
                     <Text style={s.redup}>
                       Aktual {formatKg(lot.berat_aktual)}
-                      {lot.harga_pembukaan ? ` - ${formatRupiah(lot.harga_pembukaan)}/kg` : ''}
+                      {lot.harga_pembukaan ? ` | ${formatRupiah(lot.harga_pembukaan)}/kg` : ''}
                     </Text>
                   </View>
                   <Tombol
                     judul="Label"
-                    ikon="qr"
                     jenis="garis"
+                    kecil
                     onPress={() => onLihatLabel(lot)}
-                    gaya={{ minHeight: 44, paddingHorizontal: 14 }}
                   />
                 </View>
               ) : (
                 <Tombol
                   judul="Timbang"
-                  ikon="timbangan"
+                  kecil
                   onPress={() => onTimbang(t)}
-                  gaya={{ marginTop: 12 }}
+                  gaya={{ marginTop: 10, alignSelf: 'flex-start', minWidth: 120 }}
                 />
               )}
             </View>
@@ -123,34 +122,32 @@ export default function DetailKedatangan({ kedatangan, onMuatUlang, onTimbang, o
 
 const s = StyleSheet.create({
   bilahKembali: {
-    backgroundColor: warna.putih, borderBottomWidth: 1, borderBottomColor: '#E4EBF1',
-    paddingHorizontal: 8, paddingVertical: 4,
+    backgroundColor: warna.putih, borderBottomWidth: 1, borderBottomColor: warna.garisHalus,
+    paddingHorizontal: 8, paddingVertical: 2,
   },
   tombolKembali: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, paddingHorizontal: 8, alignSelf: 'flex-start' },
   teksKembali: { color: warna.utama, fontSize: ukuran.hurufNormal, fontWeight: '600' },
-  isi: { padding: 16, paddingBottom: 40 },
-  kepala: {
-    backgroundColor: warna.putih, borderRadius: 6, padding: 16, marginBottom: 10,
-    borderWidth: 1, borderColor: '#E4EBF1',
-  },
+  isi: { paddingBottom: 40 },
+  kepala: { backgroundColor: warna.putih, padding: 16, marginBottom: 8, borderBottomWidth: 1, borderColor: warna.garisHalus },
   barisAtas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  nomor: { fontSize: 18, fontWeight: '700', color: warna.utama },
-  namaKapal: { fontSize: 17, fontWeight: '700', color: warna.teks, marginTop: 6 },
-  redup: { fontSize: 13, color: warna.teksRedup, marginTop: 2 },
-  bilahKemajuan: { height: 10, borderRadius: 5, backgroundColor: warna.abu, marginTop: 14, overflow: 'hidden' },
-  isiKemajuan: { height: 10, borderRadius: 5, backgroundColor: warna.sukses },
-  teksKemajuan: { fontSize: 13, fontWeight: '600', color: warna.teks, marginTop: 6 },
+  nomor: { fontSize: 14, fontWeight: '600', color: warna.utama, fontVariant: ['tabular-nums'] },
+  namaKapal: { fontSize: 18, fontWeight: '700', color: warna.teks, marginTop: 2 },
+  redup: { fontSize: 12, color: warna.teksRedup, marginTop: 2 },
+  bilahKemajuan: { height: 6, borderRadius: 3, backgroundColor: warna.abu, marginTop: 12, overflow: 'hidden' },
+  isiKemajuan: { height: 6, borderRadius: 3, backgroundColor: warna.sukses },
+  teksKemajuan: { fontSize: 12, fontWeight: '600', color: warna.teks, marginTop: 6 },
   kartu: {
-    backgroundColor: warna.putih, borderRadius: 6, padding: 14, marginBottom: 10,
-    borderWidth: 1, borderColor: '#E4EBF1', borderLeftWidth: 5, borderLeftColor: warna.peringatan,
+    backgroundColor: warna.putih, paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderColor: warna.garisHalus,
   },
-  kartuSelesai: { borderLeftColor: warna.sukses },
-  nomorBaris: { fontSize: 11, fontWeight: '700', color: warna.teksRedup },
-  jenis: { fontSize: ukuran.hurufSedang, fontWeight: '700', color: warna.teks, marginTop: 6 },
-  grade: { fontWeight: '500', color: warna.teksRedup },
+  kartuSelesai: {},
+  nomorBaris: { fontSize: 12, fontWeight: '600', color: warna.teksRedup },
+  belum: { fontSize: 12, fontWeight: '600', color: warna.peringatan },
+  jenis: { fontSize: 15, fontWeight: '600', color: warna.teks, marginTop: 2 },
+  grade: { fontWeight: '400', color: warna.teksRedup },
   infoLot: {
-    flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12,
-    paddingTop: 12, borderTopWidth: 1, borderTopColor: '#E4EBF1',
+    flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8,
+    paddingTop: 8, borderTopWidth: 1, borderTopColor: warna.garisHalus,
   },
-  kodeLot: { fontSize: ukuran.hurufNormal, fontWeight: '700', color: warna.teks },
+  kodeLot: { fontSize: 14, fontWeight: '600', color: warna.teks, fontVariant: ['tabular-nums'] },
 });

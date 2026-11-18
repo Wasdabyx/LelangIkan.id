@@ -69,10 +69,7 @@ export default function LabelLot({ lot, baru, namaTpi, teksKembali, onKembali })
   return (
     <ScrollView contentContainerStyle={s.isi}>
       {baru ? (
-        <View style={s.kepalaSukses}>
-          <View style={[s.lingkaran, draf && { backgroundColor: warna.peringatanLatar }]}>
-            <Ikon nama={draf ? 'peringatan' : 'centang'} ukuran={40} warna={draf ? warna.peringatan : warna.sukses} tebal={3} />
-          </View>
+        <View style={[s.kepalaSukses, draf && { borderLeftColor: warna.peringatan }]}>
           <Text style={s.judulSukses}>{draf ? 'Lot disimpan sebagai draf harga' : 'Lot berhasil dibuat'}</Text>
           {!draf ? <Text style={s.subSukses}>Lot siap masuk antrean lelang.</Text> : null}
         </View>
@@ -98,7 +95,7 @@ export default function LabelLot({ lot, baru, namaTpi, teksKembali, onKembali })
         </View>
         <Text style={s.kode}>{lot.kode_lot}</Text>
         <Text style={s.jenis}>
-          {lot.nama_jenis} - Grade {lot.kode_grade}
+          {lot.nama_jenis} | Grade {lot.kode_grade}
         </Text>
         <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 6 }}>
           <LencanaLot status={lot.status} />
@@ -126,7 +123,6 @@ export default function LabelLot({ lot, baru, namaTpi, teksKembali, onKembali })
       </View>
 
       <View style={s.statusCetak}>
-        <Ikon nama="cetak" ukuran={20} warna={jumlahCetak ? warna.sukses : warna.teksRedup} />
         <Text style={s.teksStatusCetak}>
           {jumlahCetak ? `Label sudah dicetak ${jumlahCetak} kali` : 'Label belum pernah dicetak'}
         </Text>
@@ -136,13 +132,11 @@ export default function LabelLot({ lot, baru, namaTpi, teksKembali, onKembali })
 
       <Tombol
         judul={jumlahCetak ? 'Cetak Ulang' : 'Cetak Label'}
-        ikon="cetak"
         onPress={cetak}
         memuat={mencetak}
       />
       <Tombol
         judul="Bagikan PDF"
-        ikon="bagikan"
         jenis="garis"
         onPress={bagikan}
         memuat={membagikan}
@@ -164,14 +158,13 @@ function Baris({ label, nilai, besar }) {
 
 const s = StyleSheet.create({
   isi: { padding: 16, paddingBottom: 40 },
-  judul: { fontSize: 20, fontWeight: '700', color: warna.teks, marginBottom: 12 },
-  kepalaSukses: { alignItems: 'center', marginBottom: 14 },
-  lingkaran: {
-    width: 80, height: 80, borderRadius: 40, backgroundColor: warna.suksesLatar,
-    alignItems: 'center', justifyContent: 'center',
+  judul: { fontSize: 18, fontWeight: '700', color: warna.teks, marginBottom: 12 },
+  kepalaSukses: {
+    backgroundColor: warna.putih, borderLeftWidth: 3, borderLeftColor: warna.sukses,
+    borderWidth: 1, borderColor: warna.garisHalus, borderRadius: 4, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 12,
   },
-  judulSukses: { fontSize: 18, fontWeight: '700', color: warna.teks, marginTop: 10, textAlign: 'center' },
-  subSukses: { fontSize: 14, color: warna.teksRedup, marginTop: 4, textAlign: 'center' },
+  judulSukses: { fontSize: 16, fontWeight: '700', color: warna.teks },
+  subSukses: { fontSize: 13, color: warna.teksRedup, marginTop: 2 },
   label: {
     backgroundColor: warna.putih, borderRadius: 4, padding: 16, marginBottom: 14,
     borderWidth: 2, borderColor: warna.teks, borderStyle: 'dashed',
@@ -187,14 +180,14 @@ const s = StyleSheet.create({
   jenis: { fontSize: 16, fontWeight: '700', color: warna.utama, textAlign: 'center', marginTop: 4 },
   tabel: { marginTop: 12 },
   baris: { flexDirection: 'row', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#EEF2F6', gap: 10 },
-  labelBaris: { width: 120, fontSize: 14, color: warna.teksRedup },
-  nilaiBaris: { flex: 1, fontSize: 14, color: warna.teks, fontWeight: '500', textAlign: 'right' },
-  nilaiBesar: { fontSize: 16, fontWeight: '700' },
+  labelBaris: { width: 120, fontSize: 13, color: warna.teksRedup },
+  nilaiBaris: { flex: 1, fontSize: 13, color: warna.teks, textAlign: 'right' },
+  nilaiBesar: { fontSize: 15, fontWeight: '700' },
   barisTanda: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 12 },
   tanda: {
     borderWidth: 2, borderColor: warna.galat, color: warna.galat, fontWeight: '700', fontSize: 12,
     paddingHorizontal: 10, paddingVertical: 3, borderRadius: 4,
   },
   statusCetak: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, justifyContent: 'center' },
-  teksStatusCetak: { fontSize: ukuran.hurufNormal, color: warna.teks, fontWeight: '500' },
+  teksStatusCetak: { fontSize: 13, color: warna.teksRedup },
 });

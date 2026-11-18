@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, T
 import { api } from '../../api';
 import { KotakPesan, Lencana, Tombol } from '../../components/Dasar';
 import Ikon from '../../components/Ikon';
+import { BarisDaftar, Ringkasan } from '../../components/Tata';
 import { formatKg, tanggalPanjang } from '../../format';
 import { ukuran, warna } from '../../tema';
 import LembarQR from './LembarQR';
@@ -39,86 +40,81 @@ export default function DaftarKedatangan({ onTambah, onLengkapi }) {
 
   const total = (data || []).reduce((n, k) => n + Number(k.total_berat_estimasi), 0);
 
+  const jumlahDraf = data ? data.filter((k) => k.status === 'DRAF').length : 0;
+
   return (
     <ScrollView
       contentContainerStyle={s.isi}
       refreshControl={<RefreshControl refreshing={menyegarkan} onRefresh={segarkan} colors={[warna.utama]} />}
     >
-      <View style={s.barisJudul}>
-        <View style={{ flex: 1 }}>
-          <Text style={s.judul}>Kedatangan Hari Ini</Text>
-          <Text style={s.tanggal}>{tanggalPanjang(new Date())}</Text>
+      <View style={s.kepala}>
+        <View style={s.barisJudul}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.judul}>Kedatangan Hari Ini</Text>
+            <Text style={s.tanggal}>{tanggalPanjang(new Date())}</Text>
+          </View>
+          <Pressable onPress={segarkan} style={s.tombolSegar} accessibilityLabel="Muat ulang" hitSlop={8}>
+            <Ikon nama="muatUlang" ukuran={16} warna={warna.utama} />
+            <Text style={s.teksSegar}>Muat ulang</Text>
+          </Pressable>
         </View>
-        <Pressable onPress={segarkan} style={s.tombolSegar} accessibilityLabel="Muat ulang">
-          <Ikon nama="muatUlang" ukuran={22} warna={warna.utama} />
-        </Pressable>
+        <Tombol judul="Tambah Kedatangan" ikon="tambah" onPress={onTambah} gaya={{ marginTop: 12 }} />
       </View>
 
-      {/* Ringkasan */}
-      <View style={s.ringkasan}>
-        <View style={s.kotakAngka}>
-          <Text style={s.angka}>{data ? data.length : '-'}</Text>
-          <Text style={s.labelAngka}>Kapal</Text>
-        </View>
-        <View style={s.pemisah} />
-        <View style={s.kotakAngka}>
-          <Text style={s.angka}>{data ? formatKg(total) : '-'}</Text>
-          <Text style={s.labelAngka}>Total estimasi</Text>
-        </View>
-      </View>
-
-      <Tombol judul="Tambah Kedatangan" ikon="tambah" onPress={onTambah} gaya={{ marginBottom: 20 }} />
+      <Ringkasan
+        data={[
+          ['Kapal', data ? String(data.length) : '-'],
+          ['Total estimasi', data ? formatKg(total) : '-'],
+          ['Draf', data ? String(jumlahDraf) : '-', jumlahDraf > 0 ? warna.peringatan : undefined],
+        ]}
+      />
 
       {galat ? (
-        <View>
+        <View style={{ padding: 16 }}>
           <KotakPesan teks={galat} />
-          <Tombol judul="Coba Lagi" jenis="garis" ikon="muatUlang" onPress={segarkan} gaya={{ marginTop: 12 }} />
+          <Tombol judul="Coba Lagi" jenis="garis" onPress={segarkan} gaya={{ marginTop: 12 }} />
         </View>
       ) : !data ? (
         <ActivityIndicator size="large" color={warna.utama} style={{ marginTop: 24 }} />
       ) : data.length === 0 ? (
         <View style={s.kosong}>
-          <View style={s.lingkaranKosong}>
-            <Ikon nama="kapal" ukuran={48} warna={warna.teksRedup} tebal={1.6} />
-          </View>
           <Text style={s.judulKosong}>Belum ada kedatangan hari ini</Text>
           <Text style={s.teksKosong}>Tekan "Tambah Kedatangan" saat kapal bersandar.</Text>
         </View>
       ) : (
-        data.map((k) => {
-          const draf = k.status === 'DRAF';
-          return (
-            <Pressable
-              key={k.id_kedatangan}
-              onPress={() => (draf ? onLengkapi(k) : setQr(k))}
-              style={({ pressed }) => [s.kartu, pressed && { backgroundColor: warna.abu }]}
-              accessibilityRole="button"
-              accessibilityLabel={`${k.nomor_kedatangan} ${k.nama_kapal}. ${draf ? 'Ketuk untuk melengkapi draf' : 'Ketuk untuk menampilkan QR'}`}
-            >
-              <View style={s.barisAtas}>
-                <Text style={s.nomor}>{k.nomor_kedatangan}</Text>
-                <Lencana status={k.status} />
-              </View>
-              <Text style={s.namaKapal}>{k.nama_kapal}</Text>
-              <Text style={s.redup}>{k.nomor_registrasi} - Kapten {k.nama_kapten}</Text>
-              <View style={s.barisBawah}>
-                <View style={s.info}>
-                  <Ikon nama="jam" ukuran={16} warna={warna.teksRedup} />
-                  <Text style={s.teksInfo}>{k.jam}</Text>
-                </View>
-                <View style={s.info}>
-                  <Ikon nama="ikan" ukuran={16} warna={warna.teksRedup} />
-                  <Text style={s.teksInfo}>{k.jumlah_baris} baris</Text>
-                </View>
-                <Text style={s.berat}>{formatKg(k.total_berat_estimasi)}</Text>
-              </View>
-              <View style={s.barisQR}>
-                <Ikon nama={draf ? 'pensil' : 'qr'} ukuran={18} warna={warna.utama} />
-                <Text style={s.teksQR}>{draf ? 'Lengkapi Draf' : 'Tampilkan QR'}</Text>
-              </View>
-            </Pressable>
-          );
-        })
+        <>
+          <Text style={s.subjudul}>Ketuk baris untuk menampilkan QR atau melengkapi draf.</Text>
+          <View style={s.daftar}>
+            {data.map((k, i) => {
+              const draf = k.status === 'DRAF';
+              return (
+                <BarisDaftar
+                  key={k.id_kedatangan}
+                  terakhir={i === data.length - 1}
+                  onPress={() => (draf ? onLengkapi(k) : setQr(k))}
+                  kanan={
+                    <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                      <Text style={s.berat}>{formatKg(k.total_berat_estimasi)}</Text>
+                      <Lencana status={k.status} />
+                      <Text style={s.teksQR}>{draf ? 'Lengkapi Draf' : 'Tampilkan QR'}</Text>
+                    </View>
+                  }
+                >
+                  <View accessibilityLabel={`${k.nomor_kedatangan} ${k.nama_kapal}. ${draf ? 'Ketuk untuk melengkapi draf' : 'Ketuk untuk menampilkan QR'}`}>
+                    <Text style={s.nomor}>
+                      {k.nomor_kedatangan} | {k.jam}
+                    </Text>
+                    <Text style={s.namaKapal}>{k.nama_kapal}</Text>
+                    <Text style={s.redup}>
+                      {k.nomor_registrasi} | Kapten {k.nama_kapten}
+                    </Text>
+                    <Text style={s.redup}>{k.jumlah_baris} baris tangkapan</Text>
+                  </View>
+                </BarisDaftar>
+              );
+            })}
+          </View>
+        </>
       )}
 
       <LembarQR kedatangan={qr} onTutup={() => setQr(null)} />
@@ -127,44 +123,21 @@ export default function DaftarKedatangan({ onTambah, onLengkapi }) {
 }
 
 const s = StyleSheet.create({
-  isi: { padding: 16, paddingBottom: 40 },
-  barisJudul: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  isi: { paddingBottom: 40 },
+  kepala: { backgroundColor: warna.putih, padding: 16, borderBottomWidth: 1, borderColor: warna.garisHalus },
+  barisJudul: { flexDirection: 'row', alignItems: 'center' },
   judul: { fontSize: 20, fontWeight: '700', color: warna.teks },
-  tanggal: { fontSize: 14, color: warna.teksRedup, marginTop: 2 },
-  tombolSegar: {
-    width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: warna.garis,
-    alignItems: 'center', justifyContent: 'center', backgroundColor: warna.putih,
-  },
-  ringkasan: {
-    flexDirection: 'row', backgroundColor: warna.putih, borderRadius: 6, paddingVertical: 14,
-    marginBottom: 10, borderWidth: 1, borderColor: '#E4EBF1',
-  },
-  kotakAngka: { flex: 1, alignItems: 'center' },
-  pemisah: { width: 1, backgroundColor: warna.garis },
-  angka: { fontSize: 18, fontWeight: '700', color: warna.utama },
-  labelAngka: { fontSize: 12, color: warna.teksRedup, marginTop: 2 },
+  tanggal: { fontSize: 13, color: warna.teksRedup, marginTop: 2 },
+  tombolSegar: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 32 },
+  teksSegar: { fontSize: 13, fontWeight: '600', color: warna.utama },
+  subjudul: { fontSize: 12, color: warna.teksRedup, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 },
   kosong: { alignItems: 'center', paddingVertical: 24 },
-  lingkaranKosong: {
-    width: 96, height: 96, borderRadius: 48, backgroundColor: warna.abu,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
-  },
   judulKosong: { fontSize: ukuran.hurufSedang, fontWeight: '600', color: warna.teks },
   teksKosong: { fontSize: 14, color: warna.teksRedup, marginTop: 4, textAlign: 'center' },
-  kartu: {
-    backgroundColor: warna.putih, borderRadius: 6, padding: 14, marginBottom: 10,
-    borderWidth: 1, borderColor: '#E4EBF1',
-  },
-  barisAtas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  nomor: { fontSize: 13, fontWeight: '700', color: warna.teksRedup },
-  namaKapal: { fontSize: ukuran.hurufSedang, fontWeight: '700', color: warna.teks, marginTop: 6 },
-  redup: { fontSize: 13, color: warna.teksRedup, marginTop: 2 },
-  barisBawah: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 },
-  info: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  teksInfo: { fontSize: 13, color: warna.teks },
-  berat: { marginLeft: 'auto', fontSize: ukuran.hurufNormal, fontWeight: '700', color: warna.utama },
-  barisQR: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, paddingTop: 10,
-    borderTopWidth: 1, borderTopColor: '#EEF2F6',
-  },
-  teksQR: { fontSize: 14, fontWeight: '600', color: warna.utama },
+  daftar: { backgroundColor: warna.putih, borderTopWidth: 1, borderBottomWidth: 1, borderColor: warna.garisHalus },
+  nomor: { fontSize: 12, fontWeight: '600', color: warna.teksRedup, fontVariant: ['tabular-nums'] },
+  namaKapal: { fontSize: 15, fontWeight: '600', color: warna.teks, marginTop: 2 },
+  redup: { fontSize: 12, color: warna.teksRedup, marginTop: 1 },
+  berat: { fontSize: 14, fontWeight: '700', color: warna.teks },
+  teksQR: { fontSize: 12, fontWeight: '600', color: warna.utama },
 });

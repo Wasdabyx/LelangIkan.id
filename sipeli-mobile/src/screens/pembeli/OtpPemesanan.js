@@ -68,9 +68,6 @@ export default function OtpPemesanan({ lot, info, onBerhasil, onBatal }) {
     <KeyboardAvoidingView style={s.wadah} behavior="padding">
       <ScrollView contentContainerStyle={s.isi} keyboardShouldPersistTaps="handled">
         <View style={s.kartu}>
-          <View style={s.lingkaran}>
-            <Ikon nama="gembok" ukuran={34} warna={warna.utama} tebal={2.2} />
-          </View>
           <Text style={s.judul}>Konfirmasi Pemesanan</Text>
           <Text style={s.teks}>
             Masukkan kode OTP yang dikirim ke <Text style={s.tebal}>{surel}</Text>
@@ -138,16 +135,16 @@ export default function OtpPemesanan({ lot, info, onBerhasil, onBatal }) {
 
 const s = StyleSheet.create({
   wadah: { flex: 1, backgroundColor: warna.latar },
-  isi: { flexGrow: 1, padding: 16, paddingBottom: 32 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  isi: { flexGrow: 1, paddingBottom: 32 },
+  kartu: { backgroundColor: warna.kartu, padding: 16, borderBottomWidth: 1, borderColor: warna.garisHalus },
   lingkaran: {
     width: 68, height: 68, borderRadius: 34, backgroundColor: warna.utamaMuda,
     alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 10,
   },
-  judul: { fontSize: 18, fontWeight: '600', color: warna.teks, textAlign: 'center' },
-  teks: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', marginTop: 6, lineHeight: 20 },
+  judul: { fontSize: 18, fontWeight: '700', color: warna.teks },
+  teks: { fontSize: 13, color: warna.teksRedup, marginTop: 4, lineHeight: 19 },
   tebal: { color: warna.teks, fontWeight: '600' },
-  lot: { backgroundColor: warna.latar, borderRadius: ukuran.radius, padding: 12, marginTop: 16, gap: 8 },
+  lot: { marginTop: 14, borderTopWidth: 1, borderBottomWidth: 1, borderColor: warna.garisHalus, paddingVertical: 8, gap: 6 },
   barisLot: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   label: { fontSize: 13, color: warna.teksRedup },
   nilai: { fontSize: 13, color: warna.teks, fontWeight: '500', flexShrink: 1, textAlign: 'right' },

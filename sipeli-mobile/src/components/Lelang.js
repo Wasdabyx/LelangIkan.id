@@ -51,6 +51,44 @@ export function JamMundur({ sisa, status, perpanjangan, maksPerpanjangan }) {
   );
 }
 
+/**
+ * Panel utama lelang: sisa waktu (kiri) dan harga tertinggi (kanan), tanpa kotak dekoratif.
+ * Dipakai Ruang Lelang (pembeli) dan Pantau Sesi (operator).
+ */
+export function PanelLelang({ sisa, status, perpanjangan, maksPerpanjangan, labelHarga, harga, bawahHarga, info }) {
+  const aktif = status === 'AKTIF';
+  const genting = aktif && sisa <= 15;
+  return (
+    <View>
+      <View style={s.panel}>
+        <View style={s.selPanel}>
+          <Text style={[s.labelPanel, genting && { color: warna.galat }]}>{aktif ? 'Sisa waktu' : 'Lelang selesai'}</Text>
+          <Text
+            style={[s.angkaPanel, genting && { color: warna.galat }, !aktif && { color: warna.teksRedup }]}
+            accessibilityLabel="Sisa waktu"
+          >
+            {formatSisa(aktif ? sisa : 0)}
+          </Text>
+          <Text style={s.ketPanel} numberOfLines={2}>
+            {perpanjangan > 0
+              ? `Diperpanjang ${perpanjangan} dari ${maksPerpanjangan} kali`
+              : aktif ? 'Tawaran di 15 detik terakhir menambah 30 detik' : ' '}
+          </Text>
+        </View>
+        <View style={[s.selPanel, s.selPanelKanan]}>
+          <Text style={s.labelPanel}>{labelHarga}</Text>
+          <Text style={s.hargaPanel} accessibilityLabel="Harga tertinggi" numberOfLines={1} adjustsFontSizeToFit>
+            {harga}
+            <Text style={s.perKg}>/kg</Text>
+          </Text>
+          {bawahHarga ? <Text style={s.ketPanel} numberOfLines={1}>{bawahHarga}</Text> : null}
+        </View>
+      </View>
+      {info ? <Text style={s.infoPanel}>{info}</Text> : null}
+    </View>
+  );
+}
+
 /** Satu baris label - nilai (rincian tagihan / lot). */
 export function BarisRincian({ label, nilai, tebal, besar, warnaNilai }) {
   return (
@@ -74,6 +112,15 @@ export const WARNA_TRANSAKSI = {
 };
 
 const s = StyleSheet.create({
+  panel: { flexDirection: 'row', borderTopWidth: 1, borderBottomWidth: 1, borderColor: warna.garisHalus },
+  selPanel: { flex: 1, paddingVertical: 12, paddingRight: 12 },
+  selPanelKanan: { borderLeftWidth: 1, borderLeftColor: warna.garisHalus, paddingLeft: 14, paddingRight: 0 },
+  labelPanel: { fontSize: 12, fontWeight: '600', color: warna.teksRedup },
+  angkaPanel: { fontSize: 30, fontWeight: '700', color: warna.utama, fontVariant: ['tabular-nums'], marginTop: 2 },
+  hargaPanel: { fontSize: 24, fontWeight: '700', color: warna.teks, fontVariant: ['tabular-nums'], marginTop: 6 },
+  perKg: { fontSize: 13, fontWeight: '500', color: warna.teksRedup },
+  ketPanel: { fontSize: 11, color: warna.teksRedup, marginTop: 2, lineHeight: 15 },
+  infoPanel: { fontSize: 12, color: warna.teksRedup, marginTop: 8 },
   tab: { flexDirection: 'row', backgroundColor: warna.putih, borderBottomWidth: 1, borderBottomColor: warna.garis },
   itemTab: {
     flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,

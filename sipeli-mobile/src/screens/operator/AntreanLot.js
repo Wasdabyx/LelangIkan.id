@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { operator } from '../../api';
 import { KotakPesan, Lencana, Tombol } from '../../components/Dasar';
 import Ikon from '../../components/Ikon';
+import { BarisDaftar, Ringkasan, Tabel } from '../../components/Tata';
 import { formatSisa } from '../../components/Lelang';
 import { formatKg, formatRupiah } from '../../format';
 import { usePolling } from '../../polling';
@@ -37,99 +38,146 @@ export default function AntreanLot({ tab, onPilihLot, onBukaSesi }) {
     );
   }
 
-  const aktif = sesi.filter((x) => x.status === 'AKTIF').length;
-  const data = tab === 'antrean' ? antrean : sesi;
+  const berjalan = sesi.filter((x) => x.status === 'AKTIF');
+  const selesai = sesi.filter((x) => x.status !== 'AKTIF');
+  const terjual = selesai.filter((x) => x.status_lot === 'TERJUAL' || x.status_lot === 'SELESAI').length;
 
   return (
-    <FlatList
+    <ScrollView
       style={{ flex: 1, backgroundColor: warna.latar }}
-      data={data}
-      keyExtractor={(x) => String(x.id_sesi ?? x.id_lot)}
       contentContainerStyle={s.isi}
       refreshControl={<RefreshControl refreshing={segar} onRefresh={() => { setSegar(true); muat(); }} />}
-      ListHeaderComponent={
+    >
+      <Ringkasan
+        data={[
+          ['Menunggu lelang', String(antrean.length)],
+          ['Sesi berjalan', String(berjalan.length), berjalan.length ? warna.utama : undefined],
+          ['Terjual hari ini', String(terjual), warna.sukses],
+        ]}
+      />
+      {galat ? <KotakPesan teks={galat} gaya={{ margin: 12 }} /> : null}
+
+      {tab === 'antrean' ? (
         <>
-          {galat ? <KotakPesan teks={galat} gaya={{ marginBottom: 12 }} /> : null}
-          <Text style={s.keterangan}>
-            {tab === 'antrean'
-              ? `${antrean.length} lot menunggu lelang. ${aktif > 0 ? `${aktif} sesi sedang berjalan.` : ''}`
-              : 'Sesi yang sedang berjalan dan yang sudah ditutup hari ini.'}
+          <Text style={s.judulKelompok}>
+            {antrean.length} lot menunggu lelang. {berjalan.length > 0 ? `${berjalan.length} sesi sedang berjalan.` : ''}
           </Text>
+          {antrean.length === 0 ? <Text style={s.teksKosong}>Tidak ada lot yang menunggu lelang.</Text> : null}
+          <View style={s.daftar}>
+            {antrean.map((lot, i) => (
+              <BarisAntrean key={lot.id_lot} lot={lot} terakhir={i === antrean.length - 1} onPilih={() => onPilihLot(lot)} />
+            ))}
+          </View>
         </>
-      }
-      ListEmptyComponent={
-        <View style={s.kosong}>
-          <Ikon nama={tab === 'antrean' ? 'ikan' : 'jam'} ukuran={44} warna={warna.teksRedup} />
-          <Text style={s.teksKosong}>
-            {tab === 'antrean' ? 'Tidak ada lot yang menunggu lelang.' : 'Belum ada sesi lelang hari ini.'}
-          </Text>
-        </View>
-      }
-      renderItem={({ item }) =>
-        tab === 'antrean' ? <KartuAntrean lot={item} onPilih={() => onPilihLot(item)} /> : <KartuSesi sesi={item} onPress={() => onBukaSesi(item.id_sesi)} />
-      }
-    />
+      ) : (
+        <>
+          <Text style={s.judulKelompok}>Sesi yang sedang berjalan dan yang sudah ditutup hari ini.</Text>
+          {sesi.length === 0 ? <Text style={s.teksKosong}>Belum ada sesi lelang hari ini.</Text> : null}
+          {berjalan.length > 0 ? (
+            <View style={s.daftar}>
+              {berjalan.map((x, i) => (
+                <BarisDaftar
+                  key={x.id_sesi}
+                  terakhir={i === berjalan.length - 1}
+                  onPress={() => onBukaSesi(x.id_sesi)}
+                  gaya={s.barisBerjalan}
+                  kanan={
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={[s.jam, x.sisa_detik <= 15 && { color: warna.galat }]}>{formatSisa(x.sisa_detik)}</Text>
+                      <Text style={s.kecil}>{x.jumlah_penawaran} tawaran</Text>
+                    </View>
+                  }
+                >
+                  <Text style={s.kode}>{x.lot.kode_lot}</Text>
+                  <Text style={s.jenis}>
+                    {x.lot.nama_jenis} <Text style={s.grade}>Grade {x.lot.kode_grade}</Text>
+                  </Text>
+                  <Text style={s.kecil}>
+                    {x.harga_tertinggi ? `Tertinggi ${formatRupiah(x.harga_tertinggi)}/kg` : 'Belum ada tawaran'} | mulai {x.waktu_mulai.slice(11, 16)}
+                  </Text>
+                </BarisDaftar>
+              ))}
+            </View>
+          ) : null}
+          {selesai.length > 0 ? (
+            <>
+              <Text style={s.judulKelompok}>Selesai</Text>
+              <View style={[s.daftar, { paddingHorizontal: 16 }]}>
+                <Tabel
+                  label="Sesi selesai"
+                  data={selesai}
+                  kunci={(x) => x.id_sesi}
+                  onPilih={(x) => onBukaSesi(x.id_sesi)}
+                  kolom={[
+                    {
+                      judul: 'Lot', flex: 1.6,
+                      render: (x) => (
+                        <View>
+                          <Text style={s.selKode}>{x.lot.kode_lot}</Text>
+                          <Text style={s.kecil} numberOfLines={1}>{x.lot.nama_jenis} Grade {x.lot.kode_grade}</Text>
+                        </View>
+                      ),
+                    },
+                    {
+                      judul: 'Hasil', flex: 1,
+                      render: (x) => {
+                        const ok = x.status_lot === 'TERJUAL' || x.status_lot === 'SELESAI';
+                        return ok
+                          ? <Lencana teks="Terjual" latar={warna.suksesLatar} warnaTeks={warna.sukses} />
+                          : <Text style={s.kecil}>Tidak terjual</Text>;
+                      },
+                    },
+                    {
+                      judul: 'Harga/kg', flex: 1.1, kanan: true, tebal: true,
+                      render: (x) => (x.harga_tertinggi ? formatRupiah(x.harga_tertinggi) : '-'),
+                    },
+                  ]}
+                />
+              </View>
+            </>
+          ) : null}
+        </>
+      )}
+    </ScrollView>
   );
 }
 
-function KartuAntrean({ lot, onPilih }) {
+function BarisAntrean({ lot, onPilih, terakhir }) {
+  const ada = lot.jumlah_peserta > 0;
   return (
-    <View style={s.kartu}>
-      <View style={s.barisAtas}>
-        <Text style={s.kode}>{lot.kode_lot}</Text>
-        <Lencana
-          teks={`${lot.jumlah_peserta} peserta`}
-          ikon="pengguna"
-          latar={lot.jumlah_peserta > 0 ? warna.suksesLatar : warna.peringatanLatar}
-          warnaTeks={lot.jumlah_peserta > 0 ? warna.sukses : warna.peringatan}
-        />
-      </View>
+    <BarisDaftar
+      terakhir={terakhir}
+      kanan={
+        <View style={{ alignItems: 'flex-end', gap: 6 }}>
+          <Text style={[s.peserta, { color: ada ? warna.sukses : warna.peringatan }]}>{lot.jumlah_peserta} peserta</Text>
+          <Tombol judul="Atur Lelang" kecil onPress={onPilih} />
+        </View>
+      }
+    >
+      <Text style={s.kode}>{lot.kode_lot}</Text>
       <Text style={s.jenis}>
         {lot.nama_jenis} <Text style={s.grade}>Grade {lot.kode_grade}</Text>
       </Text>
-      <Text style={s.redup}>
-        {formatKg(lot.berat_aktual)} | Buka {formatRupiah(lot.harga_pembukaan)}/kg | {lot.nama_kapal}
+      <Text style={s.kecil}>
+        {formatKg(lot.berat_aktual)} | buka {formatRupiah(lot.harga_pembukaan)}/kg
       </Text>
-      <Tombol judul="Atur dan Mulai Lelang" ikon="kanan" onPress={onPilih} gaya={{ marginTop: 12 }} />
-    </View>
-  );
-}
-
-function KartuSesi({ sesi, onPress }) {
-  const aktif = sesi.status === 'AKTIF';
-  const terjual = sesi.status_lot === 'TERJUAL' || sesi.status_lot === 'SELESAI';
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [s.kartu, pressed && { opacity: 0.85 }]}>
-      <View style={s.barisAtas}>
-        <Text style={s.kode}>{sesi.lot.kode_lot}</Text>
-        {aktif ? (
-          <Lencana teks={`Berjalan ${formatSisa(sesi.sisa_detik)}`} ikon="jam" latar={warna.utamaMuda} warnaTeks={warna.utama} />
-        ) : terjual ? (
-          <Lencana teks="Terjual" ikon="centang" latar={warna.suksesLatar} warnaTeks={warna.sukses} />
-        ) : (
-          <Lencana teks="Tidak terjual" latar={warna.abu} warnaTeks={warna.teksRedup} />
-        )}
-      </View>
-      <Text style={s.jenis}>
-        {sesi.lot.nama_jenis} <Text style={s.grade}>Grade {sesi.lot.kode_grade}</Text>
-      </Text>
-      <Text style={s.redup}>
-        {sesi.harga_tertinggi ? `Tertinggi ${formatRupiah(sesi.harga_tertinggi)}/kg` : 'Belum ada tawaran'} | {sesi.jumlah_penawaran} tawaran | mulai {sesi.waktu_mulai.slice(11, 16)}
-      </Text>
-    </Pressable>
+      <Text style={s.kecil} numberOfLines={1}>{lot.nama_kapal}</Text>
+    </BarisDaftar>
   );
 }
 
 const s = StyleSheet.create({
   tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 16 },
-  isi: { padding: 16, paddingBottom: 32, gap: 10 },
-  keterangan: { fontSize: 13, color: warna.teksRedup, lineHeight: 18 },
-  kosong: { alignItems: 'center', padding: 32, gap: 12 },
-  teksKosong: { fontSize: 14, color: warna.teksRedup, textAlign: 'center' },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
-  barisAtas: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  kode: { fontSize: 16, fontWeight: '700', color: warna.teks },
-  jenis: { fontSize: 15, fontWeight: '600', color: warna.teks, marginTop: 8 },
-  grade: { color: warna.aksen },
-  redup: { fontSize: 13, color: warna.teksRedup, marginTop: 4, lineHeight: 18 },
+  isi: { paddingBottom: 32 },
+  judulKelompok: { fontSize: 12, fontWeight: '600', color: warna.teksRedup, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 },
+  teksKosong: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', padding: 24 },
+  daftar: { backgroundColor: warna.putih, borderTopWidth: 1, borderBottomWidth: 1, borderColor: warna.garisHalus },
+  barisBerjalan: { borderLeftWidth: 3, borderLeftColor: warna.utama },
+  kode: { fontSize: 15, fontWeight: '600', color: warna.teks, fontVariant: ['tabular-nums'] },
+  selKode: { fontSize: 13, fontWeight: '600', color: warna.teks, fontVariant: ['tabular-nums'] },
+  jenis: { fontSize: 14, color: warna.teks, marginTop: 2 },
+  grade: { color: warna.aksen, fontWeight: '500' },
+  kecil: { fontSize: 12, color: warna.teksRedup, marginTop: 2 },
+  peserta: { fontSize: 12, fontWeight: '600' },
+  jam: { fontSize: 20, fontWeight: '700', color: warna.utama, fontVariant: ['tabular-nums'] },
 });

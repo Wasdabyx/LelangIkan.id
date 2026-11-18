@@ -6,6 +6,7 @@ import FormGulir from '../../components/FormGulir';
 import Ikon from '../../components/Ikon';
 import KodeQR from '../../components/KodeQR';
 import RincianTagihan from '../../components/RincianTagihan';
+import { Bagian, Segmen } from '../../components/Tata';
 import { bagikanNotaPdf, cetakNota } from '../../cetakNota';
 import { formatRupiah } from '../../format';
 import { ukuran, warna } from '../../tema';
@@ -88,37 +89,26 @@ export default function FormBayar({ awal, onKembali }) {
   return (
     <View style={{ flex: 1, backgroundColor: warna.latar }}>
       <FormGulir gayaIsi={s.isi}>
-        <View style={s.kartu}>
+        <Bagian>
           <RincianTagihan t={t} />
           <KotakPesan jenis={pesan?.jenis} teks={pesan?.teks} gaya={{ marginTop: 12 }} />
-        </View>
+        </Bagian>
 
         {!lunas ? (
-          <View style={s.kartu}>
-            <Text style={s.judul}>Catat Pembayaran</Text>
+          <Bagian judul="Catat Pembayaran">
             <Text style={s.label}>Metode pembayaran</Text>
-            <View style={s.gridMetode}>
-              {METODE.map((m) => {
-                const pilih = metode === m.kode;
-                return (
-                  <Pressable
-                    key={m.kode}
-                    disabled={m.mati}
-                    onPress={() => {
-                      setMetode(m.kode);
-                      setGalat({});
-                    }}
-                    style={[s.metode, pilih && s.metodeAktif, m.mati && s.metodeMati]}
-                    accessibilityRole="radio"
-                    accessibilityState={{ checked: pilih, disabled: !!m.mati }}
-                  >
-                    <Ikon nama={m.ikon} ukuran={24} warna={m.mati ? warna.garis : pilih ? warna.utama : warna.teksRedup} />
-                    <Text style={[s.teksMetode, pilih && { color: warna.utama }, m.mati && { color: warna.teksRedup }]}>{m.judul}</Text>
-                    <Text style={s.ketMetode}>{m.ket}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <Segmen
+              label="Metode pembayaran"
+              nilai={metode}
+              onGanti={(k) => {
+                setMetode(k);
+                setGalat({});
+              }}
+              pilihan={METODE.map((m) => ({ kunci: m.kode, judul: m.judul, nonaktif: m.mati }))}
+            />
+            <Text style={s.ketMetode}>
+              {METODE.find((m) => m.kode === metode).ket}. Saldo belum tersedia (menunggu UC-07).
+            </Text>
 
             <KolomTeks
               label="Nominal dibayar (Rp)"
@@ -191,22 +181,23 @@ export default function FormBayar({ awal, onKembali }) {
               memuat={memuat}
               gaya={{ marginTop: 14 }}
             />
-          </View>
+          </Bagian>
         ) : (
-          <View style={[s.kartu, s.kartuLunas]}>
-            <Ikon nama="centang" ukuran={40} warna={warna.sukses} />
+          <View style={s.lunas}>
             <Text style={s.judulLunas}>Transaksi lunas</Text>
-            <Text style={s.petunjuk}>Cetak nota atau bagikan PDF ke pembeli.</Text>
+            <Text style={s.teksLunas}>Cetak nota atau bagikan PDF ke pembeli.</Text>
           </View>
         )}
 
         {sudahBayar ? (
-          <View style={s.barisTombol}>
+          <View style={[s.barisTombol, { paddingHorizontal: 16, marginBottom: 10 }]}>
             <Tombol judul="Cetak Nota" ikon="cetak" jenis="garis" onPress={() => nota('cetak')} memuat={mencetak === 'cetak'} nonaktif={!!mencetak} gaya={{ flex: 1 }} />
             <Tombol judul="Bagikan PDF" ikon="bagikan" jenis="garis" onPress={() => nota('pdf')} memuat={mencetak === 'pdf'} nonaktif={!!mencetak} gaya={{ flex: 1 }} />
           </View>
         ) : null}
-        <Tombol judul="Kembali ke Daftar" jenis={lunas ? 'utama' : 'teks'} onPress={() => onKembali(lunas)} />
+        <View style={{ paddingHorizontal: 16 }}>
+          <Tombol judul="Kembali ke Daftar" jenis={lunas ? 'utama' : 'teks'} onPress={() => onKembali(lunas)} />
+        </View>
       </FormGulir>
 
       <DialogKonfirmasi
@@ -222,27 +213,21 @@ export default function FormBayar({ awal, onKembali }) {
 }
 
 const s = StyleSheet.create({
-  isi: { padding: 16, paddingBottom: 32, gap: 12 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
-  judul: { fontSize: 16, fontWeight: '700', color: warna.teks, marginBottom: 10 },
-  label: { fontSize: ukuran.hurufNormal, fontWeight: '500', color: warna.teks, marginBottom: 8 },
-  gridMetode: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  metode: {
-    width: '48%', flexGrow: 1, minHeight: 72, borderRadius: 4, borderWidth: 1, borderColor: warna.garis,
-    alignItems: 'center', justifyContent: 'center', padding: 8, backgroundColor: warna.putih,
-  },
-  metodeAktif: { borderColor: warna.utama, borderWidth: 2.5, backgroundColor: warna.utamaMuda },
-  metodeMati: { backgroundColor: warna.abu, borderStyle: 'dashed' },
-  teksMetode: { fontSize: 15, fontWeight: '700', color: warna.teks, marginTop: 4 },
-  ketMetode: { fontSize: 11, color: warna.teksRedup, marginTop: 1 },
-  tautan: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', marginTop: -10, marginBottom: 4 },
-  teksTautan: { fontSize: 14, fontWeight: '600', color: warna.aksen, textDecorationLine: 'underline' },
+  isi: { paddingBottom: 32 },
+  label: { fontSize: 13, fontWeight: '500', color: warna.teks, marginBottom: 6 },
+  ketMetode: { fontSize: 12, color: warna.teksRedup, marginTop: 6, marginBottom: 14 },
+  tautan: { alignSelf: 'flex-start', minHeight: 36, justifyContent: 'center', marginTop: -10, marginBottom: 4 },
+  teksTautan: { fontSize: 13, fontWeight: '600', color: warna.aksen, textDecorationLine: 'underline' },
   petunjuk: { fontSize: 12, color: warna.teksRedup, lineHeight: 17, marginTop: -6, marginBottom: 8, textAlign: 'left' },
   kembalian: { fontSize: 15, fontWeight: '700', color: warna.sukses, marginTop: -6, marginBottom: 6 },
   qris: { alignItems: 'center', borderWidth: 1, borderColor: warna.garis, borderRadius: 4, padding: 14, gap: 8, borderStyle: 'dashed' },
-  labelQris: { fontSize: 13, fontWeight: '700', color: warna.teksRedup },
+  labelQris: { fontSize: 13, fontWeight: '600', color: warna.teksRedup },
   nominalQris: { fontSize: 18, fontWeight: '700', color: warna.teks },
-  kartuLunas: { alignItems: 'center', gap: 8, backgroundColor: warna.suksesLatar, borderWidth: 1, borderColor: warna.sukses },
-  judulLunas: { fontSize: 17, fontWeight: '700', color: warna.sukses },
+  lunas: {
+    backgroundColor: warna.suksesLatar, borderLeftWidth: 3, borderLeftColor: warna.sukses,
+    marginHorizontal: 16, marginBottom: 10, borderRadius: 4, paddingVertical: 10, paddingHorizontal: 12,
+  },
+  judulLunas: { fontSize: 15, fontWeight: '700', color: warna.sukses },
+  teksLunas: { fontSize: 12, color: warna.teks, marginTop: 2 },
   barisTombol: { flexDirection: 'row', gap: 10 },
 });

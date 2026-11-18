@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { lelang } from '../../api';
-import { KotakPesan, Lencana } from '../../components/Dasar';
-import Ikon from '../../components/Ikon';
+import { KotakPesan, Lencana, Tombol } from '../../components/Dasar';
+import { Bagian, BarisDaftar, Tabel, TitikStatus } from '../../components/Tata';
 import { formatSisa, WARNA_TRANSAKSI } from '../../components/Lelang';
 import { formatKg, formatRupiah, waktuPendek } from '../../format';
 import { usePolling } from '../../polling';
@@ -39,115 +39,171 @@ export default function DaftarLelangPembeli({ tab, onMasukRuang, onBukaTagihan }
       </View>
     );
   }
-  const data = tab === 'lelang' ? sesi : tagihan;
-  const belumLunas = tagihan.filter((t) => t.status !== 'LUNAS').length;
+  const belumLunas = tagihan.filter((t) => t.status !== 'LUNAS');
+  const totalSisa = belumLunas.reduce((a, t) => a + Number(t.sisa_tagihan), 0);
+  const berjalan = sesi.filter((x) => x.status === 'AKTIF');
+  const selesai = sesi.filter((x) => x.status !== 'AKTIF');
 
   return (
-    <FlatList
+    <ScrollView
       style={{ flex: 1, backgroundColor: warna.latar }}
-      data={data}
-      keyExtractor={(x) => String(x.id_sesi ?? x.id_transaksi)}
       contentContainerStyle={s.isi}
       refreshControl={<RefreshControl refreshing={segar} onRefresh={() => { setSegar(true); muat(); }} />}
-      ListHeaderComponent={
+    >
+      {galat ? <KotakPesan teks={galat} gaya={{ margin: 12 }} /> : null}
+      {tab === 'lelang' ? (
         <>
-          {galat ? <KotakPesan teks={galat} gaya={{ marginBottom: 12 }} /> : null}
-          <Text style={s.keterangan}>
-            {tab === 'lelang'
-              ? 'Lelang untuk lot yang sudah Anda pesan.'
-              : belumLunas > 0
-                ? `${belumLunas} tagihan belum lunas. Bayar ke Kasir TPI dengan menyebutkan nomor transaksi.`
-                : 'Tagihan dari lot yang Anda menangkan.'}
-          </Text>
+          <View style={s.kepala}>
+            <Text style={s.jumlah}>{berjalan.length} sesi berjalan</Text>
+            <Text style={s.keterangan}>Lelang untuk lot yang sudah Anda pesan.</Text>
+          </View>
+          {sesi.length === 0 ? (
+            <Text style={s.teksKosong}>Belum ada sesi lelang untuk lot yang Anda pesan.</Text>
+          ) : null}
+          {berjalan.map((x) => (
+            <SesiBerjalan key={x.id_sesi} sesi={x} onPress={() => onMasukRuang(x.id_sesi)} />
+          ))}
+          {selesai.length > 0 ? (
+            <>
+              <Text style={s.judulKelompok}>Selesai hari ini</Text>
+              {selesai.map((x, i) => (
+                <SesiSelesai key={x.id_sesi} sesi={x} terakhir={i === selesai.length - 1} onPress={() => onMasukRuang(x.id_sesi)} />
+              ))}
+            </>
+          ) : null}
         </>
-      }
-      ListEmptyComponent={
-        <View style={s.kosong}>
-          <Ikon nama={tab === 'lelang' ? 'jam' : 'dompet'} ukuran={44} warna={warna.teksRedup} />
-          <Text style={s.teksKosong}>
-            {tab === 'lelang'
-              ? 'Belum ada sesi lelang untuk lot yang Anda pesan.'
-              : 'Belum ada tagihan.'}
+      ) : (
+        <>
+          <View style={s.kepala}>
+            <Text style={s.jumlah}>
+              {belumLunas.length > 0 ? `Sisa tagihan ${formatRupiah(totalSisa)}` : 'Semua tagihan lunas'}
+            </Text>
+            <Text style={s.keterangan}>
+              {belumLunas.length > 0
+                ? `${belumLunas.length} tagihan belum lunas. Bayar ke Kasir TPI dengan menyebutkan nomor transaksi.`
+                : 'Tagihan dari lot yang Anda menangkan.'}
+            </Text>
+          </View>
+          <Bagian tanpaJarak gaya={{ borderTopWidth: 0 }}>
+            <View style={{ paddingHorizontal: 16 }}>
+              <Tabel
+                label="Daftar tagihan"
+                kosong="Belum ada tagihan."
+                data={tagihan}
+                kunci={(t) => t.id_transaksi}
+                onPilih={(t) => onBukaTagihan(t.id_transaksi)}
+                kolom={[
+                  {
+                    judul: 'Transaksi', flex: 1.5,
+                    render: (t) => (
+                      <View>
+                        <Text style={s.selKode}>{t.kode_transaksi}</Text>
+                        <Text style={s.selKecil} numberOfLines={1}>{t.nama_jenis} | {t.kode_lot}</Text>
+                      </View>
+                    ),
+                  },
+                  {
+                    judul: 'Status', flex: 1.2,
+                    render: (t) => {
+                      const w = WARNA_TRANSAKSI[t.status];
+                      return <Lencana teks={w.label} latar={w.latar} warnaTeks={w.teks} />;
+                    },
+                  },
+                  {
+                    judul: 'Sisa / total', flex: 1.3, kanan: true, tebal: true,
+                    render: (t) => formatRupiah(t.status === 'LUNAS' ? t.total_tagihan : t.sisa_tagihan),
+                  },
+                ]}
+              />
+            </View>
+          </Bagian>
+        </>
+      )}
+    </ScrollView>
+  );
+}
+
+function SesiBerjalan({ sesi, onPress }) {
+  const posisi = {
+    TERTINGGI: ['Anda tertinggi', warna.sukses],
+    TERTINGGAL: ['Anda tertinggal', warna.galat],
+    BELUM_MENAWAR: ['Belum menawar', warna.teksRedup],
+  }[sesi.posisi] || ['', warna.teksRedup];
+  const genting = sesi.sisa_detik <= 15;
+  return (
+    <View style={s.berjalan}>
+      <View style={s.barisAtas}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.kode}>{sesi.lot.kode_lot}</Text>
+          <Text style={s.jenis}>
+            {sesi.lot.nama_jenis} <Text style={{ color: warna.aksen }}>Grade {sesi.lot.kode_grade}</Text> | {formatKg(sesi.lot.berat_aktual)}
+          </Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={[s.jam, genting && { color: warna.galat }]}>{formatSisa(sesi.sisa_detik)}</Text>
+          <Text style={s.selKecil}>Berjalan</Text>
+        </View>
+      </View>
+      <View style={s.barisHarga}>
+        <View>
+          <Text style={s.selKecil}>{sesi.harga_tertinggi ? 'Tertinggi' : 'Harga buka'}</Text>
+          <Text style={s.harga}>{formatRupiah(sesi.harga_tertinggi ?? sesi.lot.harga_pembukaan)}/kg</Text>
+        </View>
+        <TitikStatus teks={posisi[0]} w={posisi[1]} />
+      </View>
+      <Tombol judul="Masuk Ruang Lelang" onPress={onPress} gaya={{ marginTop: 10 }} />
+    </View>
+  );
+}
+
+function SesiSelesai({ sesi, onPress, terakhir }) {
+  return (
+    <BarisDaftar
+      terakhir={terakhir}
+      onPress={onPress}
+      kanan={
+        <View style={{ alignItems: 'flex-end' }}>
+          {sesi.menang ? (
+            <Lencana teks="Anda menang" latar={warna.suksesLatar} warnaTeks={warna.sukses} />
+          ) : (
+            <Text style={s.selKecil}>Selesai</Text>
+          )}
+          <Text style={[s.selKecil, { marginTop: 4 }]}>
+            {sesi.harga_tertinggi ? `${formatRupiah(sesi.harga_tertinggi)}/kg` : 'Tidak terjual'}
           </Text>
         </View>
       }
-      renderItem={({ item }) =>
-        tab === 'lelang' ? (
-          <KartuSesi sesi={item} onPress={() => onMasukRuang(item.id_sesi)} />
-        ) : (
-          <KartuTagihan t={item} onPress={() => onBukaTagihan(item.id_transaksi)} />
-        )
-      }
-    />
-  );
-}
-
-function KartuSesi({ sesi, onPress }) {
-  const aktif = sesi.status === 'AKTIF';
-  let lencana;
-  if (aktif) lencana = <Lencana teks={`Berjalan ${formatSisa(sesi.sisa_detik)}`} ikon="jam" latar={warna.utamaMuda} warnaTeks={warna.utama} />;
-  else if (sesi.menang) lencana = <Lencana teks="Anda menang" ikon="centang" latar={warna.suksesLatar} warnaTeks={warna.sukses} />;
-  else lencana = <Lencana teks="Selesai" latar={warna.abu} warnaTeks={warna.teksRedup} />;
-
-  const posisi = { TERTINGGI: 'Anda tertinggi', TERTINGGAL: 'Anda tertinggal', BELUM_MENAWAR: 'Belum menawar' }[sesi.posisi];
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [s.kartu, aktif && s.kartuAktif, pressed && { opacity: 0.85 }]}>
-      <View style={s.barisAtas}>
-        <Text style={s.kode}>{sesi.lot.kode_lot}</Text>
-        {lencana}
-      </View>
-      <Text style={s.jenis}>
-        {sesi.lot.nama_jenis} <Text style={{ color: warna.aksen }}>Grade {sesi.lot.kode_grade}</Text> | {formatKg(sesi.lot.berat_aktual)}
+    >
+      <Text style={s.kodeKecil}>{sesi.lot.kode_lot}</Text>
+      <Text style={s.selKecil}>
+        {sesi.lot.nama_jenis} Grade {sesi.lot.kode_grade} | {formatKg(sesi.lot.berat_aktual)}
       </Text>
-      <Text style={s.redup}>
-        {sesi.harga_tertinggi ? `Tertinggi ${formatRupiah(sesi.harga_tertinggi)}/kg` : `Buka ${formatRupiah(sesi.lot.harga_pembukaan)}/kg`}
-        {aktif ? ` | ${posisi}` : ''}
-      </Text>
-      {aktif ? (
-        <View style={s.masuk}>
-          <Text style={s.teksMasuk}>Masuk Ruang Lelang</Text>
-          <Ikon nama="kanan" ukuran={20} warna={warna.putih} />
-        </View>
-      ) : null}
-    </Pressable>
-  );
-}
-
-function KartuTagihan({ t, onPress }) {
-  const w = WARNA_TRANSAKSI[t.status];
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => [s.kartu, pressed && { opacity: 0.85 }]}>
-      <View style={s.barisAtas}>
-        <Text style={s.kode}>{t.kode_transaksi}</Text>
-        <Lencana teks={w.label} latar={w.latar} warnaTeks={w.teks} />
-      </View>
-      <Text style={s.jenis}>
-        {t.kode_lot} | {t.nama_jenis} Grade {t.kode_grade}
-      </Text>
-      <View style={s.barisAtas}>
-        <Text style={s.redup}>{waktuPendek(t.waktu_transaksi)}</Text>
-        <Text style={s.total}>{formatRupiah(t.status === 'LUNAS' ? t.total_tagihan : t.sisa_tagihan)}</Text>
-      </View>
-    </Pressable>
+    </BarisDaftar>
   );
 }
 
 const s = StyleSheet.create({
   tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 16 },
-  isi: { padding: 16, paddingBottom: 32, gap: 10 },
-  keterangan: { fontSize: 13, color: warna.teksRedup, lineHeight: 18 },
-  kosong: { alignItems: 'center', padding: 32, gap: 12 },
-  teksKosong: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', lineHeight: 20 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
-  kartuAktif: { borderColor: warna.utama, borderWidth: 2 },
-  barisAtas: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  kode: { fontSize: 16, fontWeight: '700', color: warna.teks },
-  jenis: { fontSize: 14, fontWeight: '600', color: warna.teks, marginTop: 8 },
-  redup: { fontSize: 13, color: warna.teksRedup, marginTop: 4 },
-  total: { fontSize: 15, fontWeight: '700', color: warna.teks, marginTop: 4 },
-  masuk: {
-    marginTop: 12, minHeight: 44, borderRadius: 6, backgroundColor: warna.utama,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+  isi: { paddingBottom: 32 },
+  kepala: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10 },
+  jumlah: { fontSize: 14, fontWeight: '600', color: warna.teks },
+  keterangan: { fontSize: 12, color: warna.teksRedup, marginTop: 2, lineHeight: 17 },
+  teksKosong: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', padding: 32 },
+  judulKelompok: { fontSize: 13, fontWeight: '600', color: warna.teksRedup, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 },
+  berjalan: {
+    backgroundColor: warna.putih, padding: 16, marginBottom: 8,
+    borderTopWidth: 1, borderBottomWidth: 1, borderColor: warna.garisHalus, borderLeftWidth: 3, borderLeftColor: warna.utama,
   },
-  teksMasuk: { color: warna.putih, fontSize: 15, fontWeight: '700' },
+  barisAtas: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  kode: { fontSize: 16, fontWeight: '600', color: warna.teks, fontVariant: ['tabular-nums'] },
+  kodeKecil: { fontSize: 14, fontWeight: '600', color: warna.teks, fontVariant: ['tabular-nums'] },
+  jenis: { fontSize: 13, color: warna.teks, marginTop: 2 },
+  jam: { fontSize: 22, fontWeight: '700', color: warna.utama, fontVariant: ['tabular-nums'] },
+  barisHarga: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 10,
+    paddingTop: 10, borderTopWidth: 1, borderTopColor: warna.garisHalus,
+  },
+  harga: { fontSize: 16, fontWeight: '700', color: warna.teks, fontVariant: ['tabular-nums'] },
+  selKode: { fontSize: 13, fontWeight: '600', color: warna.teks, fontVariant: ['tabular-nums'] },
+  selKecil: { fontSize: 12, color: warna.teksRedup },
 });

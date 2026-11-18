@@ -5,6 +5,7 @@ import { KotakPesan, Tombol } from '../../components/Dasar';
 import FormGulir from '../../components/FormGulir';
 import KodeQR from '../../components/KodeQR';
 import RincianTagihan from '../../components/RincianTagihan';
+import { Bagian } from '../../components/Tata';
 import { bagikanNotaPdf } from '../../cetakNota';
 import { usePolling } from '../../polling';
 import { warna } from '../../tema';
@@ -50,7 +51,7 @@ export default function DetailTagihan({ idTransaksi, onKembali }) {
   return (
     <View style={{ flex: 1, backgroundColor: warna.latar }}>
     <FormGulir gayaIsi={s.isi}>
-      <View style={s.kartu}>
+      <Bagian>
         <RincianTagihan t={t} />
         {galat ? <KotakPesan teks={galat} gaya={{ marginTop: 12 }} /> : null}
         {lunas ? (
@@ -68,8 +69,10 @@ export default function DetailTagihan({ idTransaksi, onKembali }) {
             gaya={{ marginTop: 14 }}
           />
         )}
+      </Bagian>
+      <View style={{ paddingHorizontal: 16 }}>
+        <Tombol judul="Kembali" jenis="garis" onPress={onKembali} />
       </View>
-      <Tombol judul="Kembali" jenis="garis" onPress={onKembali} />
     </FormGulir>
     </View>
   );
@@ -77,8 +80,8 @@ export default function DetailTagihan({ idTransaksi, onKembali }) {
 
 const s = StyleSheet.create({
   tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 16 },
-  isi: { padding: 16, paddingBottom: 32, gap: 12 },
+  isi: { paddingBottom: 32 },
   kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
-  qr: { alignItems: 'center', marginTop: 16, gap: 8 },
+  qr: { alignItems: 'center', marginTop: 16, paddingTop: 16, gap: 8, borderTopWidth: 1, borderTopColor: warna.garisHalus },
   teksQr: { fontSize: 12, color: warna.teksRedup, textAlign: 'center' },
 });

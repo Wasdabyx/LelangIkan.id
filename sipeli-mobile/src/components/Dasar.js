@@ -5,7 +5,7 @@ import Ikon from './Ikon';
 
 /* ---------- Tombol ---------- */
 // jenis: 'utama' | 'garis' | 'bahaya' | 'teks'
-export function Tombol({ judul, onPress, jenis = 'utama', ikon, memuat, nonaktif, gaya }) {
+export function Tombol({ judul, onPress, jenis = 'utama', ikon, memuat, nonaktif, gaya, kecil }) {
   const mati = nonaktif || memuat;
   const g = GAYA_TOMBOL[jenis];
   return (
@@ -15,6 +15,7 @@ export function Tombol({ judul, onPress, jenis = 'utama', ikon, memuat, nonaktif
       accessibilityRole="button"
       style={({ pressed }) => [
         s.tombol,
+        kecil && s.tombolKecil,
         g.wadah,
         pressed && g.tekan,
         nonaktif && !memuat && s.tombolMati,
@@ -25,8 +26,8 @@ export function Tombol({ judul, onPress, jenis = 'utama', ikon, memuat, nonaktif
         <ActivityIndicator color={g.teks.color} />
       ) : (
         <View style={s.isiTombol}>
-          {ikon ? <Ikon nama={ikon} ukuran={18} warna={nonaktif ? warna.teksRedup : g.teks.color} /> : null}
-          <Text style={[s.teksTombol, g.teks, nonaktif && { color: warna.teksRedup }]}>{judul}</Text>
+          {ikon ? <Ikon nama={ikon} ukuran={kecil ? 16 : 18} warna={nonaktif ? warna.teksRedup : g.teks.color} /> : null}
+          <Text style={[s.teksTombol, kecil && s.teksTombolKecil, g.teks, nonaktif && { color: warna.teksRedup }]}>{judul}</Text>
         </View>
       )}
     </Pressable>
@@ -103,8 +104,8 @@ export function KotakPesan({ jenis = 'galat', teks, gaya }) {
     info: [warna.utamaMuda, warna.utama, 'awan'],
   }[jenis];
   return (
-    <View style={[s.kotak, { backgroundColor: w[0], borderColor: w[1] }, gaya]}>
-      <Ikon nama={w[2]} ukuran={18} warna={w[1]} />
+    <View style={[s.kotak, { backgroundColor: w[0], borderLeftColor: w[1] }, gaya]}>
+      <Ikon nama={w[2]} ukuran={16} warna={w[1]} />
       <Text style={[s.teksKotak, { color: w[1] }]}>{teks}</Text>
     </View>
   );
@@ -153,27 +154,29 @@ const s = StyleSheet.create({
     minHeight: ukuran.tinggiTombol, borderRadius: ukuran.radius,
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16,
   },
+  tombolKecil: { minHeight: ukuran.tinggiTombolKecil, paddingHorizontal: 12 },
+  teksTombolKecil: { fontSize: 13 },
   tombolMati: { backgroundColor: warna.abu, borderColor: warna.garis },
   isiTombol: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   teksTombol: { fontSize: ukuran.hurufSedang, fontWeight: '600' },
   label: { fontSize: 13, fontWeight: '500', color: warna.teks, marginBottom: 6 },
   input: {
     height: ukuran.tinggiInput, borderWidth: 1, borderColor: warna.garis,
-    borderRadius: ukuran.radius, paddingHorizontal: 14, fontSize: ukuran.hurufSedang,
+    borderRadius: ukuran.radiusInput, paddingHorizontal: 12, fontSize: ukuran.hurufSedang,
     color: warna.teks, backgroundColor: warna.putih,
   },
   inputGalat: { borderColor: warna.galat, borderWidth: 1.5 },
   teksGalat: { color: warna.galat, fontSize: 12, marginTop: 4 },
   lencana: {
     flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start',
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4,
   },
   teksLencana: { fontSize: 11, fontWeight: '600' },
   kotak: {
     flexDirection: 'row', gap: 10, alignItems: 'flex-start',
-    borderWidth: 1, borderRadius: ukuran.radius, padding: 12,
+    borderLeftWidth: 3, borderRadius: ukuran.radiusInput, paddingVertical: 10, paddingHorizontal: 12,
   },
-  teksKotak: { flex: 1, fontSize: 13, lineHeight: 18 },
+  teksKotak: { flex: 1, fontSize: 13, lineHeight: 18, color: warna.teks },
   bilah: {
     backgroundColor: warna.utama, paddingHorizontal: 16, paddingVertical: 8,
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -191,7 +194,7 @@ const s = StyleSheet.create({
   },
   teksKeluar: { color: warna.putih, fontWeight: '500', fontSize: 13 },
   latarDialog: { flex: 1, backgroundColor: 'rgba(16,42,67,0.55)', justifyContent: 'center', padding: 24 },
-  dialog: { backgroundColor: warna.putih, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  dialog: { backgroundColor: warna.putih, borderRadius: ukuran.radiusDialog, padding: 18 },
   judulDialog: { fontSize: 17, fontWeight: '600', color: warna.teks },
   pesanDialog: { fontSize: 14, color: warna.teksRedup, marginTop: 6, lineHeight: 20 },
 });

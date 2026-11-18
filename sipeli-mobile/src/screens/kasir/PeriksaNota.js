@@ -5,6 +5,7 @@ import { KotakPesan, Tombol } from '../../components/Dasar';
 import FormGulir from '../../components/FormGulir';
 import Ikon from '../../components/Ikon';
 import RincianTagihan from '../../components/RincianTagihan';
+import { Bagian } from '../../components/Tata';
 import { warna } from '../../tema';
 import PemindaiQR from '../penimbangan/PemindaiQR';
 
@@ -33,17 +34,16 @@ export default function PeriksaNota() {
   return (
     <View style={{ flex: 1, backgroundColor: warna.latar }}>
       <FormGulir gayaIsi={s.isi}>
-        <View style={s.kartu}>
+        <Bagian>
           <Text style={s.judul}>Periksa Keaslian Nota</Text>
-          <Text style={s.teks}>Pindai QR pada nota pembayaran (cetak atau PDF) untuk memastikan nota diterbitkan oleh LelangIkan.id dan isinya tidak diubah.</Text>
+          <Text style={s.teks}>Pindai QR pada nota (cetak atau PDF) untuk memastikan nota diterbitkan LelangIkan.id dan isinya tidak diubah.</Text>
           <Tombol judul="Pindai QR Nota" ikon="kamera" onPress={() => setPindai(true)} memuat={memuat} gaya={{ marginTop: 14 }} />
           <KotakPesan teks={galat} gaya={{ marginTop: 12 }} />
-        </View>
+        </Bagian>
 
         {hasil ? (
-          <View style={[s.kartu, { borderWidth: 2, borderColor: hasil.asli ? warna.sukses : warna.galat }]}>
-            <View style={[s.status, { backgroundColor: hasil.asli ? warna.suksesLatar : warna.galatLatar }]}>
-              <Ikon nama={hasil.asli ? 'centang' : 'peringatan'} ukuran={32} warna={hasil.asli ? warna.sukses : warna.galat} />
+          <Bagian judul="Hasil pemeriksaan">
+            <View style={[s.status, { backgroundColor: hasil.asli ? warna.suksesLatar : warna.galatLatar, borderLeftColor: hasil.asli ? warna.sukses : warna.galat }]}>
               <Text style={[s.judulStatus, { color: hasil.asli ? warna.sukses : warna.galat }]}>
                 {hasil.asli ? 'Nota asli' : 'Nota tidak dikenali'}
               </Text>
@@ -54,7 +54,7 @@ export default function PeriksaNota() {
                 <RincianTagihan t={hasil} tampilRetribusi={false} />
               </View>
             ) : null}
-          </View>
+          </Bagian>
         ) : null}
       </FormGulir>
       <PemindaiQR
@@ -69,10 +69,10 @@ export default function PeriksaNota() {
 }
 
 const s = StyleSheet.create({
-  isi: { padding: 16, paddingBottom: 32, gap: 12 },
+  isi: { paddingBottom: 32 },
   kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
   judul: { fontSize: 16, fontWeight: '700', color: warna.teks, marginBottom: 6 },
-  teks: { fontSize: 13, color: warna.teksRedup, lineHeight: 18, textAlign: 'center' },
-  status: { borderRadius: 4, padding: 14, alignItems: 'center', gap: 6 },
-  judulStatus: { fontSize: 17, fontWeight: '700' },
+  teks: { fontSize: 13, color: warna.teksRedup, lineHeight: 18 },
+  status: { borderRadius: 4, borderLeftWidth: 3, paddingVertical: 10, paddingHorizontal: 12, gap: 2 },
+  judulStatus: { fontSize: 16, fontWeight: '700' },
 });

@@ -10,6 +10,7 @@ export const warna = {
   teks: '#102A43',
   teksRedup: '#486581',
   garis: '#BCCCDC',
+  garisHalus: '#E3E8EF',   // pemisah baris dan tepi bagian
   abu: '#F2F4F7',
   galat: '#B42318',
   galatLatar: '#FEF3F2',
@@ -22,8 +23,12 @@ export const warna = {
 
 export const ukuran = {
   tinggiTombol: 46,
+  tinggiTombolKecil: 36,
   tinggiInput: 44,
-  radius: 6,
+  radius: 6,        // tombol
+  radiusInput: 4,
+  radiusKartu: 6,
+  radiusDialog: 8,
   hurufBesar: 22,
   hurufSedang: 15,
   hurufNormal: 14,

@@ -1,14 +1,16 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { formatKg, formatRupiah, waktuPendek } from '../format';
-import { ukuran, warna } from '../tema';
+import { warna } from '../tema';
 import { Lencana } from './Dasar';
-import { BarisRincian, WARNA_TRANSAKSI } from './Lelang';
+import { WARNA_TRANSAKSI } from './Lelang';
+import { Info, Tabel } from './Tata';
 
-const METODE = { TUNAI: 'Tunai', TRANSFER: 'Transfer bank', QRIS: 'QRIS', SALDO: 'Saldo' };
+const METODE = { TUNAI: 'Tunai', TRANSFER: 'Transfer', QRIS: 'QRIS', SALDO: 'Saldo' };
 
 /** FR-28: rincian tagihan (berat, harga akhir, retribusi, biaya layanan, total) + riwayat pembayaran. */
 export default function RincianTagihan({ t, tampilRetribusi = true }) {
   const w = WARNA_TRANSAKSI[t.status] || WARNA_TRANSAKSI.BELUM_DIBAYAR;
+  const sisa = Number(t.sisa_tagihan);
   return (
     <View>
       <View style={s.barisJudul}>
@@ -16,24 +18,21 @@ export default function RincianTagihan({ t, tampilRetribusi = true }) {
         <Lencana teks={w.label} latar={w.latar} warnaTeks={w.teks} />
       </View>
       <Text style={s.lot}>
-        {t.kode_lot} | {t.nama_jenis} <Text style={{ color: warna.aksen }}>Grade {t.kode_grade}</Text>
+        {t.kode_lot} | {t.nama_jenis} Grade {t.kode_grade}
       </Text>
       <Text style={s.redup}>
-        Pembeli {t.nama_pembeli} | Kapal {t.nama_kapal} | {waktuPendek(t.waktu_transaksi)}
+        {t.nama_pembeli} | KM {String(t.nama_kapal).replace(/^KM\s+/i, '')} | {waktuPendek(t.waktu_transaksi)}
       </Text>
 
-      <View style={s.kotak}>
-        <BarisRincian label={`${formatKg(t.berat_final)} x ${formatRupiah(t.harga_akhir_per_kg)}`} nilai={formatRupiah(t.subtotal)} />
-        <BarisRincian label="Biaya layanan" nilai={formatRupiah(t.biaya_layanan)} />
-        <View style={s.garis} />
-        <BarisRincian label="Total tagihan" nilai={formatRupiah(t.total_tagihan)} besar />
-        {Number(t.total_dibayar) > 0 ? <BarisRincian label="Sudah dibayar" nilai={formatRupiah(t.total_dibayar)} warnaNilai={warna.sukses} /> : null}
-        <BarisRincian
-          label="Sisa tagihan"
-          nilai={formatRupiah(t.sisa_tagihan)}
-          tebal
-          warnaNilai={Number(t.sisa_tagihan) > 0 ? warna.galat : warna.sukses}
-        />
+      <View style={s.rincian}>
+        <Info label={`${formatKg(t.berat_final)} x ${formatRupiah(t.harga_akhir_per_kg)}`} nilai={formatRupiah(t.subtotal)} />
+        <Info label="Biaya layanan" nilai={formatRupiah(t.biaya_layanan)} />
+        <Info label="Total tagihan" nilai={formatRupiah(t.total_tagihan)} tebal garis />
+        {Number(t.total_dibayar) > 0 ? <Info label="Sudah dibayar" nilai={formatRupiah(t.total_dibayar)} /> : null}
+      </View>
+      <View style={[s.sisa, sisa > 0 ? s.sisaAda : s.sisaNol]}>
+        <Text style={s.labelSisa}>Sisa tagihan</Text>
+        <Text style={[s.nilaiSisa, { color: sisa > 0 ? warna.galat : warna.sukses }]}>{formatRupiah(t.sisa_tagihan)}</Text>
       </View>
       {tampilRetribusi ? (
         <Text style={s.catatan}>
@@ -42,20 +41,25 @@ export default function RincianTagihan({ t, tampilRetribusi = true }) {
       ) : null}
 
       {t.pembayaran && t.pembayaran.length > 0 ? (
-        <View style={{ marginTop: 14 }}>
-          <Text style={s.subjudul}>Riwayat Pembayaran</Text>
-          {t.pembayaran.map((p, i) => (
-            <View key={i} style={s.barisBayar}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.metode}>{METODE[p.metode] || p.metode}</Text>
-                <Text style={s.redupKecil}>
-                  {waktuPendek(p.waktu_bayar)}
-                  {p.nomor_referensi ? ` | ${p.nomor_referensi}` : ''} | {p.nama_kasir}
-                </Text>
-              </View>
-              <Text style={s.nominal}>{formatRupiah(p.nominal)}</Text>
-            </View>
-          ))}
+        <View style={{ marginTop: 16 }}>
+          <Text style={s.subjudul}>Riwayat pembayaran</Text>
+          <Tabel
+            label="Riwayat pembayaran"
+            kolom={[
+              { judul: 'Waktu', flex: 1.1, redup: true, render: (p) => waktuPendek(p.waktu_bayar).replace(/^\d+ \w+ \d+, /, '') },
+              {
+                judul: 'Metode', flex: 1.6,
+                render: (p) => (
+                  <View>
+                    <Text style={s.metode}>{METODE[p.metode] || p.metode}</Text>
+                    <Text style={s.redupKecil} numberOfLines={1}>{p.nomor_referensi || p.nama_kasir}</Text>
+                  </View>
+                ),
+              },
+              { judul: 'Nominal', flex: 1.4, kanan: true, tebal: true, render: (p) => formatRupiah(p.nominal) },
+            ]}
+            data={t.pembayaran}
+          />
         </View>
       ) : null}
     </View>
@@ -64,15 +68,20 @@ export default function RincianTagihan({ t, tampilRetribusi = true }) {
 
 const s = StyleSheet.create({
   barisJudul: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  kode: { fontSize: 17, fontWeight: '700', color: warna.teks },
-  lot: { fontSize: 14, fontWeight: '600', color: warna.teks, marginTop: 6 },
+  kode: { fontSize: 18, fontWeight: '700', color: warna.teks, fontVariant: ['tabular-nums'] },
+  lot: { fontSize: 14, fontWeight: '500', color: warna.teks, marginTop: 4 },
   redup: { fontSize: 12, color: warna.teksRedup, marginTop: 2, lineHeight: 17 },
-  kotak: { backgroundColor: warna.latar, borderRadius: ukuran.radius, padding: 12, marginTop: 12, gap: 8 },
-  garis: { height: 1, backgroundColor: warna.garis },
+  rincian: { marginTop: 12 },
+  sisa: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    marginTop: 8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 4, borderLeftWidth: 3,
+  },
+  sisaAda: { backgroundColor: warna.galatLatar, borderLeftColor: warna.galat },
+  sisaNol: { backgroundColor: warna.suksesLatar, borderLeftColor: warna.sukses },
+  labelSisa: { fontSize: 14, fontWeight: '600', color: warna.teks },
+  nilaiSisa: { fontSize: 18, fontWeight: '700', fontVariant: ['tabular-nums'] },
   catatan: { fontSize: 11, color: warna.teksRedup, marginTop: 8, lineHeight: 16 },
-  subjudul: { fontSize: 15, fontWeight: '700', color: warna.teks, marginBottom: 4 },
-  barisBayar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#E4EBF1' },
-  metode: { fontSize: 14, fontWeight: '600', color: warna.teks },
+  subjudul: { fontSize: 13, fontWeight: '600', color: warna.teksRedup, marginBottom: 2 },
+  metode: { fontSize: 13, fontWeight: '600', color: warna.teks },
   redupKecil: { fontSize: 11, color: warna.teksRedup, marginTop: 1 },
-  nominal: { fontSize: 14, fontWeight: '700', color: warna.sukses },
 });

@@ -3,7 +3,8 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { operator } from '../../api';
 import { KolomTeks, KotakPesan, Tombol } from '../../components/Dasar';
 import FormGulir from '../../components/FormGulir';
-import { BarisRincian, JamMundur } from '../../components/Lelang';
+import { PanelLelang } from '../../components/Lelang';
+import { Bagian, Info, Tabel } from '../../components/Tata';
 import { formatKg, formatRupiah } from '../../format';
 import { usePolling } from '../../polling';
 import { ukuran, warna } from '../../tema';
@@ -67,7 +68,7 @@ export default function PantauSesi({ idSesi, onKembali }) {
   return (
     <View style={{ flex: 1, backgroundColor: warna.latar }}>
       <FormGulir gayaIsi={s.isi}>
-        <View style={s.kartu}>
+        <Bagian>
           <View style={s.barisJudul}>
             <Text style={s.kode}>{lot.kode_lot}</Text>
             <Text style={s.peserta}>{data.jumlah_peserta} peserta terdaftar</Text>
@@ -75,47 +76,39 @@ export default function PantauSesi({ idSesi, onKembali }) {
           <Text style={s.jenis}>
             {lot.nama_jenis} <Text style={{ color: warna.aksen }}>Grade {lot.kode_grade}</Text> | {formatKg(lot.berat_aktual)}
           </Text>
-
           <View style={{ marginTop: 12 }}>
-            <JamMundur
+            <PanelLelang
               sisa={data.sisa_detik}
               status={data.status}
               perpanjangan={data.jumlah_perpanjangan}
               maksPerpanjangan={data.maks_perpanjangan}
+              labelHarga={data.harga_tertinggi ? 'Harga tertinggi' : 'Harga pembukaan'}
+              harga={formatRupiah(data.harga_tertinggi ?? data.harga_pembukaan)}
+              bawahHarga={data.penawar_tertinggi ? `oleh ${data.penawar_tertinggi}` : 'Belum ada tawaran'}
             />
           </View>
           {galat ? <KotakPesan teks={galat} gaya={{ marginTop: 12 }} /> : null}
-
-          <View style={s.hargaKotak}>
-            <Text style={s.labelHarga}>{data.harga_tertinggi ? 'Harga tertinggi' : 'Harga pembukaan'}</Text>
-            <Text style={s.harga} accessibilityLabel="Harga tertinggi">
-              {formatRupiah(data.harga_tertinggi ?? data.harga_pembukaan)}
-              <Text style={s.perKg}> /kg</Text>
-            </Text>
-            <Text style={s.penawar}>
-              {data.penawar_tertinggi ? `oleh ${data.penawar_tertinggi}` : 'Belum ada tawaran'}
-            </Text>
-          </View>
-
-          <View style={s.rincian}>
-            <BarisRincian label="Kenaikan minimum" nilai={`${formatRupiah(data.kenaikan_minimum)}/kg`} />
-            <BarisRincian label="Jumlah tawaran" nilai={`${data.jumlah_penawaran} dari ${data.jumlah_penawar} penawar`} />
+          <View style={{ marginTop: 8 }}>
+            <Info label="Kenaikan minimum" nilai={`${formatRupiah(data.kenaikan_minimum)}/kg`} />
+            <Info label="Jumlah tawaran" nilai={`${data.jumlah_penawaran} dari ${data.jumlah_penawar} penawar`} />
             {data.harga_tertinggi ? (
-              <BarisRincian label="Perkiraan nilai" nilai={formatRupiah(Math.round(data.harga_tertinggi * lot.berat_aktual))} tebal />
+              <Info label="Perkiraan nilai" nilai={formatRupiah(Math.round(data.harga_tertinggi * lot.berat_aktual))} tebal />
             ) : null}
           </View>
+        </Bagian>
 
-          {hasil ? (
-            <View style={[s.hasil, hasil.terjual ? s.hasilTerjual : s.hasilTidak]}>
+        {hasil ? (
+          <Bagian judul="Hasil lelang">
+            <View style={[s.hasil, { borderLeftColor: hasil.terjual ? warna.sukses : warna.garis }]}>
               <Text style={[s.judulHasil, { color: hasil.terjual ? warna.sukses : warna.teksRedup }]}>
                 {hasil.terjual ? 'Lot terjual' : 'Lot tidak terjual'}
               </Text>
               {hasil.terjual ? (
                 <>
-                  <BarisRincian label="Pemenang" nilai={hasil.pemenang} tebal />
-                  <BarisRincian label="Harga akhir" nilai={`${formatRupiah(hasil.harga_akhir_per_kg)}/kg`} />
-                  <BarisRincian label="Nomor transaksi" nilai={hasil.kode_transaksi} tebal />
-                  <BarisRincian label="Total tagihan" nilai={formatRupiah(hasil.total_tagihan)} besar />
+                  <Info label="Pemenang" nilai={hasil.pemenang} tebal />
+                  <Info label="Harga akhir" nilai={`${formatRupiah(hasil.harga_akhir_per_kg)}/kg`} />
+                  <Info label="Nomor transaksi" nilai={hasil.kode_transaksi} tebal />
+                  <Info label="Total tagihan" nilai={formatRupiah(hasil.total_tagihan)} besar garis />
                   <Text style={s.catatanHasil}>Pemenang membayar ke Kasir TPI dengan menyebutkan nomor transaksi.</Text>
                 </>
               ) : (
@@ -123,52 +116,60 @@ export default function PantauSesi({ idSesi, onKembali }) {
               )}
               {data.alasan_tutup ? <Text style={s.catatanHasil}>Ditutup manual: {data.alasan_tutup}</Text> : null}
             </View>
-          ) : null}
-        </View>
-
-        <View style={s.kartu}>
-          <Text style={s.subjudul}>Riwayat Tawaran</Text>
-          {data.riwayat.length === 0 ? (
-            <Text style={s.kosong}>Menunggu tawaran pertama...</Text>
-          ) : (
-            data.riwayat.map((r, i) => (
-              <View key={i} style={[s.barisTawar, r.tertinggi && s.barisTertinggi]}>
-                <Text style={s.waktu}>{r.waktu}</Text>
-                <Text style={[s.namaTawar, r.tertinggi && { fontWeight: '700' }]} numberOfLines={1}>
-                  {r.penawar}
-                </Text>
-                <Text style={[s.nilaiTawar, r.tertinggi && { color: warna.sukses }]}>{formatRupiah(r.harga_per_kg)}</Text>
-              </View>
-            ))
-          )}
-        </View>
-
-        {aktif ? (
-          formTutup ? (
-            <View style={s.kartu}>
-              <Text style={s.subjudul}>Tutup Sesi Lebih Awal</Text>
-              <Text style={s.kosong}>
-                Penawar tertinggi saat ini menjadi pemenang. Alasan dicatat ke log audit.
-              </Text>
-              <KolomTeks
-                label="Alasan penutupan"
-                value={alasan}
-                onChangeText={(t) => {
-                  setAlasan(t.slice(0, 255));
-                  setGalatAlasan(null);
-                }}
-                placeholder="Contoh: cuaca buruk, listrik padam"
-                galat={galatAlasan}
-                accessibilityLabel="Alasan penutupan"
-              />
-              <Tombol judul="Tutup Sesi Sekarang" jenis="bahaya" onPress={tutup} memuat={menutup} />
-              <Tombol judul="Batal" jenis="teks" onPress={() => setFormTutup(false)} nonaktif={menutup} gaya={{ marginTop: 6 }} />
-            </View>
-          ) : (
-            <Tombol judul="Tutup Sesi Lebih Awal" jenis="garis" onPress={() => setFormTutup(true)} />
-          )
+          </Bagian>
         ) : null}
-        <Tombol judul={aktif ? 'Kembali ke Daftar (sesi tetap berjalan)' : 'Kembali ke Daftar'} jenis={aktif ? 'teks' : 'utama'} onPress={onKembali} />
+
+        <Bagian judul="Riwayat tawaran">
+          <Tabel
+            label="Riwayat tawaran"
+            kosong="Menunggu tawaran pertama..."
+            data={data.riwayat}
+            sorot={(r) => r.tertinggi}
+            kolom={[
+              { judul: 'Waktu', flex: 0.9, redup: true, render: (r) => r.waktu },
+              {
+                judul: 'Penawar', flex: 1.5,
+                render: (r) => <Text style={[s.namaTawar, r.tertinggi && { fontWeight: '700' }]} numberOfLines={1}>{r.penawar}</Text>,
+              },
+              {
+                judul: 'Harga/kg', flex: 1.2, kanan: true,
+                render: (r) => <Text style={[s.nilaiTawar, r.tertinggi && { color: warna.sukses }]}>{formatRupiah(r.harga_per_kg)}</Text>,
+              },
+            ]}
+          />
+        </Bagian>
+
+        <View style={{ paddingHorizontal: 16 }}>
+          {aktif ? (
+            formTutup ? (
+              <View style={s.formTutup}>
+                <Text style={s.subjudul}>Tutup Sesi Lebih Awal</Text>
+                <Text style={s.kosong}>Penawar tertinggi saat ini menjadi pemenang. Alasan dicatat ke log audit.</Text>
+                <KolomTeks
+                  label="Alasan penutupan"
+                  value={alasan}
+                  onChangeText={(t) => {
+                    setAlasan(t.slice(0, 255));
+                    setGalatAlasan(null);
+                  }}
+                  placeholder="Contoh: cuaca buruk, listrik padam"
+                  galat={galatAlasan}
+                  accessibilityLabel="Alasan penutupan"
+                />
+                <Tombol judul="Tutup Sesi Sekarang" jenis="bahaya" onPress={tutup} memuat={menutup} />
+                <Tombol judul="Batal" jenis="teks" onPress={() => setFormTutup(false)} nonaktif={menutup} gaya={{ marginTop: 6 }} />
+              </View>
+            ) : (
+              <Tombol judul="Tutup Sesi Lebih Awal" jenis="bahaya" onPress={() => setFormTutup(true)} />
+            )
+          ) : null}
+          <Tombol
+            judul={aktif ? 'Kembali ke Daftar (sesi tetap berjalan)' : 'Kembali ke Daftar'}
+            jenis={aktif ? 'teks' : 'utama'}
+            onPress={onKembali}
+            gaya={{ marginTop: 8 }}
+          />
+        </View>
       </FormGulir>
     </View>
   );
@@ -176,31 +177,20 @@ export default function PantauSesi({ idSesi, onKembali }) {
 
 const s = StyleSheet.create({
   tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 16 },
-  isi: { padding: 16, paddingBottom: 32, gap: 12 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  isi: { paddingBottom: 32 },
   barisJudul: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  kode: { fontSize: 17, fontWeight: '700', color: warna.teks },
-  peserta: { fontSize: 12, color: warna.teksRedup, fontWeight: '500' },
-  jenis: { fontSize: 14, color: warna.teks, fontWeight: '500', marginTop: 4 },
-  hargaKotak: { alignItems: 'center', marginTop: 14 },
-  labelHarga: { fontSize: 12, fontWeight: '700', color: warna.teksRedup },
-  harga: { fontSize: 26, fontWeight: '700', color: warna.teks, marginTop: 2 },
-  perKg: { fontSize: 16, fontWeight: '500', color: warna.teksRedup },
-  penawar: { fontSize: 14, color: warna.teksRedup, marginTop: 2 },
-  rincian: { backgroundColor: warna.latar, borderRadius: ukuran.radius, padding: 12, marginTop: 14, gap: 8 },
-  hasil: { borderRadius: ukuran.radius, padding: 14, marginTop: 14, gap: 8, borderWidth: 1 },
-  hasilTerjual: { backgroundColor: warna.suksesLatar, borderColor: warna.sukses },
-  hasilTidak: { backgroundColor: warna.abu, borderColor: warna.garis },
-  judulHasil: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
-  catatanHasil: { fontSize: 12, color: warna.teksRedup, lineHeight: 17 },
-  subjudul: { fontSize: 15, fontWeight: '700', color: warna.teks, marginBottom: 8 },
-  kosong: { fontSize: 13, color: warna.teksRedup, marginBottom: 10, lineHeight: 18 },
-  barisTawar: {
-    flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingHorizontal: 8,
-    borderBottomWidth: 1, borderBottomColor: '#E4EBF1',
+  kode: { fontSize: 17, fontWeight: '700', color: warna.teks, fontVariant: ['tabular-nums'] },
+  peserta: { fontSize: 12, color: warna.teksRedup },
+  jenis: { fontSize: 14, color: warna.teks, marginTop: 2 },
+  hasil: { borderLeftWidth: 3, paddingLeft: 12 },
+  judulHasil: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  catatanHasil: { fontSize: 12, color: warna.teksRedup, lineHeight: 17, marginTop: 4 },
+  formTutup: {
+    backgroundColor: warna.putih, borderWidth: 1, borderColor: warna.garisHalus, borderRadius: ukuran.radiusKartu,
+    padding: 14, marginBottom: 4,
   },
-  barisTertinggi: { backgroundColor: warna.suksesLatar, borderRadius: 4 },
-  waktu: { fontSize: 12, color: warna.teksRedup, fontVariant: ['tabular-nums'] },
-  namaTawar: { flex: 1, fontSize: 14, color: warna.teks },
-  nilaiTawar: { fontSize: 14, fontWeight: '600', color: warna.teks },
+  subjudul: { fontSize: 15, fontWeight: '700', color: warna.teks, marginBottom: 4 },
+  kosong: { fontSize: 13, color: warna.teksRedup, marginBottom: 10, lineHeight: 18 },
+  namaTawar: { fontSize: 13, color: warna.teks },
+  nilaiTawar: { fontSize: 13, fontWeight: '600', color: warna.teks, fontVariant: ['tabular-nums'] },
 });

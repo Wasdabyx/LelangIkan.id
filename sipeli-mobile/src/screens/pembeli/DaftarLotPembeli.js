@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { pembeli } from '../../api';
-import { DialogKonfirmasi, KotakPesan, Lencana, Tombol } from '../../components/Dasar';
+import { DialogKonfirmasi, KotakPesan, Tombol } from '../../components/Dasar';
+import { BarisDaftar, TitikStatus } from '../../components/Tata';
 import Ikon from '../../components/Ikon';
 import { formatKg, formatRupiah, waktuPendek } from '../../format';
 import { ukuran, warna } from '../../tema';
@@ -64,35 +65,40 @@ export default function DaftarLotPembeli({ tab, onPesan, onLihatBukti }) {
           data={data}
           keyExtractor={(x) => String(x.id_pantauan ?? x.id_lot)}
           contentContainerStyle={s.isi}
+          style={{ backgroundColor: warna.latar }}
           refreshControl={<RefreshControl refreshing={segar} onRefresh={() => { setSegar(true); muat(); }} />}
           ListHeaderComponent={
             <>
-              {galat ? <KotakPesan teks={galat} gaya={{ marginBottom: 12 }} /> : null}
-              <Text style={s.keterangan}>
-                {tab === 'lot'
-                  ? 'Kode OTP dikirim ke surel saat Anda ikut lelang.'
-                  : 'Lot yang sesinya dibuka akan muncul di tab Lelang.'}
-              </Text>
+              {galat ? <KotakPesan teks={galat} gaya={{ margin: 12, marginBottom: 0 }} /> : null}
+              <View style={s.kepala}>
+                <Text style={s.jumlah}>
+                  {tab === 'lot' ? `${lot.length} lot menunggu lelang` : `${pesanan.length} pemesanan`}
+                </Text>
+                <Text style={s.keterangan}>
+                  {tab === 'lot'
+                    ? 'Kode OTP dikirim ke surel saat Anda ikut lelang.'
+                    : 'Lot yang sesinya dibuka akan muncul di tab Lelang.'}
+                </Text>
+              </View>
             </>
           }
           ListEmptyComponent={
             <View style={s.kosong}>
-              <Ikon nama={tab === 'lot' ? 'ikan' : 'qr'} ukuran={44} warna={warna.teksRedup} />
-              <Text style={s.teksKosong}>
+                            <Text style={s.teksKosong}>
                 {tab === 'lot'
                   ? 'Belum ada lot yang menunggu lelang hari ini.'
                   : 'Anda belum memesan lot apa pun.'}
               </Text>
             </View>
           }
-          renderItem={({ item }) =>
+          renderItem={({ item, index }) =>
             tab === 'lot' ? (
-              <KartuLot lot={item} onPesan={() => setDipilih(item)} onLihat={() => {
+              <BarisLot lot={item} terakhir={index === data.length - 1} onPesan={() => setDipilih(item)} onLihat={() => {
                 const p = pesanan.find((x) => x.id_lot === item.id_lot);
                 if (p) onLihatBukti(p);
               }} />
             ) : (
-              <KartuPesanan data={item} onPress={() => onLihatBukti(item)} />
+              <BarisPesanan data={item} terakhir={index === data.length - 1} onPress={() => onLihatBukti(item)} />
             )
           }
         />
@@ -114,82 +120,76 @@ export default function DaftarLotPembeli({ tab, onPesan, onLihatBukti }) {
   );
 }
 
-function KartuLot({ lot, onPesan, onLihat }) {
+function BarisLot({ lot, onPesan, onLihat, terakhir }) {
   const sudah = !!lot.kode_pemesanan;
   return (
-    <View style={s.kartu}>
-      <View style={s.barisAtas}>
-        <Text style={s.kodeLot}>{lot.kode_lot}</Text>
-        {sudah ? (
-          <Lencana teks="Sudah dipesan" ikon="centang" latar={warna.suksesLatar} warnaTeks={warna.sukses} />
-        ) : (
-          <Lencana teks="Menunggu lelang" latar={warna.utamaMuda} warnaTeks={warna.utama} />
-        )}
-      </View>
+    <BarisDaftar
+      terakhir={terakhir}
+      onPress={sudah ? onLihat : undefined}
+      kanan={
+        <View style={s.kolomKanan}>
+          <Text style={s.harga}>{formatRupiah(lot.harga_pembukaan)}</Text>
+          <Text style={s.labelHarga}>harga buka/kg</Text>
+          {sudah ? (
+            <View style={{ marginTop: 8 }}>
+              <TitikStatus teks="Sudah dipesan" w={warna.sukses} />
+            </View>
+          ) : (
+            <Tombol judul="Ikut Lelang" kecil onPress={onPesan} gaya={{ marginTop: 8 }} />
+          )}
+        </View>
+      }
+    >
+      <Text style={s.kodeLot}>{lot.kode_lot}</Text>
       <Text style={s.jenis}>
         {lot.nama_jenis} <Text style={s.grade}>Grade {lot.kode_grade}</Text>
       </Text>
-      <View style={s.rincian}>
-        <Rincian label="Berat" nilai={formatKg(lot.berat_aktual)} />
-        <Rincian label="Harga buka/kg" nilai={formatRupiah(lot.harga_pembukaan)} />
-        <Rincian label="Perkiraan nilai" nilai={formatRupiah(lot.nilai_lot)} />
-      </View>
-      <View style={s.barisKapal}>
-        <Ikon nama="kapal" ukuran={16} warna={warna.teksRedup} />
-        <Text style={s.kapal}>{lot.nama_kapal}</Text>
-      </View>
-      {sudah ? (
-        <Tombol judul={`Lihat Kode ${lot.kode_pemesanan}`} jenis="garis" ikon="qr" onPress={onLihat} gaya={{ marginTop: 12 }} />
-      ) : (
-        <Tombol judul="Ikut Lelang Lot Ini" ikon="surel" onPress={onPesan} gaya={{ marginTop: 12 }} />
-      )}
-    </View>
+      <Text style={s.angka}>{formatKg(lot.berat_aktual)}</Text>
+      <Text style={s.redup} numberOfLines={1}>
+        {lot.nama_kapal} | nilai {formatRupiah(lot.nilai_lot)}
+      </Text>
+      {sudah ? <Text style={s.tautanKode}>{`Lihat Kode ${lot.kode_pemesanan}`}</Text> : null}
+      {sudah ? <Text style={s.kodePesanKecil}>{lot.kode_pemesanan}</Text> : null}
+    </BarisDaftar>
   );
 }
 
-function KartuPesanan({ data, onPress }) {
+function BarisPesanan({ data, onPress, terakhir }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [s.kartu, pressed && { opacity: 0.8 }]}>
-      <View style={s.barisAtas}>
-        <Text style={s.kodePesan}>{data.kode_pemesanan}</Text>
-        <Ikon nama="kanan" ukuran={22} warna={warna.teksRedup} />
-      </View>
+    <BarisDaftar terakhir={terakhir} onPress={onPress} kanan={<Ikon nama="kanan" ukuran={18} warna={warna.teksRedup} />}>
+      <Text style={s.kodePesan}>{data.kode_pemesanan}</Text>
       <Text style={s.jenis}>
         {data.kode_lot} - {data.nama_jenis} <Text style={s.grade}>Grade {data.kode_grade}</Text>
       </Text>
-      <Text style={s.teksRedup}>
+      <Text style={s.redup}>
         {formatKg(data.berat_aktual)} | Dipesan {waktuPendek(data.waktu_pemesanan)}
       </Text>
-    </Pressable>
-  );
-}
-
-function Rincian({ label, nilai }) {
-  return (
-    <View style={{ flex: 1 }}>
-      <Text style={s.labelRincian}>{label}</Text>
-      <Text style={s.nilaiRincian}>{nilai}</Text>
-    </View>
+    </BarisDaftar>
   );
 }
 
 const s = StyleSheet.create({
   wadah: { flex: 1, backgroundColor: warna.latar },
-  isi: { padding: 16, paddingBottom: 32, gap: 10 },
+  isi: { paddingBottom: 32 },
   tengah: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  keterangan: { fontSize: 13, color: warna.teksRedup, lineHeight: 18, marginBottom: 4 },
+  kepala: {
+    paddingHorizontal: 16, paddingTop: 12, paddingBottom: 10,
+    borderBottomWidth: 1, borderBottomColor: warna.garisHalus, backgroundColor: warna.latar,
+  },
+  jumlah: { fontSize: 14, fontWeight: '600', color: warna.teks },
+  keterangan: { fontSize: 12, color: warna.teksRedup, marginTop: 2 },
   kosong: { alignItems: 'center', padding: 32, gap: 12 },
   teksKosong: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', lineHeight: 20 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
-  barisAtas: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  kodeLot: { fontSize: 16, fontWeight: '700', color: warna.teks },
-  kodePesan: { fontSize: 16, fontWeight: '700', color: warna.sukses },
-  jenis: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.teks, marginTop: 8 },
-  grade: { color: warna.aksen },
-  rincian: { flexDirection: 'row', gap: 8, marginTop: 10, backgroundColor: warna.latar, borderRadius: 6, padding: 10 },
-  labelRincian: { fontSize: 11, color: warna.teksRedup },
-  nilaiRincian: { fontSize: 14, fontWeight: '600', color: warna.teks, marginTop: 2 },
-  barisKapal: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
-  kapal: { fontSize: 13, color: warna.teksRedup },
+  kodeLot: { fontSize: 15, fontWeight: '600', color: warna.teks, fontVariant: ['tabular-nums'] },
+  kodePesan: { fontSize: 15, fontWeight: '600', color: warna.sukses, fontVariant: ['tabular-nums'] },
+  kodePesanKecil: { fontSize: 12, fontWeight: '600', color: warna.sukses, marginTop: 2 },
+  jenis: { fontSize: 14, color: warna.teks, marginTop: 2 },
+  grade: { color: warna.aksen, fontWeight: '500' },
+  angka: { fontSize: 13, fontWeight: '600', color: warna.teks, marginTop: 2 },
+  redup: { fontSize: 12, color: warna.teksRedup, marginTop: 2 },
   teksRedup: { fontSize: 13, color: warna.teksRedup, marginTop: 4 },
+  kolomKanan: { alignItems: 'flex-end', minWidth: 110 },
+  harga: { fontSize: 16, fontWeight: '700', color: warna.teks, fontVariant: ['tabular-nums'] },
+  labelHarga: { fontSize: 11, color: warna.teksRedup },
+  tautanKode: { fontSize: 13, fontWeight: '600', color: warna.utama, marginTop: 6 },
 });

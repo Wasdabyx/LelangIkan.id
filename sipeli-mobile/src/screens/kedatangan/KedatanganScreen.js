@@ -77,24 +77,22 @@ function LayarSukses({ hasil, onTambahLagi, onLengkapi, onKeDaftar }) {
   const draf = d.status === 'DRAF';
   return (
     <ScrollView contentContainerStyle={s.isiSukses}>
-      <View style={[s.lingkaran, draf && { backgroundColor: warna.abu }]}>
-        <Ikon nama="centang" ukuran={56} warna={draf ? '#344054' : warna.sukses} tebal={3} />
+      <View style={[s.strip, draf && { borderLeftColor: warna.teksRedup }]}>
+        <Text style={s.judulSukses}>{hasil.pesan}</Text>
       </View>
-      <Text style={s.judulSukses}>{hasil.pesan}</Text>
 
       <View style={s.kartu}>
         <Text style={s.labelKecil}>Nomor kedatangan</Text>
         <Text style={s.nomor}>{d.nomor_kedatangan}</Text>
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
           <Lencana status={d.status} />
-          <Lencana ikon="awan" teks="Terkirim" latar={warna.suksesLatar} warnaTeks={warna.sukses} />
+          <Lencana teks="Terkirim" latar={warna.suksesLatar} warnaTeks={warna.sukses} />
         </View>
 
         {draf ? (
           // Draf belum boleh ditimbang, jadi QR belum ditampilkan
           <View style={[s.kotakQR, { backgroundColor: warna.abu }]}>
-            <Ikon nama="pensil" ukuran={40} warna="#344054" />
-            <Text style={[s.teksQR, { color: '#344054' }]}>
+            <Text style={[s.teksQR, { color: '#344054', marginTop: 0 }]}>
               Draf belum dapat ditimbang. Lengkapi datanya agar QR untuk Petugas Timbang muncul.
             </Text>
           </View>
@@ -115,10 +113,10 @@ function LayarSukses({ hasil, onTambahLagi, onLengkapi, onKeDaftar }) {
       </View>
 
       {draf ? (
-        <Tombol judul="Lengkapi Draf Sekarang" ikon="pensil" onPress={onLengkapi} gaya={{ marginBottom: 10 }} />
+        <Tombol judul="Lengkapi Draf Sekarang" onPress={onLengkapi} gaya={{ marginBottom: 10 }} />
       ) : null}
-      <Tombol judul="Tambah Kedatangan Lain" ikon={draf ? undefined : 'tambah'} jenis={draf ? 'garis' : undefined} onPress={onTambahLagi} />
-      <Tombol judul="Kembali ke Daftar" jenis="garis" onPress={onKeDaftar} gaya={{ marginTop: 10 }} />
+      <Tombol judul="Tambah Kedatangan Lain" jenis={draf ? 'garis' : undefined} onPress={onTambahLagi} />
+      <Tombol judul="Kembali ke Daftar" jenis="teks" onPress={onKeDaftar} gaya={{ marginTop: 10 }} />
     </ScrollView>
   );
 }
@@ -135,25 +133,25 @@ function Baris({ label, nilai }) {
 const s = StyleSheet.create({
   layar: { flex: 1, backgroundColor: warna.latar },
   isiSukses: { padding: 16, paddingBottom: 40, alignItems: 'stretch' },
-  lingkaran: {
-    width: 104, height: 104, borderRadius: 52, backgroundColor: warna.suksesLatar,
-    alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginTop: 12,
+  strip: {
+    backgroundColor: warna.putih, borderLeftWidth: 3, borderLeftColor: warna.sukses, borderRadius: 4,
+    borderWidth: 1, borderColor: warna.garisHalus, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 12,
   },
-  judulSukses: { fontSize: 18, fontWeight: '700', color: warna.teks, textAlign: 'center', marginVertical: 16 },
+  judulSukses: { fontSize: 15, fontWeight: '700', color: warna.teks },
   kartu: {
-    backgroundColor: warna.putih, borderRadius: 6, padding: 18, marginBottom: 14,
-    borderWidth: 1, borderColor: '#E4EBF1',
+    backgroundColor: warna.putih, borderRadius: 6, padding: 16, marginBottom: 14,
+    borderWidth: 1, borderColor: warna.garisHalus,
   },
-  labelKecil: { fontSize: 11, fontWeight: '700', color: warna.teksRedup },
-  nomor: { fontSize: 26, fontWeight: '700', color: warna.utama, marginVertical: 6 },
+  labelKecil: { fontSize: 12, color: warna.teksRedup },
+  nomor: { fontSize: 22, fontWeight: '700', color: warna.utama, marginVertical: 4, fontVariant: ['tabular-nums'] },
   kotakQR: {
-    alignItems: 'center', backgroundColor: warna.utamaMuda, borderRadius: 4,
+    alignItems: 'center', borderWidth: 1, borderColor: warna.garisHalus, borderRadius: 4,
     paddingVertical: 14, paddingHorizontal: 12, marginBottom: 14,
   },
-  teksQR: { fontSize: 14, color: warna.utama, fontWeight: '500', textAlign: 'center', marginTop: 10 },
-  barisInfo: { flexDirection: 'row', paddingVertical: 6 },
-  labelInfo: { width: 130, fontSize: 14, color: warna.teksRedup },
-  nilaiInfo: { flex: 1, fontSize: 14, color: warna.teks, fontWeight: '500' },
-  garis: { height: 1, backgroundColor: warna.garis, marginVertical: 12 },
-  total: { fontSize: 30, fontWeight: '700', color: warna.utama, marginTop: 4 },
+  teksQR: { fontSize: 13, color: warna.teksRedup, textAlign: 'center', marginTop: 10 },
+  barisInfo: { flexDirection: 'row', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: warna.garisHalus },
+  labelInfo: { width: 120, fontSize: 13, color: warna.teksRedup },
+  nilaiInfo: { flex: 1, fontSize: 13, color: warna.teks, fontWeight: '500', textAlign: 'right' },
+  garis: { height: 0, marginVertical: 6 },
+  total: { fontSize: 24, fontWeight: '700', color: warna.utama, marginTop: 2, fontVariant: ['tabular-nums'] },
 });

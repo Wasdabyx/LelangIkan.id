@@ -3,6 +3,7 @@ import { BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api';
 import { DialogKonfirmasi, KolomTeks, KotakPesan, Tombol } from '../../components/Dasar';
 import FormGulir from '../../components/FormGulir';
+import { Bagian, Segmen, Tabel } from '../../components/Tata';
 import Ikon from '../../components/Ikon';
 import { formatAngka, formatKg, formatRupiah, keAngka } from '../../format';
 import { ukuran, warna } from '../../tema';
@@ -214,156 +215,143 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
     <View style={{ flex: 1 }}>
       <View style={s.bilahKembali}>
         <Pressable onPress={mintaBatal} style={s.tombolKembali} accessibilityRole="button">
-          <Ikon nama="kembali" ukuran={22} warna={warna.utama} />
+          <Ikon nama="kembali" ukuran={20} warna={warna.utama} />
           <Text style={s.teksKembali}>{kedatangan.nomor_kedatangan}</Text>
         </Pressable>
       </View>
 
       <FormGulir gayaIsi={s.isi}>
-        {/* Baris yang ditimbang */}
-        <Text style={s.judul}>
-          {baris.nama_jenis} <Text style={s.grade}>- Grade {baris.kode_grade}</Text>
-        </Text>
-        <Text style={s.redup}>
-          {kedatangan.nama_kapal} - Estimasi {formatKg(estimasi)} - {baris.jumlah_keranjang} keranjang
-        </Text>
-
-        {/* Pilihan sumber berat */}
-        <View style={s.segmen}>
-          {[
-            ['timbangan', 'Timbangan', 'timbangan'],
-            ['manual', 'Input Manual', 'pensil'],
-          ].map(([kunci, judul, ikon]) => {
-            const aktif = sumber === kunci;
-            return (
-              <Pressable
-                key={kunci}
-                onPress={() => gantiSumber(kunci)}
-                style={[s.pilihSegmen, aktif && s.pilihSegmenAktif]}
-                accessibilityRole="button"
-                accessibilityState={{ selected: aktif }}
-              >
-                <Ikon nama={ikon} ukuran={20} warna={aktif ? warna.putih : warna.utama} />
-                <Text style={[s.teksSegmen, aktif && { color: warna.putih }]}>{judul}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {sumber === 'timbangan' ? (
-          <View>
-            {/* Kartu berat: angka besar >= 40pt (DPPL UC-02) */}
-            <View style={s.kartuBerat}>
-              <View style={s.barisStatus}>
-                <View style={s.titikHijau} />
-                <Text style={s.teksTerhubung} numberOfLines={1}>
-                  Terhubung - {NAMA_TIMBANGAN}
-                </Text>
-                <View style={[s.chip, { backgroundColor: statusBacaan.latar }]}>
-                  <Text style={[s.teksChip, { color: statusBacaan.warna }]}>{statusBacaan.teks}</Text>
-                </View>
-              </View>
-              <View style={s.barisAngka}>
-                <Text style={s.angkaBerat} accessibilityLabel={`Berat ${formatAngka(timbangan.bacaan)} kilogram`}>
-                  {formatAngka(timbangan.bacaan)}
-                </Text>
-                <Text style={s.satuan}>kg</Text>
-              </View>
-              <Text style={s.petunjuk}>
-                {timbangan.stabil
-                  ? 'Berat stabil. Tekan Catat Keranjang.'
-                  : timbangan.adaBeban
-                    ? 'Tunggu angka berhenti berubah...'
-                    : `Letakkan keranjang ke-${keranjang.length + 1} di atas timbangan.`}
-              </Text>
-            </View>
-
-            {timbangan.adaBeban ? (
-              <View style={s.barisTombol}>
-                <Tombol
-                  judul="Catat Keranjang"
-                  ikon="centang"
-                  onPress={catatDariTimbangan}
-                  nonaktif={!timbangan.stabil}
-                  gaya={{ flex: 1 }}
-                />
-                <Tombol judul="Angkat" jenis="garis" onPress={timbangan.angkat} gaya={{ minWidth: 100 }} />
-              </View>
-            ) : (
-              <Tombol
-                judul="Letakkan Keranjang (Simulasi)"
-                ikon="timbangan"
-                jenis="garis"
-                onPress={letakkanKeranjang}
-                gaya={{ marginTop: 12 }}
-              />
-            )}
-          </View>
-        ) : (
-          <View style={s.kartuManual}>
-            <KotakPesan
-              jenis="info"
-              teks="Gunakan input manual hanya bila timbangan tidak dapat dipakai. Alasan wajib diisi dan tercatat."
-              gaya={{ marginBottom: 12 }}
+        <Bagian>
+          <Text style={s.judul}>
+            {baris.nama_jenis} <Text style={s.grade}>Grade {baris.kode_grade}</Text>
+          </Text>
+          <Text style={s.redup}>
+            {kedatangan.nama_kapal} | Estimasi {formatKg(estimasi)} | {baris.jumlah_keranjang} keranjang
+          </Text>
+          <View style={{ marginTop: 12 }}>
+            <Segmen
+              label="Sumber berat"
+              pilihan={[
+                { kunci: 'timbangan', judul: 'Timbangan' },
+                { kunci: 'manual', judul: 'Input Manual' },
+              ]}
+              nilai={sumber}
+              onGanti={gantiSumber}
             />
-            <View style={s.barisManual}>
-              <KolomTeks
-                label={`Berat keranjang ke-${keranjang.length + 1} (kg)`}
-                gayaWadah={{ flex: 1, marginBottom: 0 }}
-                value={teksManual}
-                onChangeText={(t) => {
-                  setTeksManual(t);
-                  setGalatManual(null);
-                }}
-                placeholder="Contoh: 30,5"
-                keyboardType="decimal-pad"
-                returnKeyType="done"
-                onSubmitEditing={tambahManual}
-              />
-              <Tombol judul="Tambah" ikon="tambah" onPress={tambahManual} gaya={{ minHeight: ukuran.tinggiInput }} />
-            </View>
-            {galatManual ? <Text style={s.teksGalat}>{galatManual}</Text> : null}
           </View>
-        )}
+
+          {sumber === 'timbangan' ? (
+            <View>
+              {/* Layar timbangan: angka besar >= 40pt (DPPL UC-02) */}
+              <View style={s.kartuBerat}>
+                <View style={s.barisStatus}>
+                  <View style={s.titikHijau} />
+                  <Text style={s.teksTerhubung} numberOfLines={1}>
+                    Terhubung | {NAMA_TIMBANGAN}
+                  </Text>
+                  <Text style={[s.teksChip, { color: timbangan.stabil ? '#6CE9A6' : '#FEC84B' }]}>{statusBacaan.teks}</Text>
+                </View>
+                <View style={s.barisAngka}>
+                  <Text style={s.angkaBerat} accessibilityLabel={`Berat ${formatAngka(timbangan.bacaan)} kilogram`}>
+                    {formatAngka(timbangan.bacaan)}
+                  </Text>
+                  <Text style={s.satuan}>kg</Text>
+                </View>
+                <Text style={s.petunjuk}>
+                  {timbangan.stabil
+                    ? 'Berat stabil. Tekan Catat Keranjang.'
+                    : timbangan.adaBeban
+                      ? 'Tunggu angka berhenti berubah...'
+                      : `Letakkan keranjang ke-${keranjang.length + 1} di atas timbangan.`}
+                </Text>
+              </View>
+
+              {timbangan.adaBeban ? (
+                <View style={s.barisTombol}>
+                  <Tombol
+                    judul="Catat Keranjang"
+                    onPress={catatDariTimbangan}
+                    nonaktif={!timbangan.stabil}
+                    gaya={{ flex: 1 }}
+                  />
+                  <Tombol judul="Angkat" jenis="garis" onPress={timbangan.angkat} gaya={{ minWidth: 96 }} />
+                </View>
+              ) : (
+                <Tombol
+                  judul="Letakkan Keranjang (Simulasi)"
+                  jenis="garis"
+                  onPress={letakkanKeranjang}
+                  gaya={{ marginTop: 10 }}
+                />
+              )}
+            </View>
+          ) : (
+            <View style={{ marginTop: 12 }}>
+              <Text style={s.catatanManual}>
+                Gunakan input manual hanya bila timbangan tidak dapat dipakai. Alasan wajib diisi dan tercatat.
+              </Text>
+              <View style={s.barisManual}>
+                <KolomTeks
+                  label={`Berat keranjang ke-${keranjang.length + 1} (kg)`}
+                  gayaWadah={{ flex: 1, marginBottom: 0 }}
+                  value={teksManual}
+                  onChangeText={(t) => {
+                    setTeksManual(t);
+                    setGalatManual(null);
+                  }}
+                  placeholder="Contoh: 30,5"
+                  keyboardType="decimal-pad"
+                  returnKeyType="done"
+                  onSubmitEditing={tambahManual}
+                />
+                <Tombol judul="Tambah" onPress={tambahManual} gaya={{ minHeight: ukuran.tinggiInput, minWidth: 88 }} />
+              </View>
+              {galatManual ? <Text style={s.teksGalat}>{galatManual}</Text> : null}
+            </View>
+          )}
+        </Bagian>
 
         {/* Daftar keranjang */}
-        <View style={s.kartu}>
-          <View style={s.barisJudulKartu}>
-            <Text style={s.judulKartu}>Keranjang tercatat</Text>
+        <Bagian
+          judul="Keranjang tercatat"
+          kanan={
             <Text style={[s.hitungan, lengkap && { color: warna.sukses }]}>
               {keranjang.length} dari {baris.jumlah_keranjang}
             </Text>
-          </View>
-          {keranjang.length === 0 ? (
-            <Text style={s.kosong}>Belum ada keranjang yang dicatat.</Text>
-          ) : (
-            keranjang.map((k, i) => (
-              <View key={i} style={s.barisKeranjang}>
-                <Text style={s.namaKeranjang}>Keranjang {i + 1}</Text>
-                {k.manual ? (
-                  <View style={s.tagManual}>
-                    <Text style={s.teksTagManual}>Manual</Text>
-                  </View>
-                ) : null}
-                <Text style={s.beratKeranjang}>{formatKg(k.berat)}</Text>
-                <Pressable
-                  onPress={() => hapusKeranjang(i)}
-                  style={s.tombolHapus}
-                  accessibilityLabel={`Hapus keranjang ${i + 1}`}
-                >
-                  <Ikon nama="hapus" ukuran={20} warna={warna.galat} />
-                </Pressable>
-              </View>
-            ))
-          )}
-          <View style={s.garis} />
+          }
+        >
+          <Tabel
+            label="Daftar keranjang"
+            kosong="Belum ada keranjang yang dicatat."
+            data={keranjang}
+            kolom={[
+              { judul: 'No', flex: 0.5, render: (_, i) => String(i + 1), redup: true },
+              { judul: 'Sumber', flex: 1.2, render: (k) => (k.manual ? 'Manual' : 'Timbangan'), redup: true },
+              { judul: 'Berat', flex: 1.3, kanan: true, tebal: true, render: (k) => formatKg(k.berat) },
+              {
+                judul: '',
+                flex: 0.6,
+                kanan: true,
+                render: (_, i) => (
+                  <Pressable
+                    onPress={() => hapusKeranjang(i)}
+                    style={s.tombolHapus}
+                    accessibilityLabel={`Hapus keranjang ${i + 1}`}
+                    hitSlop={6}
+                  >
+                    <Ikon nama="hapus" ukuran={18} warna={warna.galat} />
+                  </Pressable>
+                ),
+              },
+            ]}
+          />
           <View style={s.barisTotal}>
             <View style={{ flex: 1 }}>
               <Text style={s.labelKecil}>Berat aktual</Text>
               <Text style={s.total}>{formatKg(total)}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={s.labelKecil}>Selisih</Text>
+              <Text style={s.labelKecil}>Selisih dari estimasi</Text>
               <Text style={[s.selisih, lewatAmbang && tampilPanelSelisih && { color: warna.galat }]}>
                 {total > 0 ? `${total >= estimasi ? '+' : '-'}${formatAngka(selisih, 1)}%` : '-'}
               </Text>
@@ -372,56 +360,55 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
           {!lengkap && keranjang.length > 0 && !tampilPanelSelisih ? (
             <Text style={s.info}>Masih {baris.jumlah_keranjang - keranjang.length} keranjang lagi sesuai catatan pendataan.</Text>
           ) : null}
-        </View>
+        </Bagian>
 
         {/* Panel selisih > ambang (ALG-08, alur A2) */}
         {tampilPanelSelisih ? (
           <View style={s.panelSelisih}>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Ikon nama="peringatan" ukuran={24} warna={warna.galat} />
-              <View style={{ flex: 1 }}>
-                <Text style={s.judulSelisih}>
-                  Selisih {formatAngka(selisih, 1)}% melebihi batas {ambang}%
-                </Text>
-                <Text style={s.teksSelisih}>
-                  Estimasi {formatKg(estimasi)}, aktual {formatKg(total)}. Timbang ulang, atau konfirmasi berat ini
-                  dengan mengisi alasan. Lot akan ditandai perlu verifikasi.
-                </Text>
-              </View>
-            </View>
+            <Text style={s.judulSelisih}>
+              Selisih {formatAngka(selisih, 1)}% melebihi batas {ambang}%
+            </Text>
+            <Text style={s.teksSelisih}>
+              Estimasi {formatKg(estimasi)}, aktual {formatKg(total)}. Timbang ulang, atau konfirmasi berat ini
+              dengan mengisi alasan. Lot akan ditandai perlu verifikasi.
+            </Text>
             <Tombol
               judul="Timbang Ulang"
-              ikon="muatUlang"
               jenis="bahaya"
+              kecil
               onPress={() => setTanyaUlang(true)}
-              gaya={{ marginTop: 12 }}
+              gaya={{ marginTop: 10, alignSelf: 'flex-start', minWidth: 140 }}
             />
           </View>
         ) : null}
 
         {perluAlasan ? (
-          <KolomTeks
-            label={labelAlasan}
-            value={alasan}
-            onChangeText={(t) => {
-              setAlasan(t);
-              setGalat((g) => ({ ...g, alasan: null }));
-            }}
-            placeholder="Contoh: timbangan rusak / es mencair"
-            maxLength={200}
-            galat={galat.alasan}
-          />
+          <View style={s.wadahAlasan}>
+            <KolomTeks
+              label={labelAlasan}
+              value={alasan}
+              onChangeText={(t) => {
+                setAlasan(t);
+                setGalat((g) => ({ ...g, alasan: null }));
+              }}
+              placeholder="Contoh: timbangan rusak / es mencair"
+              maxLength={200}
+              galat={galat.alasan}
+              gayaWadah={{ marginBottom: 0 }}
+            />
+          </View>
         ) : null}
 
         {/* Harga pembukaan (ALG-06) */}
-        <View style={s.kartu}>
-          <Text style={s.judulKartu}>Harga pembukaan</Text>
+        <Bagian judul="Harga pembukaan">
           {usulan.harga ? (
             <View style={s.kotakUsulan}>
-              <Text style={s.teksUsulan}>
-                Usulan sistem: <Text style={{ fontWeight: '700' }}>{formatRupiah(usulan.harga)}/kg</Text>
-              </Text>
-              <Text style={s.keteranganUsulan}>{usulan.keterangan}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={s.teksUsulan}>
+                  Usulan sistem: <Text style={{ fontWeight: '700' }}>{formatRupiah(usulan.harga)}/kg</Text>
+                </Text>
+                <Text style={s.keteranganUsulan}>{usulan.keterangan}</Text>
+              </View>
               {keAngka(harga) !== Number(usulan.harga) ? (
                 <Pressable onPress={() => setHarga(String(Math.round(usulan.harga)))} style={s.tombolUsulan}>
                   <Text style={s.teksTombolUsulan}>Pakai harga usulan</Text>
@@ -444,12 +431,12 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
             keyboardType="number-pad"
             maxLength={9}
             galat={galat.harga}
-            gayaWadah={{ marginBottom: 8 }}
+            gayaWadah={{ marginBottom: 4 }}
           />
           {hargaValid ? (
             <Text style={s.info}>
               {formatRupiah(hargaAngka)} per kg
-              {total > 0 ? ` - perkiraan nilai lot ${formatRupiah(hargaAngka * total)}` : ''}
+              {total > 0 ? ` | perkiraan nilai lot ${formatRupiah(hargaAngka * total)}` : ''}
             </Text>
           ) : harga.trim() === '' ? (
             <KotakPesan
@@ -458,19 +445,19 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
               gaya={{ marginTop: 4 }}
             />
           ) : null}
-        </View>
+        </Bagian>
 
-        <KotakPesan teks={pesan} gaya={{ marginBottom: 12 }} />
+        <KotakPesan teks={pesan} gaya={{ marginHorizontal: 16, marginTop: 10 }} />
       </FormGulir>
 
       {/* Tombol utama dalam jangkauan ibu jari */}
       <View style={s.bilahBawah}>
-        <Text style={s.ringkasBawah}>
-          {keranjang.length} keranjang - {formatKg(total)}
-        </Text>
+        <View style={s.barisRingkasBawah}>
+          <Text style={s.ringkasBawah}>{keranjang.length} keranjang</Text>
+          <Text style={s.ringkasBawahTebal}>{formatKg(total)}</Text>
+        </View>
         <Tombol
           judul="Buat Lot dan Cetak"
-          ikon="cetak"
           onPress={simpan}
           memuat={menyimpan}
           nonaktif={keranjang.length === 0}
@@ -505,79 +492,56 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
 
 const s = StyleSheet.create({
   bilahKembali: {
-    backgroundColor: warna.putih, borderBottomWidth: 1, borderBottomColor: '#E4EBF1',
-    paddingHorizontal: 8, paddingVertical: 4,
+    backgroundColor: warna.putih, borderBottomWidth: 1, borderBottomColor: warna.garisHalus,
+    paddingHorizontal: 8, paddingVertical: 2,
   },
   tombolKembali: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, paddingHorizontal: 8, alignSelf: 'flex-start' },
   teksKembali: { color: warna.utama, fontSize: ukuran.hurufNormal, fontWeight: '600' },
-  isi: { padding: 16, paddingBottom: 24 },
+  isi: { paddingBottom: 24 },
   judul: { fontSize: 18, fontWeight: '700', color: warna.teks },
-  grade: { fontWeight: '500', color: warna.teksRedup },
-  redup: { fontSize: 13, color: warna.teksRedup, marginTop: 2 },
-  segmen: {
-    flexDirection: 'row', backgroundColor: warna.putih, borderRadius: 4, padding: 4,
-    borderWidth: 1, borderColor: warna.garis, marginTop: 14, marginBottom: 12,
-  },
-  pilihSegmen: {
-    flex: 1, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center',
-    minHeight: 44, borderRadius: 4,
-  },
-  pilihSegmenAktif: { backgroundColor: warna.utama },
-  teksSegmen: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.utama },
-  kartuBerat: { backgroundColor: warna.teks, borderRadius: 6, padding: 16 },
+  grade: { fontWeight: '400', color: warna.teksRedup },
+  redup: { fontSize: 12, color: warna.teksRedup, marginTop: 2 },
+  kartuBerat: { backgroundColor: '#102A43', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 12, marginTop: 12 },
   barisStatus: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  titikHijau: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#32D583' },
-  teksTerhubung: { flex: 1, color: '#D9E8F0', fontSize: 13, fontWeight: '500' },
-  chip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
-  teksChip: { fontSize: 13, fontWeight: '700' },
-  barisAngka: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginVertical: 8 },
+  titikHijau: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#32D583' },
+  teksTerhubung: { flex: 1, color: '#BCCCDC', fontSize: 12 },
+  teksChip: { fontSize: 12, fontWeight: '700' },
+  barisAngka: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginVertical: 6 },
   angkaBerat: { color: warna.putih, fontSize: 60, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  satuan: { color: '#D9E8F0', fontSize: 20, fontWeight: '600', marginLeft: 8, marginBottom: 12 },
-  petunjuk: { color: '#D9E8F0', fontSize: 14, textAlign: 'center' },
-  barisTombol: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  kartuManual: {
-    backgroundColor: warna.putih, borderRadius: 6, padding: 14,
-    borderWidth: 1, borderColor: '#E4EBF1',
-  },
-  barisManual: { flexDirection: 'row', gap: 10, alignItems: 'flex-end' },
-  teksGalat: { color: warna.galat, fontSize: 13, marginTop: 6, fontWeight: '500' },
-  kartu: {
-    backgroundColor: warna.putih, borderRadius: 6, padding: 14, marginTop: 14, marginBottom: 10,
-    borderWidth: 1, borderColor: '#E4EBF1',
-  },
-  barisJudulKartu: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  judulKartu: { flex: 1, fontSize: ukuran.hurufSedang, fontWeight: '700', color: warna.teks, marginBottom: 4 },
-  hitungan: { fontSize: 14, fontWeight: '700', color: warna.teksRedup },
-  kosong: { fontSize: 14, color: warna.teksRedup, paddingVertical: 8 },
-  barisKeranjang: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44,
-    borderBottomWidth: 1, borderBottomColor: '#EEF2F6',
-  },
-  namaKeranjang: { fontSize: ukuran.hurufNormal, color: warna.teks },
-  tagManual: { backgroundColor: warna.peringatanLatar, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 2 },
-  teksTagManual: { color: warna.peringatan, fontSize: 11, fontWeight: '700' },
-  beratKeranjang: { marginLeft: 'auto', fontSize: ukuran.hurufNormal, fontWeight: '700', color: warna.teks },
-  tombolHapus: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  garis: { height: 1, backgroundColor: warna.garis, marginVertical: 10 },
-  barisTotal: { flexDirection: 'row', alignItems: 'flex-end' },
-  labelKecil: { fontSize: 11, fontWeight: '700', color: warna.teksRedup },
-  total: { fontSize: 22, fontWeight: '700', color: warna.utama, marginTop: 2 },
-  selisih: { fontSize: 18, fontWeight: '700', color: warna.teks, marginTop: 2 },
-  info: { fontSize: 13, color: warna.teksRedup, marginTop: 8 },
+  satuan: { color: '#BCCCDC', fontSize: 18, fontWeight: '600', marginLeft: 8, marginBottom: 12 },
+  petunjuk: { color: '#BCCCDC', fontSize: 13, textAlign: 'center' },
+  barisTombol: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  catatanManual: { fontSize: 12, color: warna.teksRedup, marginBottom: 10, lineHeight: 17 },
+  barisManual: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
+  teksGalat: { color: warna.galat, fontSize: 12, marginTop: 6 },
+  hitungan: { fontSize: 13, fontWeight: '700', color: warna.teksRedup },
+  tombolHapus: { width: 32, height: 28, alignItems: 'flex-end', justifyContent: 'center' },
+  barisTotal: { flexDirection: 'row', alignItems: 'flex-end', marginTop: 10 },
+  labelKecil: { fontSize: 12, color: warna.teksRedup },
+  total: { fontSize: 22, fontWeight: '700', color: warna.utama, marginTop: 2, fontVariant: ['tabular-nums'] },
+  selisih: { fontSize: 16, fontWeight: '700', color: warna.teks, marginTop: 2 },
+  info: { fontSize: 12, color: warna.teksRedup, marginTop: 6 },
   panelSelisih: {
-    backgroundColor: warna.galatLatar, borderWidth: 1, borderColor: warna.galat,
-    borderRadius: 6, padding: 14, marginBottom: 14,
+    backgroundColor: warna.putih, borderLeftWidth: 3, borderLeftColor: warna.galat,
+    paddingHorizontal: 14, paddingVertical: 12, marginTop: 8,
+    borderTopWidth: 1, borderBottomWidth: 1, borderColor: warna.garisHalus,
   },
-  judulSelisih: { fontSize: ukuran.hurufSedang, fontWeight: '700', color: warna.galat },
-  teksSelisih: { fontSize: 14, color: warna.teks, marginTop: 4, lineHeight: 19 },
-  kotakUsulan: { backgroundColor: warna.utamaMuda, borderRadius: 6, padding: 12, marginBottom: 12 },
-  teksUsulan: { fontSize: ukuran.hurufNormal, color: warna.utama },
-  keteranganUsulan: { fontSize: 13, color: warna.teksRedup, marginTop: 2 },
-  tombolUsulan: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
-  teksTombolUsulan: { color: warna.utama, fontWeight: '700', fontSize: 14, textDecorationLine: 'underline' },
+  judulSelisih: { fontSize: 15, fontWeight: '700', color: warna.galat },
+  teksSelisih: { fontSize: 13, color: warna.teks, marginTop: 4, lineHeight: 18 },
+  wadahAlasan: { backgroundColor: warna.putih, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderColor: warna.garisHalus },
+  kotakUsulan: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, paddingBottom: 10, marginBottom: 10,
+    borderBottomWidth: 1, borderBottomColor: warna.garisHalus,
+  },
+  teksUsulan: { fontSize: 14, color: warna.teks },
+  keteranganUsulan: { fontSize: 12, color: warna.teksRedup, marginTop: 2 },
+  tombolUsulan: { minHeight: 36, justifyContent: 'center' },
+  teksTombolUsulan: { color: warna.utama, fontWeight: '600', fontSize: 13 },
   bilahBawah: {
-    backgroundColor: warna.putih, borderTopWidth: 1, borderTopColor: '#E4EBF1',
+    backgroundColor: warna.putih, borderTopWidth: 1, borderTopColor: warna.garisHalus,
     paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12,
   },
-  ringkasBawah: { fontSize: 13, color: warna.teksRedup, textAlign: 'center', marginBottom: 6, fontWeight: '500' },
+  barisRingkasBawah: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  ringkasBawah: { fontSize: 13, color: warna.teksRedup },
+  ringkasBawahTebal: { fontSize: 13, color: warna.teks, fontWeight: '700' },
 });
