@@ -102,7 +102,7 @@ export default function DetailKedatangan({ kedatangan, onMuatUlang, onTimbang, o
                     ikon="qr"
                     jenis="garis"
                     onPress={() => onLihatLabel(lot)}
-                    gaya={{ minHeight: 48, paddingHorizontal: 14 }}
+                    gaya={{ minHeight: 44, paddingHorizontal: 14 }}
                   />
                 </View>
               ) : (
@@ -126,31 +126,31 @@ const s = StyleSheet.create({
     backgroundColor: warna.putih, borderBottomWidth: 1, borderBottomColor: '#E4EBF1',
     paddingHorizontal: 8, paddingVertical: 4,
   },
-  tombolKembali: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, paddingHorizontal: 8, alignSelf: 'flex-start' },
-  teksKembali: { color: warna.utama, fontSize: ukuran.hurufNormal, fontWeight: '700' },
+  tombolKembali: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, paddingHorizontal: 8, alignSelf: 'flex-start' },
+  teksKembali: { color: warna.utama, fontSize: ukuran.hurufNormal, fontWeight: '600' },
   isi: { padding: 16, paddingBottom: 40 },
   kepala: {
-    backgroundColor: warna.putih, borderRadius: 14, padding: 16, marginBottom: 14,
+    backgroundColor: warna.putih, borderRadius: 6, padding: 16, marginBottom: 10,
     borderWidth: 1, borderColor: '#E4EBF1',
   },
   barisAtas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  nomor: { fontSize: 22, fontWeight: '800', color: warna.utama, letterSpacing: 0.5 },
-  namaKapal: { fontSize: 20, fontWeight: '800', color: warna.teks, marginTop: 6 },
-  redup: { fontSize: 14, color: warna.teksRedup, marginTop: 2 },
+  nomor: { fontSize: 18, fontWeight: '700', color: warna.utama },
+  namaKapal: { fontSize: 17, fontWeight: '700', color: warna.teks, marginTop: 6 },
+  redup: { fontSize: 13, color: warna.teksRedup, marginTop: 2 },
   bilahKemajuan: { height: 10, borderRadius: 5, backgroundColor: warna.abu, marginTop: 14, overflow: 'hidden' },
   isiKemajuan: { height: 10, borderRadius: 5, backgroundColor: warna.sukses },
-  teksKemajuan: { fontSize: 14, fontWeight: '700', color: warna.teks, marginTop: 6 },
+  teksKemajuan: { fontSize: 13, fontWeight: '600', color: warna.teks, marginTop: 6 },
   kartu: {
-    backgroundColor: warna.putih, borderRadius: 14, padding: 14, marginBottom: 10,
+    backgroundColor: warna.putih, borderRadius: 6, padding: 14, marginBottom: 10,
     borderWidth: 1, borderColor: '#E4EBF1', borderLeftWidth: 5, borderLeftColor: warna.peringatan,
   },
   kartuSelesai: { borderLeftColor: warna.sukses },
-  nomorBaris: { fontSize: 12, fontWeight: '800', color: warna.teksRedup, letterSpacing: 0.6 },
-  jenis: { fontSize: ukuran.hurufSedang, fontWeight: '800', color: warna.teks, marginTop: 6 },
-  grade: { fontWeight: '600', color: warna.teksRedup },
+  nomorBaris: { fontSize: 11, fontWeight: '700', color: warna.teksRedup },
+  jenis: { fontSize: ukuran.hurufSedang, fontWeight: '700', color: warna.teks, marginTop: 6 },
+  grade: { fontWeight: '500', color: warna.teksRedup },
   infoLot: {
     flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12,
     paddingTop: 12, borderTopWidth: 1, borderTopColor: '#E4EBF1',
   },
-  kodeLot: { fontSize: ukuran.hurufNormal, fontWeight: '800', color: warna.teks, letterSpacing: 0.5 },
+  kodeLot: { fontSize: ukuran.hurufNormal, fontWeight: '700', color: warna.teks },
 });

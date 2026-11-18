@@ -63,15 +63,15 @@ export default function PilihWaktu({ nilai, onUbah, galat }) {
 
 const s = StyleSheet.create({
   barisLabel: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  label: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.teks },
+  label: { fontSize: ukuran.hurufNormal, fontWeight: '500', color: warna.teks },
   tombolSekarang: { minHeight: 32, justifyContent: 'center', paddingHorizontal: 4 },
-  teksSekarang: { color: warna.utama, fontWeight: '700', fontSize: 15 },
+  teksSekarang: { color: warna.utama, fontWeight: '600', fontSize: 14 },
   baris: { flexDirection: 'row', gap: 10 },
   kotak: {
-    height: ukuran.tinggiInput, borderWidth: 1.5, borderColor: warna.garis, borderRadius: ukuran.radius,
+    height: ukuran.tinggiInput, borderWidth: 1, borderColor: warna.garis, borderRadius: ukuran.radius,
     paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: warna.putih,
   },
   kotakGalat: { borderColor: warna.galat, borderWidth: 2 },
   teks: { fontSize: ukuran.hurufNormal, color: warna.teks, flexShrink: 1 },
-  teksGalat: { color: warna.galat, fontSize: 14, marginTop: 6, fontWeight: '600' },
+  teksGalat: { color: warna.galat, fontSize: 13, marginTop: 6, fontWeight: '500' },
 });

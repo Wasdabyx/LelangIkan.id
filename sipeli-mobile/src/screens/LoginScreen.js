@@ -116,7 +116,7 @@ export default function LoginScreen({ onBerhasil, pesanAwal, infoAwal, namaAwal,
                 />
               </View>
             )}
-            <Text style={[gaya.judul, keyboardTampil && { fontSize: 26 }]}>
+            <Text style={[gaya.judul, keyboardTampil && { fontSize: 20 }]}>
               LelangIkan<Text style={gaya.judulId}>.id</Text>
             </Text>
             {!keyboardTampil && (
@@ -205,7 +205,7 @@ export default function LoginScreen({ onBerhasil, pesanAwal, infoAwal, namaAwal,
               {memuat ? (
                 <ActivityIndicator color={warna.putih} />
               ) : (
-                <Text style={gaya.teksTombol}>MASUK</Text>
+                <Text style={gaya.teksTombol}>Masuk</Text>
               )}
             </Pressable>
 
@@ -225,18 +225,18 @@ export default function LoginScreen({ onBerhasil, pesanAwal, infoAwal, namaAwal,
 
 const gaya = StyleSheet.create({
   layar: { flex: 1, backgroundColor: warna.utama },
-  isi: { flexGrow: 1, justifyContent: 'center', padding: 20 },
+  isi: { flexGrow: 1, justifyContent: 'center', padding: 16 },
   kepala: { alignItems: 'center', marginBottom: 24 },
   logo: { marginBottom: 12 },
   gambarLogo: { width: 96, height: 96 },
-  judul: { fontSize: 34, fontWeight: '800', color: warna.putih, letterSpacing: 0.5 },
+  judul: { fontSize: 26, fontWeight: '700', color: warna.putih },
   judulId: { color: '#8FD3F4' },
   subjudul: { fontSize: ukuran.hurufNormal, color: '#D9E8F0', marginTop: 4 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 16, padding: 20 },
-  judulKartu: { fontSize: 22, fontWeight: '700', color: warna.teks, marginBottom: 16 },
-  label: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.teks, marginBottom: 6 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  judulKartu: { fontSize: 18, fontWeight: '600', color: warna.teks, marginBottom: 16 },
+  label: { fontSize: ukuran.hurufNormal, fontWeight: '500', color: warna.teks, marginBottom: 6 },
   input: {
-    height: ukuran.tinggiInput, borderWidth: 1.5, borderColor: warna.garis,
+    height: ukuran.tinggiInput, borderWidth: 1, borderColor: warna.garis,
     borderRadius: ukuran.radius, paddingHorizontal: 14, fontSize: ukuran.hurufSedang,
     color: warna.teks, backgroundColor: warna.putih,
   },
@@ -244,24 +244,24 @@ const gaya = StyleSheet.create({
   barisSandi: { flexDirection: 'row', alignItems: 'center', paddingRight: 4 },
   inputSandi: { flex: 1, fontSize: ukuran.hurufSedang, color: warna.teks, height: '100%' },
   tombolLihat: { paddingHorizontal: 10, minHeight: 44, justifyContent: 'center' },
-  teksLihat: { color: warna.utama, fontWeight: '700', fontSize: 14 },
-  teksGalat: { color: warna.galat, fontSize: 14, marginTop: 6, fontWeight: '600' },
+  teksLihat: { color: warna.utama, fontWeight: '600', fontSize: 13 },
+  teksGalat: { color: warna.galat, fontSize: 13, marginTop: 6, fontWeight: '500' },
   kotakGalat: {
     backgroundColor: warna.galatLatar, borderColor: warna.galat, borderWidth: 1,
     borderRadius: ukuran.radius, padding: 12, marginBottom: 16,
   },
-  teksKotakGalat: { color: warna.galat, fontSize: 15, fontWeight: '600' },
+  teksKotakGalat: { color: warna.galat, fontSize: 14, fontWeight: '500' },
   kotakInfo: {
     backgroundColor: warna.suksesLatar, borderColor: warna.sukses, borderWidth: 1,
     borderRadius: ukuran.radius, padding: 12, marginBottom: 16,
   },
-  teksKotakInfo: { color: warna.sukses, fontSize: 15, fontWeight: '600', lineHeight: 21 },
+  teksKotakInfo: { color: warna.sukses, fontSize: 14, fontWeight: '500', lineHeight: 19 },
   tautan: { alignItems: 'center', minHeight: 44, justifyContent: 'center', marginTop: 12 },
-  teksTautan: { color: warna.teksRedup, fontSize: 15 },
-  teksTautanTebal: { color: warna.utama, fontWeight: '800' },
+  teksTautan: { color: warna.teksRedup, fontSize: 14 },
+  teksTautanTebal: { color: warna.utama, fontWeight: '700' },
   tombol: {
     height: ukuran.tinggiTombol, backgroundColor: warna.utama, borderRadius: ukuran.radius,
     alignItems: 'center', justifyContent: 'center', marginTop: 24,
   },
-  teksTombol: { color: warna.putih, fontSize: ukuran.hurufSedang, fontWeight: '800', letterSpacing: 1 },
+  teksTombol: { color: warna.putih, fontSize: ukuran.hurufSedang, fontWeight: '700' },
 });

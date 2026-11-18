@@ -76,9 +76,9 @@ export default function DetailTagihan({ idTransaksi, onKembali }) {
 }
 
 const s = StyleSheet.create({
-  tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 16 },
   isi: { padding: 16, paddingBottom: 32, gap: 12 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 16, padding: 16 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
   qr: { alignItems: 'center', marginTop: 16, gap: 8 },
-  teksQr: { fontSize: 13, color: warna.teksRedup, textAlign: 'center' },
+  teksQr: { fontSize: 12, color: warna.teksRedup, textAlign: 'center' },
 });

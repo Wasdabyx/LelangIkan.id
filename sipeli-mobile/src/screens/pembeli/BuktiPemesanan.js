@@ -16,13 +16,13 @@ export default function BuktiPemesanan({ data, baru, onKembali }) {
               <Ikon nama="centang" ukuran={40} warna={warna.sukses} tebal={2.6} />
             </View>
             <Text style={s.judul}>Pemesanan Berhasil</Text>
-            <Text style={s.teks}>Anda terdaftar sebagai peserta lelang lot ini. Bukti juga dikirim ke surel Anda.</Text>
+            <Text style={s.teks}>Anda terdaftar sebagai peserta lelang lot ini.</Text>
           </>
         ) : (
           <Text style={s.judul}>Bukti Pemesanan</Text>
         )}
 
-        <Text style={s.labelKode}>KODE PEMESANAN</Text>
+        <Text style={s.labelKode}>Kode pemesanan</Text>
         <Text style={s.kode} selectable>{data.kode_pemesanan}</Text>
 
         <View style={s.qr}>
@@ -52,7 +52,7 @@ function Baris({ label, nilai, tebal }) {
   return (
     <View style={s.baris}>
       <Text style={s.label}>{label}</Text>
-      <Text style={[s.nilai, tebal && { fontWeight: '800' }]}>{nilai}</Text>
+      <Text style={[s.nilai, tebal && { fontWeight: '700' }]}>{nilai}</Text>
     </View>
   );
 }
@@ -60,19 +60,19 @@ function Baris({ label, nilai, tebal }) {
 const s = StyleSheet.create({
   wadah: { flex: 1, backgroundColor: warna.latar },
   isi: { padding: 16, paddingBottom: 32 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 16, padding: 20 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
   lingkaran: {
     width: 72, height: 72, borderRadius: 36, backgroundColor: warna.suksesLatar,
     alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 10,
   },
-  judul: { fontSize: 22, fontWeight: '700', color: warna.teks, textAlign: 'center' },
-  teks: { fontSize: 15, color: warna.teksRedup, textAlign: 'center', marginTop: 6, lineHeight: 22 },
-  labelKode: { fontSize: 13, color: warna.teksRedup, textAlign: 'center', marginTop: 18, letterSpacing: 1 },
-  kode: { fontSize: 28, fontWeight: '800', color: warna.sukses, textAlign: 'center', marginTop: 4, letterSpacing: 1 },
+  judul: { fontSize: 18, fontWeight: '600', color: warna.teks, textAlign: 'center' },
+  teks: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', marginTop: 6, lineHeight: 20 },
+  labelKode: { fontSize: 12, color: warna.teksRedup, textAlign: 'center', marginTop: 18 },
+  kode: { fontSize: 22, fontWeight: '700', color: warna.sukses, textAlign: 'center', marginTop: 4 },
   qr: { alignItems: 'center', marginTop: 14 },
   ringkasan: { backgroundColor: warna.latar, borderRadius: ukuran.radius, padding: 12, marginTop: 16, gap: 8 },
   baris: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  label: { fontSize: 14, color: warna.teksRedup },
-  nilai: { fontSize: 14, color: warna.teks, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
-  catatan: { fontSize: 13, color: warna.teksRedup, textAlign: 'center', marginTop: 14, lineHeight: 19 },
+  label: { fontSize: 13, color: warna.teksRedup },
+  nilai: { fontSize: 13, color: warna.teks, fontWeight: '500', flexShrink: 1, textAlign: 'right' },
+  catatan: { fontSize: 12, color: warna.teksRedup, textAlign: 'center', marginTop: 14, lineHeight: 17 },
 });

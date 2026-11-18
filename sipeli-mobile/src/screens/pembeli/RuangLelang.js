@@ -10,9 +10,9 @@ import { ukuran, warna } from '../../tema';
 import { hanyaAngka } from '../../validasi';
 
 const POSISI = {
-  TERTINGGI: { teks: 'ANDA PENAWAR TERTINGGI', latar: warna.suksesLatar, warna: warna.sukses },
-  TERTINGGAL: { teks: 'ANDA TERTINGGAL - AJUKAN TAWARAN BARU', latar: warna.galatLatar, warna: warna.galat },
-  BELUM_MENAWAR: { teks: 'ANDA BELUM MENAWAR', latar: warna.abu, warna: warna.teksRedup },
+  TERTINGGI: { teks: 'Anda penawar tertinggi', latar: warna.suksesLatar, warna: warna.sukses },
+  TERTINGGAL: { teks: 'Anda tertinggal, ajukan tawaran baru', latar: warna.galatLatar, warna: warna.galat },
+  BELUM_MENAWAR: { teks: 'Anda belum menawar', latar: warna.abu, warna: warna.teksRedup },
 };
 
 /**
@@ -135,7 +135,7 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
           </View>
 
           <View style={s.hargaKotak}>
-            <Text style={s.labelHarga}>{data.harga_tertinggi ? 'HARGA TERTINGGI' : 'HARGA PEMBUKAAN'}</Text>
+            <Text style={s.labelHarga}>{data.harga_tertinggi ? 'Harga tertinggi' : 'Harga pembukaan'}</Text>
             <Text style={s.harga} accessibilityLabel="Harga tertinggi">
               {formatRupiah(data.harga_tertinggi ?? data.harga_pembukaan)}
               <Text style={s.perKg}> /kg</Text>
@@ -157,7 +157,7 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
         {hasil ? (
           <View style={[s.kartu, s.hasil, hasil.menang ? s.hasilMenang : null]}>
             <Text style={[s.judulHasil, { color: hasil.menang ? warna.sukses : warna.teks }]}>
-              {hasil.menang ? 'SELAMAT, ANDA MENANG' : hasil.terjual ? 'LELANG SELESAI' : 'LOT TIDAK TERJUAL'}
+              {hasil.menang ? 'Selamat, Anda menang' : hasil.terjual ? 'Lelang selesai' : 'Lot tidak terjual'}
             </Text>
             {hasil.terjual ? (
               <BarisRincian label="Harga akhir" nilai={`${formatRupiah(hasil.harga_akhir_per_kg)}/kg`} tebal />
@@ -166,7 +166,7 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
               <>
                 <BarisRincian label="Nomor transaksi" nilai={hasil.kode_transaksi} tebal />
                 <BarisRincian label="Total tagihan" nilai={formatRupiah(hasil.total_tagihan)} besar />
-                <Text style={s.catatan}>Silakan bayar ke Kasir TPI dengan menyebutkan nomor transaksi di atas.</Text>
+                <Text style={s.catatan}>Bayar di Kasir TPI dengan nomor transaksi di atas.</Text>
                 <Tombol judul="Lihat Tagihan" ikon="dompet" onPress={() => onLihatTagihan(hasil.id_transaksi)} gaya={{ marginTop: 6 }} />
               </>
             ) : hasil.terjual ? (
@@ -203,14 +203,14 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
             </View>
             <Text style={s.perkiraan}>Perkiraan total: {formatRupiah(Math.round(total || 0))}</Text>
             <Tombol
-              judul={`TAWAR ${formatRupiah(Number(harga) || 0)}/kg`}
+              judul={`Tawar ${formatRupiah(Number(harga) || 0)}/kg`}
               onPress={periksa}
               memuat={mengirim}
               nonaktif={data.posisi === 'TERTINGGI'}
               gaya={{ marginTop: 10 }}
             />
             {data.posisi === 'TERTINGGI' ? (
-              <Text style={s.catatan}>Anda sedang memimpin. Tunggu sampai ada peserta lain yang menawar lebih tinggi.</Text>
+              <Text style={s.catatan}>Anda sedang memimpin.</Text>
             ) : null}
           </View>
         )}
@@ -223,7 +223,7 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
             data.riwayat.map((r, i) => (
               <View key={i} style={[s.barisTawar, r.tertinggi && s.barisTertinggi]}>
                 <Text style={s.waktu}>{r.waktu}</Text>
-                <Text style={[s.namaTawar, r.penawar === 'Anda' && { fontWeight: '800', color: warna.utama }]}>{r.penawar}</Text>
+                <Text style={[s.namaTawar, r.penawar === 'Anda' && { fontWeight: '700', color: warna.utama }]}>{r.penawar}</Text>
                 <Text style={[s.nilaiTawar, r.tertinggi && { color: warna.sukses }]}>{formatRupiah(r.harga_per_kg)}</Text>
               </View>
             ))
@@ -245,40 +245,40 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
 }
 
 const s = StyleSheet.create({
-  tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 16 },
   isi: { padding: 16, paddingBottom: 32, gap: 12 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 16, padding: 16 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
   barisJudul: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  kode: { fontSize: 20, fontWeight: '800', color: warna.teks },
-  psn: { fontSize: 13, fontWeight: '700', color: warna.sukses },
-  jenis: { fontSize: 15, color: warna.teks, fontWeight: '600', marginTop: 4 },
+  kode: { fontSize: 17, fontWeight: '700', color: warna.teks },
+  psn: { fontSize: 12, fontWeight: '600', color: warna.sukses },
+  jenis: { fontSize: 14, color: warna.teks, fontWeight: '500', marginTop: 4 },
   hargaKotak: { alignItems: 'center', marginTop: 14 },
-  labelHarga: { fontSize: 13, fontWeight: '800', color: warna.teksRedup, letterSpacing: 1 },
-  harga: { fontSize: 34, fontWeight: '800', color: warna.teks, marginTop: 2 },
-  perKg: { fontSize: 18, fontWeight: '600', color: warna.teksRedup },
-  info: { fontSize: 13, color: warna.teksRedup, marginTop: 2, textAlign: 'center' },
+  labelHarga: { fontSize: 12, fontWeight: '700', color: warna.teksRedup },
+  harga: { fontSize: 26, fontWeight: '700', color: warna.teks, marginTop: 2 },
+  perKg: { fontSize: 16, fontWeight: '500', color: warna.teksRedup },
+  info: { fontSize: 12, color: warna.teksRedup, marginTop: 2, textAlign: 'center' },
   posisi: { borderRadius: ukuran.radius, padding: 12, marginTop: 14, alignItems: 'center' },
-  teksPosisi: { fontSize: 15, fontWeight: '800', textAlign: 'center' },
-  tawaranSaya: { fontSize: 13, color: warna.teksRedup, marginTop: 2 },
-  subjudul: { fontSize: 17, fontWeight: '800', color: warna.teks, marginBottom: 10 },
-  minimal: { fontSize: 13, fontWeight: '700', color: warna.teksRedup, marginTop: -8, marginBottom: 10 },
+  teksPosisi: { fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  tawaranSaya: { fontSize: 12, color: warna.teksRedup, marginTop: 2 },
+  subjudul: { fontSize: 15, fontWeight: '700', color: warna.teks, marginBottom: 10 },
+  minimal: { fontSize: 12, fontWeight: '600', color: warna.teksRedup, marginTop: -8, marginBottom: 10 },
   cepat: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   cip: {
-    minHeight: 44, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1.5, borderColor: warna.utama,
+    minHeight: 44, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: warna.utama,
     alignItems: 'center', justifyContent: 'center', backgroundColor: warna.putih,
   },
-  teksCip: { fontSize: 14, fontWeight: '700', color: warna.utama },
-  perkiraan: { fontSize: 14, color: warna.teksRedup, marginTop: 10 },
-  catatan: { fontSize: 13, color: warna.teksRedup, lineHeight: 19, marginTop: 6 },
-  hasil: { gap: 8, borderWidth: 1.5, borderColor: warna.garis },
+  teksCip: { fontSize: 13, fontWeight: '600', color: warna.utama },
+  perkiraan: { fontSize: 13, color: warna.teksRedup, marginTop: 10 },
+  catatan: { fontSize: 12, color: warna.teksRedup, lineHeight: 17, marginTop: 6 },
+  hasil: { gap: 8, borderWidth: 1, borderColor: warna.garis },
   hasilMenang: { backgroundColor: warna.suksesLatar, borderColor: warna.sukses },
-  judulHasil: { fontSize: 19, fontWeight: '800', textAlign: 'center', letterSpacing: 0.5, marginBottom: 4 },
+  judulHasil: { fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 4 },
   barisTawar: {
     flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingHorizontal: 8,
     borderBottomWidth: 1, borderBottomColor: '#E4EBF1',
   },
-  barisTertinggi: { backgroundColor: warna.suksesLatar, borderRadius: 8 },
-  waktu: { fontSize: 13, color: warna.teksRedup, fontVariant: ['tabular-nums'] },
-  namaTawar: { flex: 1, fontSize: 15, color: warna.teks },
-  nilaiTawar: { fontSize: 15, fontWeight: '700', color: warna.teks },
+  barisTertinggi: { backgroundColor: warna.suksesLatar, borderRadius: 4 },
+  waktu: { fontSize: 12, color: warna.teksRedup, fontVariant: ['tabular-nums'] },
+  namaTawar: { flex: 1, fontSize: 14, color: warna.teks },
+  nilaiTawar: { fontSize: 14, fontWeight: '600', color: warna.teks },
 });

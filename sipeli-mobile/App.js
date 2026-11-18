@@ -164,5 +164,5 @@ export default function App() {
 
 const gaya = StyleSheet.create({
   memuat: { flex: 1, backgroundColor: warna.utama, alignItems: 'center', justifyContent: 'center' },
-  teksMemuat: { color: warna.putih, marginTop: 12, fontSize: 16 },
+  teksMemuat: { color: warna.putih, marginTop: 12, fontSize: 15 },
 });

@@ -45,7 +45,7 @@ export default function PeriksaNota() {
             <View style={[s.status, { backgroundColor: hasil.asli ? warna.suksesLatar : warna.galatLatar }]}>
               <Ikon nama={hasil.asli ? 'centang' : 'peringatan'} ukuran={32} warna={hasil.asli ? warna.sukses : warna.galat} />
               <Text style={[s.judulStatus, { color: hasil.asli ? warna.sukses : warna.galat }]}>
-                {hasil.asli ? 'NOTA ASLI' : 'NOTA TIDAK DIKENALI'}
+                {hasil.asli ? 'Nota asli' : 'Nota tidak dikenali'}
               </Text>
               <Text style={s.teks}>{hasil.pesan}</Text>
             </View>
@@ -70,9 +70,9 @@ export default function PeriksaNota() {
 
 const s = StyleSheet.create({
   isi: { padding: 16, paddingBottom: 32, gap: 12 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 16, padding: 16 },
-  judul: { fontSize: 18, fontWeight: '800', color: warna.teks, marginBottom: 6 },
-  teks: { fontSize: 14, color: warna.teksRedup, lineHeight: 20, textAlign: 'center' },
-  status: { borderRadius: 12, padding: 14, alignItems: 'center', gap: 6 },
-  judulStatus: { fontSize: 20, fontWeight: '800', letterSpacing: 1 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  judul: { fontSize: 16, fontWeight: '700', color: warna.teks, marginBottom: 6 },
+  teks: { fontSize: 13, color: warna.teksRedup, lineHeight: 18, textAlign: 'center' },
+  status: { borderRadius: 4, padding: 14, alignItems: 'center', gap: 6 },
+  judulStatus: { fontSize: 17, fontWeight: '700' },
 });

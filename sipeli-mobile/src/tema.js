@@ -5,7 +5,7 @@ export const warna = {
   utamaTekan: '#083A50',
   utamaMuda: '#E6F1F6',
   aksen: '#2E8BC0',
-  latar: '#F1F5F8',
+  latar: '#F5F7FA',
   kartu: '#FFFFFF',
   teks: '#102A43',
   teksRedup: '#486581',
@@ -21,10 +21,10 @@ export const warna = {
 };
 
 export const ukuran = {
-  tinggiTombol: 56,
-  tinggiInput: 52,
-  radius: 10,
-  hurufBesar: 28,
-  hurufSedang: 18,
-  hurufNormal: 16,
+  tinggiTombol: 46,
+  tinggiInput: 44,
+  radius: 6,
+  hurufBesar: 22,
+  hurufSedang: 15,
+  hurufNormal: 14,
 };

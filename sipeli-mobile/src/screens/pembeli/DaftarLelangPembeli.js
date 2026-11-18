@@ -54,7 +54,7 @@ export default function DaftarLelangPembeli({ tab, onMasukRuang, onBukaTagihan }
           {galat ? <KotakPesan teks={galat} gaya={{ marginBottom: 12 }} /> : null}
           <Text style={s.keterangan}>
             {tab === 'lelang'
-              ? 'Sesi lelang pada lot yang sudah Anda pesan. Ketuk sesi yang berjalan untuk masuk ruang lelang.'
+              ? 'Lelang untuk lot yang sudah Anda pesan.'
               : belumLunas > 0
                 ? `${belumLunas} tagihan belum lunas. Bayar ke Kasir TPI dengan menyebutkan nomor transaksi.`
                 : 'Tagihan dari lot yang Anda menangkan.'}
@@ -66,7 +66,7 @@ export default function DaftarLelangPembeli({ tab, onMasukRuang, onBukaTagihan }
           <Ikon nama={tab === 'lelang' ? 'jam' : 'dompet'} ukuran={44} warna={warna.teksRedup} />
           <Text style={s.teksKosong}>
             {tab === 'lelang'
-              ? 'Belum ada sesi lelang pada lot yang Anda pesan. Sesi muncul di sini saat operator membukanya.'
+              ? 'Belum ada sesi lelang untuk lot yang Anda pesan.'
               : 'Belum ada tagihan.'}
           </Text>
         </View>
@@ -133,21 +133,21 @@ function KartuTagihan({ t, onPress }) {
 }
 
 const s = StyleSheet.create({
-  tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  isi: { padding: 16, paddingBottom: 32, gap: 12 },
-  keterangan: { fontSize: 14, color: warna.teksRedup, lineHeight: 20 },
+  tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  isi: { padding: 16, paddingBottom: 32, gap: 10 },
+  keterangan: { fontSize: 13, color: warna.teksRedup, lineHeight: 18 },
   kosong: { alignItems: 'center', padding: 32, gap: 12 },
-  teksKosong: { fontSize: 15, color: warna.teksRedup, textAlign: 'center', lineHeight: 22 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  teksKosong: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', lineHeight: 20 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
   kartuAktif: { borderColor: warna.utama, borderWidth: 2 },
   barisAtas: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  kode: { fontSize: 18, fontWeight: '800', color: warna.teks },
-  jenis: { fontSize: 15, fontWeight: '700', color: warna.teks, marginTop: 8 },
-  redup: { fontSize: 14, color: warna.teksRedup, marginTop: 4 },
-  total: { fontSize: 17, fontWeight: '800', color: warna.teks, marginTop: 4 },
+  kode: { fontSize: 16, fontWeight: '700', color: warna.teks },
+  jenis: { fontSize: 14, fontWeight: '600', color: warna.teks, marginTop: 8 },
+  redup: { fontSize: 13, color: warna.teksRedup, marginTop: 4 },
+  total: { fontSize: 15, fontWeight: '700', color: warna.teks, marginTop: 4 },
   masuk: {
-    marginTop: 12, minHeight: 48, borderRadius: 10, backgroundColor: warna.utama,
+    marginTop: 12, minHeight: 44, borderRadius: 6, backgroundColor: warna.utama,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
   },
-  teksMasuk: { color: warna.putih, fontSize: 16, fontWeight: '800' },
+  teksMasuk: { color: warna.putih, fontSize: 15, fontWeight: '700' },
 });

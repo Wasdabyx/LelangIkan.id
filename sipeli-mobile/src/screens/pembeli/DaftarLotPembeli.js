@@ -70,8 +70,8 @@ export default function DaftarLotPembeli({ tab, onPesan, onLihatBukti }) {
               {galat ? <KotakPesan teks={galat} gaya={{ marginBottom: 12 }} /> : null}
               <Text style={s.keterangan}>
                 {tab === 'lot'
-                  ? 'Pilih lot yang ingin Anda ikuti lelangnya. Kode OTP akan dikirim ke surel Anda untuk konfirmasi.'
-                  : 'Saat operator membuka sesi, lot muncul di tab Lelang dan Anda dapat langsung menawar.'}
+                  ? 'Kode OTP dikirim ke surel saat Anda ikut lelang.'
+                  : 'Lot yang sesinya dibuka akan muncul di tab Lelang.'}
               </Text>
             </>
           }
@@ -80,7 +80,7 @@ export default function DaftarLotPembeli({ tab, onPesan, onLihatBukti }) {
               <Ikon nama={tab === 'lot' ? 'ikan' : 'qr'} ukuran={44} warna={warna.teksRedup} />
               <Text style={s.teksKosong}>
                 {tab === 'lot'
-                  ? 'Belum ada lot yang menunggu lelang hari ini. Tarik ke bawah untuk memuat ulang.'
+                  ? 'Belum ada lot yang menunggu lelang hari ini.'
                   : 'Anda belum memesan lot apa pun.'}
               </Text>
             </View>
@@ -175,21 +175,21 @@ function Rincian({ label, nilai }) {
 
 const s = StyleSheet.create({
   wadah: { flex: 1, backgroundColor: warna.latar },
-  isi: { padding: 16, paddingBottom: 32, gap: 12 },
+  isi: { padding: 16, paddingBottom: 32, gap: 10 },
   tengah: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  keterangan: { fontSize: 14, color: warna.teksRedup, lineHeight: 20, marginBottom: 4 },
+  keterangan: { fontSize: 13, color: warna.teksRedup, lineHeight: 18, marginBottom: 4 },
   kosong: { alignItems: 'center', padding: 32, gap: 12 },
-  teksKosong: { fontSize: 15, color: warna.teksRedup, textAlign: 'center', lineHeight: 22 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  teksKosong: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', lineHeight: 20 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
   barisAtas: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  kodeLot: { fontSize: 18, fontWeight: '800', color: warna.teks, letterSpacing: 0.3 },
-  kodePesan: { fontSize: 18, fontWeight: '800', color: warna.sukses, letterSpacing: 0.3 },
-  jenis: { fontSize: ukuran.hurufNormal, fontWeight: '700', color: warna.teks, marginTop: 8 },
+  kodeLot: { fontSize: 16, fontWeight: '700', color: warna.teks },
+  kodePesan: { fontSize: 16, fontWeight: '700', color: warna.sukses },
+  jenis: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.teks, marginTop: 8 },
   grade: { color: warna.aksen },
-  rincian: { flexDirection: 'row', gap: 8, marginTop: 10, backgroundColor: warna.latar, borderRadius: 10, padding: 10 },
-  labelRincian: { fontSize: 12, color: warna.teksRedup },
-  nilaiRincian: { fontSize: 15, fontWeight: '700', color: warna.teks, marginTop: 2 },
+  rincian: { flexDirection: 'row', gap: 8, marginTop: 10, backgroundColor: warna.latar, borderRadius: 6, padding: 10 },
+  labelRincian: { fontSize: 11, color: warna.teksRedup },
+  nilaiRincian: { fontSize: 14, fontWeight: '600', color: warna.teks, marginTop: 2 },
   barisKapal: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
-  kapal: { fontSize: 14, color: warna.teksRedup },
-  teksRedup: { fontSize: 14, color: warna.teksRedup, marginTop: 4 },
+  kapal: { fontSize: 13, color: warna.teksRedup },
+  teksRedup: { fontSize: 13, color: warna.teksRedup, marginTop: 4 },
 });

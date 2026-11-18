@@ -52,7 +52,7 @@ export default function AntreanLot({ tab, onPilihLot, onBukaSesi }) {
           {galat ? <KotakPesan teks={galat} gaya={{ marginBottom: 12 }} /> : null}
           <Text style={s.keterangan}>
             {tab === 'antrean'
-              ? `${antrean.length} lot menunggu lelang, urut nomor lot. ${aktif > 0 ? `${aktif} sesi sedang berjalan.` : ''}`
+              ? `${antrean.length} lot menunggu lelang. ${aktif > 0 ? `${aktif} sesi sedang berjalan.` : ''}`
               : 'Sesi yang sedang berjalan dan yang sudah ditutup hari ini.'}
           </Text>
         </>
@@ -121,15 +121,15 @@ function KartuSesi({ sesi, onPress }) {
 }
 
 const s = StyleSheet.create({
-  tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  isi: { padding: 16, paddingBottom: 32, gap: 12 },
-  keterangan: { fontSize: 14, color: warna.teksRedup, lineHeight: 20 },
+  tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  isi: { padding: 16, paddingBottom: 32, gap: 10 },
+  keterangan: { fontSize: 13, color: warna.teksRedup, lineHeight: 18 },
   kosong: { alignItems: 'center', padding: 32, gap: 12 },
-  teksKosong: { fontSize: 15, color: warna.teksRedup, textAlign: 'center' },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  teksKosong: { fontSize: 14, color: warna.teksRedup, textAlign: 'center' },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
   barisAtas: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  kode: { fontSize: 18, fontWeight: '800', color: warna.teks },
-  jenis: { fontSize: 16, fontWeight: '700', color: warna.teks, marginTop: 8 },
+  kode: { fontSize: 16, fontWeight: '700', color: warna.teks },
+  jenis: { fontSize: 15, fontWeight: '600', color: warna.teks, marginTop: 8 },
   grade: { color: warna.aksen },
-  redup: { fontSize: 14, color: warna.teksRedup, marginTop: 4, lineHeight: 20 },
+  redup: { fontSize: 13, color: warna.teksRedup, marginTop: 4, lineHeight: 18 },
 });

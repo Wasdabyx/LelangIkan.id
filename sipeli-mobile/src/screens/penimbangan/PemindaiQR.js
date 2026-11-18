@@ -15,7 +15,7 @@ export default function PemindaiQR({
   onHasil,
   onTutup,
   petunjuk = 'Arahkan kamera ke kode QR kedatangan atau label lot',
-  alasanIzin = 'Kamera dipakai untuk memindai kode QR kedatangan dan label lot. Foto tidak disimpan.',
+  alasanIzin = 'Kamera dipakai untuk memindai QR kedatangan dan label lot.',
 }) {
   const [izin, mintaIzin] = useCameraPermissions();
   const [senter, setSenter] = useState(false);
@@ -120,24 +120,24 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8,
     backgroundColor: warna.utama,
   },
-  judul: { flex: 1, color: warna.putih, fontSize: 20, fontWeight: '800' },
+  judul: { flex: 1, color: warna.putih, fontSize: 17, fontWeight: '700' },
   tombolTutup: {
     flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 12,
-    borderWidth: 1.5, borderColor: warna.putih, borderRadius: 8,
+    borderWidth: 1, borderColor: warna.putih, borderRadius: 4,
   },
-  teksTutup: { color: warna.putih, fontWeight: '700', fontSize: 15 },
-  tengah: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  kartuIzin: { backgroundColor: warna.putih, borderRadius: 16, padding: 20, alignSelf: 'stretch' },
+  teksTutup: { color: warna.putih, fontWeight: '600', fontSize: 14 },
+  tengah: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  kartuIzin: { backgroundColor: warna.putih, borderRadius: 6, padding: 16, alignSelf: 'stretch', borderWidth: 1, borderColor: '#E4EBF1' },
   lingkaran: {
     width: 80, height: 80, borderRadius: 40, backgroundColor: warna.utamaMuda,
     alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 12,
   },
-  judulIzin: { fontSize: 20, fontWeight: '800', color: warna.teks, textAlign: 'center' },
-  teksIzin: { fontSize: ukuran.hurufNormal, color: warna.teksRedup, textAlign: 'center', marginTop: 8, lineHeight: 22 },
+  judulIzin: { fontSize: 17, fontWeight: '700', color: warna.teks, textAlign: 'center' },
+  teksIzin: { fontSize: ukuran.hurufNormal, color: warna.teksRedup, textAlign: 'center', marginTop: 8, lineHeight: 20 },
   lapisan: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   petunjuk: {
-    color: warna.putih, fontSize: ukuran.hurufNormal, fontWeight: '700', textAlign: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
+    color: warna.putih, fontSize: ukuran.hurufNormal, fontWeight: '600', textAlign: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 4,
     marginBottom: 20, marginHorizontal: 24,
   },
   bingkai: { width: SISI, height: SISI },
@@ -152,5 +152,5 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center',
   },
   tombolBulatAktif: { backgroundColor: warna.putih },
-  teksBulat: { color: warna.putih, fontSize: 13, fontWeight: '700', marginTop: 2 },
+  teksBulat: { color: warna.putih, fontSize: 12, fontWeight: '600', marginTop: 2 },
 });

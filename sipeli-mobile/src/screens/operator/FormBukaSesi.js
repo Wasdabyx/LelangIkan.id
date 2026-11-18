@@ -111,7 +111,7 @@ export default function FormBukaSesi({ lot, onBatal, onDibuka }) {
             Usulan sistem (ALG-02): {formatRupiah(lot.usulan_kenaikan)}/kg, menurut nilai lot. Boleh diubah.
           </Text>
 
-          <Tombol judul="MULAI LELANG" onPress={periksa} memuat={memuat} gaya={{ marginTop: 18 }} />
+          <Tombol judul="Mulai Lelang" onPress={periksa} memuat={memuat} gaya={{ marginTop: 18 }} />
           <Tombol judul="Batal" jenis="teks" onPress={onBatal} nonaktif={memuat} gaya={{ marginTop: 6 }} />
         </View>
       </FormGulir>
@@ -130,18 +130,18 @@ export default function FormBukaSesi({ lot, onBatal, onDibuka }) {
 
 const s = StyleSheet.create({
   isi: { padding: 16, paddingBottom: 32 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 16, padding: 20 },
-  judul: { fontSize: 22, fontWeight: '700', color: warna.teks },
-  kode: { fontSize: 18, fontWeight: '800', color: warna.utama, marginTop: 4 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  judul: { fontSize: 18, fontWeight: '600', color: warna.teks },
+  kode: { fontSize: 16, fontWeight: '700', color: warna.utama, marginTop: 4 },
   rincian: { backgroundColor: warna.latar, borderRadius: ukuran.radius, padding: 12, marginTop: 12, gap: 8 },
-  label: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.teks, marginBottom: 8 },
+  label: { fontSize: ukuran.hurufNormal, fontWeight: '500', color: warna.teks, marginBottom: 8 },
   pilihan: { flexDirection: 'row', gap: 8, marginBottom: 10, flexWrap: 'wrap' },
   cip: {
-    minHeight: 44, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1.5, borderColor: warna.garis,
+    minHeight: 44, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: warna.garis,
     alignItems: 'center', justifyContent: 'center', backgroundColor: warna.putih,
   },
   cipAktif: { borderColor: warna.utama, backgroundColor: warna.utamaMuda },
-  teksCip: { fontSize: 15, fontWeight: '600', color: warna.teksRedup },
-  teksCipAktif: { color: warna.utama, fontWeight: '800' },
-  petunjuk: { fontSize: 13, color: warna.teksRedup, marginTop: -6, lineHeight: 19 },
+  teksCip: { fontSize: 14, fontWeight: '500', color: warna.teksRedup },
+  teksCipAktif: { color: warna.utama, fontWeight: '700' },
+  petunjuk: { fontSize: 12, color: warna.teksRedup, marginTop: -6, lineHeight: 17 },
 });

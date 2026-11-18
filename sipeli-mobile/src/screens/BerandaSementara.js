@@ -31,7 +31,7 @@ export default function BerandaSementara({ pengguna, judul, pesan, onKeluar }) {
           <Text style={gaya.judul}>Login berhasil</Text>
           {judul ? (
             <Text style={gaya.teks}>
-              Tampilan <Text style={{ fontWeight: '700' }}>{judul}</Text> akan dibuat pada langkah berikutnya.
+              Tampilan <Text style={{ fontWeight: '600' }}>{judul}</Text> akan dibuat pada langkah berikutnya.
             </Text>
           ) : (
             <Text style={gaya.teks}>{pesan}</Text>
@@ -48,19 +48,19 @@ const gaya = StyleSheet.create({
     backgroundColor: warna.utama, paddingHorizontal: 16, paddingVertical: 14,
     flexDirection: 'row', alignItems: 'center',
   },
-  nama: { color: warna.putih, fontSize: ukuran.hurufSedang, fontWeight: '700' },
-  peran: { color: '#D9E8F0', fontSize: 14, marginTop: 2 },
+  nama: { color: warna.putih, fontSize: ukuran.hurufSedang, fontWeight: '600' },
+  peran: { color: '#D9E8F0', fontSize: 13, marginTop: 2 },
   tombolKeluar: {
-    borderWidth: 1.5, borderColor: warna.putih, borderRadius: 8,
+    borderWidth: 1, borderColor: warna.putih, borderRadius: 4,
     paddingHorizontal: 14, minHeight: 44, justifyContent: 'center',
   },
-  teksKeluar: { color: warna.putih, fontWeight: '700', fontSize: 15 },
-  isi: { flex: 1, padding: 20, justifyContent: 'center' },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 16, padding: 24, alignItems: 'center' },
+  teksKeluar: { color: warna.putih, fontWeight: '600', fontSize: 14 },
+  isi: { flex: 1, padding: 16, justifyContent: 'center' },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: '#E4EBF1' },
   centang: {
     width: 72, height: 72, borderRadius: 36, backgroundColor: warna.suksesLatar,
     alignItems: 'center', justifyContent: 'center',
   },
-  judul: { fontSize: 22, fontWeight: '700', color: warna.teks, marginTop: 8 },
-  teks: { fontSize: ukuran.hurufNormal, color: warna.teksRedup, textAlign: 'center', marginTop: 8, lineHeight: 22 },
+  judul: { fontSize: 18, fontWeight: '600', color: warna.teks, marginTop: 8 },
+  teks: { fontSize: ukuran.hurufNormal, color: warna.teksRedup, textAlign: 'center', marginTop: 8, lineHeight: 20 },
 });

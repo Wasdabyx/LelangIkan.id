@@ -119,8 +119,8 @@ export default function LabelLot({ lot, baru, namaTpi, teksKembali, onKembali })
 
         {lot.perlu_verifikasi || lot.timbang_manual ? (
           <View style={s.barisTanda}>
-            {lot.perlu_verifikasi ? <Text style={s.tanda}>PERLU VERIFIKASI</Text> : null}
-            {lot.timbang_manual ? <Text style={s.tanda}>INPUT MANUAL</Text> : null}
+            {lot.perlu_verifikasi ? <Text style={s.tanda}>Perlu verifikasi</Text> : null}
+            {lot.timbang_manual ? <Text style={s.tanda}>Input manual</Text> : null}
           </View>
         ) : null}
       </View>
@@ -164,37 +164,37 @@ function Baris({ label, nilai, besar }) {
 
 const s = StyleSheet.create({
   isi: { padding: 16, paddingBottom: 40 },
-  judul: { fontSize: 24, fontWeight: '800', color: warna.teks, marginBottom: 12 },
+  judul: { fontSize: 20, fontWeight: '700', color: warna.teks, marginBottom: 12 },
   kepalaSukses: { alignItems: 'center', marginBottom: 14 },
   lingkaran: {
     width: 80, height: 80, borderRadius: 40, backgroundColor: warna.suksesLatar,
     alignItems: 'center', justifyContent: 'center',
   },
-  judulSukses: { fontSize: 22, fontWeight: '800', color: warna.teks, marginTop: 10, textAlign: 'center' },
-  subSukses: { fontSize: 15, color: warna.teksRedup, marginTop: 4, textAlign: 'center' },
+  judulSukses: { fontSize: 18, fontWeight: '700', color: warna.teks, marginTop: 10, textAlign: 'center' },
+  subSukses: { fontSize: 14, color: warna.teksRedup, marginTop: 4, textAlign: 'center' },
   label: {
-    backgroundColor: warna.putih, borderRadius: 12, padding: 16, marginBottom: 14,
+    backgroundColor: warna.putih, borderRadius: 4, padding: 16, marginBottom: 14,
     borderWidth: 2, borderColor: warna.teks, borderStyle: 'dashed',
   },
   atasLabel: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 8,
     borderBottomWidth: 2, borderBottomColor: warna.teks, paddingBottom: 6,
   },
-  merek: { fontSize: 18, fontWeight: '800', color: warna.teks },
-  tpi: { flexShrink: 1, fontSize: 13, color: warna.teksRedup },
+  merek: { fontSize: 16, fontWeight: '700', color: warna.teks },
+  tpi: { flexShrink: 1, fontSize: 12, color: warna.teksRedup },
   wadahQR: { alignItems: 'center', marginTop: 12 },
-  kode: { fontSize: 26, fontWeight: '800', color: warna.teks, textAlign: 'center', letterSpacing: 1, marginTop: 6, fontVariant: ['tabular-nums'] },
-  jenis: { fontSize: 19, fontWeight: '800', color: warna.utama, textAlign: 'center', marginTop: 4 },
+  kode: { fontSize: 20, fontWeight: '700', color: warna.teks, textAlign: 'center', marginTop: 6, fontVariant: ['tabular-nums'] },
+  jenis: { fontSize: 16, fontWeight: '700', color: warna.utama, textAlign: 'center', marginTop: 4 },
   tabel: { marginTop: 12 },
   baris: { flexDirection: 'row', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#EEF2F6', gap: 10 },
-  labelBaris: { width: 120, fontSize: 15, color: warna.teksRedup },
-  nilaiBaris: { flex: 1, fontSize: 15, color: warna.teks, fontWeight: '600', textAlign: 'right' },
-  nilaiBesar: { fontSize: 18, fontWeight: '800' },
+  labelBaris: { width: 120, fontSize: 14, color: warna.teksRedup },
+  nilaiBaris: { flex: 1, fontSize: 14, color: warna.teks, fontWeight: '500', textAlign: 'right' },
+  nilaiBesar: { fontSize: 16, fontWeight: '700' },
   barisTanda: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 12 },
   tanda: {
-    borderWidth: 2, borderColor: warna.galat, color: warna.galat, fontWeight: '800', fontSize: 13,
-    paddingHorizontal: 10, paddingVertical: 3, borderRadius: 6,
+    borderWidth: 2, borderColor: warna.galat, color: warna.galat, fontWeight: '700', fontSize: 12,
+    paddingHorizontal: 10, paddingVertical: 3, borderRadius: 4,
   },
   statusCetak: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, justifyContent: 'center' },
-  teksStatusCetak: { fontSize: ukuran.hurufNormal, color: warna.teks, fontWeight: '600' },
+  teksStatusCetak: { fontSize: ukuran.hurufNormal, color: warna.teks, fontWeight: '500' },
 });

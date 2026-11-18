@@ -25,7 +25,7 @@ export function Tombol({ judul, onPress, jenis = 'utama', ikon, memuat, nonaktif
         <ActivityIndicator color={g.teks.color} />
       ) : (
         <View style={s.isiTombol}>
-          {ikon ? <Ikon nama={ikon} ukuran={22} warna={nonaktif ? warna.teksRedup : g.teks.color} /> : null}
+          {ikon ? <Ikon nama={ikon} ukuran={18} warna={nonaktif ? warna.teksRedup : g.teks.color} /> : null}
           <Text style={[s.teksTombol, g.teks, nonaktif && { color: warna.teksRedup }]}>{judul}</Text>
         </View>
       )}
@@ -40,12 +40,12 @@ const GAYA_TOMBOL = {
     teks: { color: warna.putih },
   },
   garis: {
-    wadah: { backgroundColor: warna.putih, borderWidth: 1.5, borderColor: warna.utama },
+    wadah: { backgroundColor: warna.putih, borderWidth: 1, borderColor: warna.utama },
     tekan: { backgroundColor: warna.utamaMuda },
     teks: { color: warna.utama },
   },
   bahaya: {
-    wadah: { backgroundColor: warna.putih, borderWidth: 1.5, borderColor: warna.galat },
+    wadah: { backgroundColor: warna.putih, borderWidth: 1, borderColor: warna.galat },
     tekan: { backgroundColor: warna.galatLatar },
     teks: { color: warna.galat },
   },
@@ -87,7 +87,7 @@ export function Lencana({ status, teks, ikon, latar, warnaTeks }) {
   const w = WARNA_LENCANA[status] || { latar: latar || warna.abu, teks: warnaTeks || warna.teks, label: teks };
   return (
     <View style={[s.lencana, { backgroundColor: w.latar }]}>
-      {ikon ? <Ikon nama={ikon} ukuran={16} warna={w.teks} tebal={2.4} /> : null}
+      {ikon ? <Ikon nama={ikon} ukuran={13} warna={w.teks} tebal={2.4} /> : null}
       <Text style={[s.teksLencana, { color: w.teks }]}>{teks || w.label}</Text>
     </View>
   );
@@ -104,7 +104,7 @@ export function KotakPesan({ jenis = 'galat', teks, gaya }) {
   }[jenis];
   return (
     <View style={[s.kotak, { backgroundColor: w[0], borderColor: w[1] }, gaya]}>
-      <Ikon nama={w[2]} ukuran={20} warna={w[1]} />
+      <Ikon nama={w[2]} ukuran={18} warna={w[1]} />
       <Text style={[s.teksKotak, { color: w[1] }]}>{teks}</Text>
     </View>
   );
@@ -115,7 +115,7 @@ export function BilahAtas({ pengguna, onKeluar }) {
   return (
     <View style={s.bilah}>
       <View style={s.avatar}>
-        <Ikon nama="pengguna" ukuran={22} warna={warna.utama} />
+        <Ikon nama="pengguna" ukuran={18} warna={warna.utama} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s.nama} numberOfLines={1}>{pengguna.nama_lengkap}</Text>
@@ -124,8 +124,8 @@ export function BilahAtas({ pengguna, onKeluar }) {
           {pengguna.nama_tpi ? ` - ${pengguna.nama_tpi}` : ''}
         </Text>
       </View>
-      <Pressable onPress={onKeluar} style={({ pressed }) => [s.tombolKeluar, pressed && { opacity: 0.7 }]}>
-        <Ikon nama="keluar" ukuran={18} warna={warna.putih} />
+      <Pressable onPress={onKeluar} hitSlop={6} style={({ pressed }) => [s.tombolKeluar, pressed && { opacity: 0.7 }]}>
+        <Ikon nama="keluar" ukuran={16} warna={warna.putih} />
         <Text style={s.teksKeluar}>Keluar</Text>
       </Pressable>
     </View>
@@ -140,7 +140,7 @@ export function DialogKonfirmasi({ tampil, judul, pesan, teksYa = 'Ya', teksTida
         <View style={s.dialog}>
           <Text style={s.judulDialog}>{judul}</Text>
           {pesan ? <Text style={s.pesanDialog}>{pesan}</Text> : null}
-          <Tombol judul={teksYa} jenis={bahaya ? 'bahaya' : 'utama'} onPress={onYa} gaya={{ marginTop: 20 }} />
+          <Tombol judul={teksYa} jenis={bahaya ? 'bahaya' : 'utama'} onPress={onYa} gaya={{ marginTop: 18 }} />
           <Tombol judul={teksTidak} jenis="teks" onPress={onTidak} gaya={{ marginTop: 8 }} />
         </View>
       </View>
@@ -155,43 +155,43 @@ const s = StyleSheet.create({
   },
   tombolMati: { backgroundColor: warna.abu, borderColor: warna.garis },
   isiTombol: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  teksTombol: { fontSize: ukuran.hurufSedang, fontWeight: '700' },
-  label: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.teks, marginBottom: 6 },
+  teksTombol: { fontSize: ukuran.hurufSedang, fontWeight: '600' },
+  label: { fontSize: 13, fontWeight: '500', color: warna.teks, marginBottom: 6 },
   input: {
-    height: ukuran.tinggiInput, borderWidth: 1.5, borderColor: warna.garis,
+    height: ukuran.tinggiInput, borderWidth: 1, borderColor: warna.garis,
     borderRadius: ukuran.radius, paddingHorizontal: 14, fontSize: ukuran.hurufSedang,
     color: warna.teks, backgroundColor: warna.putih,
   },
-  inputGalat: { borderColor: warna.galat, borderWidth: 2 },
-  teksGalat: { color: warna.galat, fontSize: 14, marginTop: 6, fontWeight: '600' },
+  inputGalat: { borderColor: warna.galat, borderWidth: 1.5 },
+  teksGalat: { color: warna.galat, fontSize: 12, marginTop: 4 },
   lencana: {
     flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999,
   },
-  teksLencana: { fontSize: 13, fontWeight: '700' },
+  teksLencana: { fontSize: 11, fontWeight: '600' },
   kotak: {
     flexDirection: 'row', gap: 10, alignItems: 'flex-start',
     borderWidth: 1, borderRadius: ukuran.radius, padding: 12,
   },
-  teksKotak: { flex: 1, fontSize: 15, fontWeight: '600', lineHeight: 21 },
+  teksKotak: { flex: 1, fontSize: 13, lineHeight: 18 },
   bilah: {
-    backgroundColor: warna.utama, paddingHorizontal: 16, paddingVertical: 10,
-    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: warna.utama, paddingHorizontal: 16, paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
   },
   avatar: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: warna.putih,
+    width: 32, height: 32, borderRadius: 16, backgroundColor: warna.putih,
     alignItems: 'center', justifyContent: 'center',
   },
-  nama: { color: warna.putih, fontSize: ukuran.hurufNormal, fontWeight: '700' },
-  peran: { color: '#D9E8F0', fontSize: 13, marginTop: 2 },
+  nama: { color: warna.putih, fontSize: 14, fontWeight: '600' },
+  peran: { color: '#D9E8F0', fontSize: 11, marginTop: 1 },
   tombolKeluar: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    borderWidth: 1.5, borderColor: warna.putih, borderRadius: 8,
-    paddingHorizontal: 12, minHeight: 44,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.6)', borderRadius: 4,
+    paddingHorizontal: 10, minHeight: 34,
   },
-  teksKeluar: { color: warna.putih, fontWeight: '700', fontSize: 15 },
+  teksKeluar: { color: warna.putih, fontWeight: '500', fontSize: 13 },
   latarDialog: { flex: 1, backgroundColor: 'rgba(16,42,67,0.55)', justifyContent: 'center', padding: 24 },
-  dialog: { backgroundColor: warna.putih, borderRadius: 16, padding: 20 },
-  judulDialog: { fontSize: 20, fontWeight: '700', color: warna.teks },
-  pesanDialog: { fontSize: ukuran.hurufNormal, color: warna.teksRedup, marginTop: 8, lineHeight: 22 },
+  dialog: { backgroundColor: warna.putih, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  judulDialog: { fontSize: 17, fontWeight: '600', color: warna.teks },
+  pesanDialog: { fontSize: 14, color: warna.teksRedup, marginTop: 6, lineHeight: 20 },
 });

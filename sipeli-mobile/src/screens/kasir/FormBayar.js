@@ -175,7 +175,7 @@ export default function FormBayar({ awal, onKembali }) {
 
             {metode === 'QRIS' && n > 0 && n <= sisa ? (
               <View style={s.qris}>
-                <Text style={s.labelQris}>QRIS SIMULASI</Text>
+                <Text style={s.labelQris}>QRIS simulasi</Text>
                 <KodeQR nilai={`QRIS-SIMULASI|${t.kode_transaksi}|${n}`} ukuran={170} />
                 <Text style={s.nominalQris}>{formatRupiah(n)}</Text>
                 <Text style={s.petunjuk}>
@@ -195,8 +195,8 @@ export default function FormBayar({ awal, onKembali }) {
         ) : (
           <View style={[s.kartu, s.kartuLunas]}>
             <Ikon nama="centang" ukuran={40} warna={warna.sukses} />
-            <Text style={s.judulLunas}>TRANSAKSI LUNAS</Text>
-            <Text style={s.petunjuk}>Cetak nota atau bagikan PDF-nya ke pembeli. QR pada nota dapat diperiksa keasliannya.</Text>
+            <Text style={s.judulLunas}>Transaksi lunas</Text>
+            <Text style={s.petunjuk}>Cetak nota atau bagikan PDF ke pembeli.</Text>
           </View>
         )}
 
@@ -223,26 +223,26 @@ export default function FormBayar({ awal, onKembali }) {
 
 const s = StyleSheet.create({
   isi: { padding: 16, paddingBottom: 32, gap: 12 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 16, padding: 16 },
-  judul: { fontSize: 18, fontWeight: '800', color: warna.teks, marginBottom: 10 },
-  label: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.teks, marginBottom: 8 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  judul: { fontSize: 16, fontWeight: '700', color: warna.teks, marginBottom: 10 },
+  label: { fontSize: ukuran.hurufNormal, fontWeight: '500', color: warna.teks, marginBottom: 8 },
   gridMetode: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
   metode: {
-    width: '48%', flexGrow: 1, minHeight: 84, borderRadius: 12, borderWidth: 1.5, borderColor: warna.garis,
+    width: '48%', flexGrow: 1, minHeight: 72, borderRadius: 4, borderWidth: 1, borderColor: warna.garis,
     alignItems: 'center', justifyContent: 'center', padding: 8, backgroundColor: warna.putih,
   },
   metodeAktif: { borderColor: warna.utama, borderWidth: 2.5, backgroundColor: warna.utamaMuda },
   metodeMati: { backgroundColor: warna.abu, borderStyle: 'dashed' },
-  teksMetode: { fontSize: 16, fontWeight: '800', color: warna.teks, marginTop: 4 },
-  ketMetode: { fontSize: 12, color: warna.teksRedup, marginTop: 1 },
+  teksMetode: { fontSize: 15, fontWeight: '700', color: warna.teks, marginTop: 4 },
+  ketMetode: { fontSize: 11, color: warna.teksRedup, marginTop: 1 },
   tautan: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', marginTop: -10, marginBottom: 4 },
-  teksTautan: { fontSize: 15, fontWeight: '700', color: warna.aksen, textDecorationLine: 'underline' },
-  petunjuk: { fontSize: 13, color: warna.teksRedup, lineHeight: 19, marginTop: -6, marginBottom: 8, textAlign: 'left' },
-  kembalian: { fontSize: 17, fontWeight: '800', color: warna.sukses, marginTop: -6, marginBottom: 6 },
-  qris: { alignItems: 'center', borderWidth: 1.5, borderColor: warna.garis, borderRadius: 12, padding: 14, gap: 8, borderStyle: 'dashed' },
-  labelQris: { fontSize: 14, fontWeight: '800', color: warna.teksRedup, letterSpacing: 1 },
-  nominalQris: { fontSize: 22, fontWeight: '800', color: warna.teks },
-  kartuLunas: { alignItems: 'center', gap: 8, backgroundColor: warna.suksesLatar, borderWidth: 1.5, borderColor: warna.sukses },
-  judulLunas: { fontSize: 20, fontWeight: '800', color: warna.sukses, letterSpacing: 1 },
+  teksTautan: { fontSize: 14, fontWeight: '600', color: warna.aksen, textDecorationLine: 'underline' },
+  petunjuk: { fontSize: 12, color: warna.teksRedup, lineHeight: 17, marginTop: -6, marginBottom: 8, textAlign: 'left' },
+  kembalian: { fontSize: 15, fontWeight: '700', color: warna.sukses, marginTop: -6, marginBottom: 6 },
+  qris: { alignItems: 'center', borderWidth: 1, borderColor: warna.garis, borderRadius: 4, padding: 14, gap: 8, borderStyle: 'dashed' },
+  labelQris: { fontSize: 13, fontWeight: '700', color: warna.teksRedup },
+  nominalQris: { fontSize: 18, fontWeight: '700', color: warna.teks },
+  kartuLunas: { alignItems: 'center', gap: 8, backgroundColor: warna.suksesLatar, borderWidth: 1, borderColor: warna.sukses },
+  judulLunas: { fontSize: 17, fontWeight: '700', color: warna.sukses },
   barisTombol: { flexDirection: 'row', gap: 10 },
 });

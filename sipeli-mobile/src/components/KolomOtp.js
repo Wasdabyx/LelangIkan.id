@@ -80,16 +80,16 @@ export const formatMenit = (detik) =>
 const s = StyleSheet.create({
   baris: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   kotak: {
-    flex: 1, maxWidth: 52, height: 60, borderWidth: 1.5, borderColor: warna.garis,
+    flex: 1, maxWidth: 52, height: 60, borderWidth: 1, borderColor: warna.garis,
     borderRadius: ukuran.radius, alignItems: 'center', justifyContent: 'center', backgroundColor: warna.putih,
   },
   kotakAktif: { borderColor: warna.utama, borderWidth: 2.5 },
   kotakGalat: { borderColor: warna.galat, borderWidth: 2 },
   kotakMati: { backgroundColor: warna.abu },
-  digit: { fontSize: 28, fontWeight: '800', color: warna.teks },
+  digit: { fontSize: 22, fontWeight: '700', color: warna.teks },
   inputTersembunyi: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     opacity: 0.011, color: 'transparent', fontSize: 1,
   },
-  teksGalat: { color: warna.galat, fontSize: 14, marginTop: 8, fontWeight: '600', textAlign: 'center' },
+  teksGalat: { color: warna.galat, fontSize: 13, marginTop: 8, fontWeight: '500', textAlign: 'center' },
 });

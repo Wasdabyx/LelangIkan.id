@@ -359,11 +359,11 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
           <View style={s.garis} />
           <View style={s.barisTotal}>
             <View style={{ flex: 1 }}>
-              <Text style={s.labelKecil}>BERAT AKTUAL</Text>
+              <Text style={s.labelKecil}>Berat aktual</Text>
               <Text style={s.total}>{formatKg(total)}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={s.labelKecil}>SELISIH</Text>
+              <Text style={s.labelKecil}>Selisih</Text>
               <Text style={[s.selisih, lewatAmbang && tampilPanelSelisih && { color: warna.galat }]}>
                 {total > 0 ? `${total >= estimasi ? '+' : '-'}${formatAngka(selisih, 1)}%` : '-'}
               </Text>
@@ -419,7 +419,7 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
           {usulan.harga ? (
             <View style={s.kotakUsulan}>
               <Text style={s.teksUsulan}>
-                Usulan sistem: <Text style={{ fontWeight: '800' }}>{formatRupiah(usulan.harga)}/kg</Text>
+                Usulan sistem: <Text style={{ fontWeight: '700' }}>{formatRupiah(usulan.harga)}/kg</Text>
               </Text>
               <Text style={s.keteranganUsulan}>{usulan.keterangan}</Text>
               {keAngka(harga) !== Number(usulan.harga) ? (
@@ -508,76 +508,76 @@ const s = StyleSheet.create({
     backgroundColor: warna.putih, borderBottomWidth: 1, borderBottomColor: '#E4EBF1',
     paddingHorizontal: 8, paddingVertical: 4,
   },
-  tombolKembali: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 48, paddingHorizontal: 8, alignSelf: 'flex-start' },
-  teksKembali: { color: warna.utama, fontSize: ukuran.hurufNormal, fontWeight: '700' },
+  tombolKembali: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, paddingHorizontal: 8, alignSelf: 'flex-start' },
+  teksKembali: { color: warna.utama, fontSize: ukuran.hurufNormal, fontWeight: '600' },
   isi: { padding: 16, paddingBottom: 24 },
-  judul: { fontSize: 22, fontWeight: '800', color: warna.teks },
-  grade: { fontWeight: '600', color: warna.teksRedup },
-  redup: { fontSize: 14, color: warna.teksRedup, marginTop: 2 },
+  judul: { fontSize: 18, fontWeight: '700', color: warna.teks },
+  grade: { fontWeight: '500', color: warna.teksRedup },
+  redup: { fontSize: 13, color: warna.teksRedup, marginTop: 2 },
   segmen: {
-    flexDirection: 'row', backgroundColor: warna.putih, borderRadius: 12, padding: 4,
-    borderWidth: 1.5, borderColor: warna.garis, marginTop: 14, marginBottom: 12,
+    flexDirection: 'row', backgroundColor: warna.putih, borderRadius: 4, padding: 4,
+    borderWidth: 1, borderColor: warna.garis, marginTop: 14, marginBottom: 12,
   },
   pilihSegmen: {
     flex: 1, flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center',
-    minHeight: 48, borderRadius: 9,
+    minHeight: 44, borderRadius: 4,
   },
   pilihSegmenAktif: { backgroundColor: warna.utama },
-  teksSegmen: { fontSize: ukuran.hurufNormal, fontWeight: '700', color: warna.utama },
-  kartuBerat: { backgroundColor: warna.teks, borderRadius: 16, padding: 16 },
+  teksSegmen: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.utama },
+  kartuBerat: { backgroundColor: warna.teks, borderRadius: 6, padding: 16 },
   barisStatus: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titikHijau: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#32D583' },
-  teksTerhubung: { flex: 1, color: '#D9E8F0', fontSize: 14, fontWeight: '600' },
+  teksTerhubung: { flex: 1, color: '#D9E8F0', fontSize: 13, fontWeight: '500' },
   chip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 4 },
-  teksChip: { fontSize: 14, fontWeight: '800' },
+  teksChip: { fontSize: 13, fontWeight: '700' },
   barisAngka: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginVertical: 8 },
-  angkaBerat: { color: warna.putih, fontSize: 60, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  satuan: { color: '#D9E8F0', fontSize: 24, fontWeight: '700', marginLeft: 8, marginBottom: 12 },
-  petunjuk: { color: '#D9E8F0', fontSize: 15, textAlign: 'center' },
+  angkaBerat: { color: warna.putih, fontSize: 60, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  satuan: { color: '#D9E8F0', fontSize: 20, fontWeight: '600', marginLeft: 8, marginBottom: 12 },
+  petunjuk: { color: '#D9E8F0', fontSize: 14, textAlign: 'center' },
   barisTombol: { flexDirection: 'row', gap: 10, marginTop: 12 },
   kartuManual: {
-    backgroundColor: warna.putih, borderRadius: 14, padding: 14,
+    backgroundColor: warna.putih, borderRadius: 6, padding: 14,
     borderWidth: 1, borderColor: '#E4EBF1',
   },
   barisManual: { flexDirection: 'row', gap: 10, alignItems: 'flex-end' },
-  teksGalat: { color: warna.galat, fontSize: 14, marginTop: 6, fontWeight: '600' },
+  teksGalat: { color: warna.galat, fontSize: 13, marginTop: 6, fontWeight: '500' },
   kartu: {
-    backgroundColor: warna.putih, borderRadius: 14, padding: 14, marginTop: 14, marginBottom: 14,
+    backgroundColor: warna.putih, borderRadius: 6, padding: 14, marginTop: 14, marginBottom: 10,
     borderWidth: 1, borderColor: '#E4EBF1',
   },
   barisJudulKartu: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  judulKartu: { flex: 1, fontSize: ukuran.hurufSedang, fontWeight: '800', color: warna.teks, marginBottom: 4 },
-  hitungan: { fontSize: 15, fontWeight: '800', color: warna.teksRedup },
-  kosong: { fontSize: 15, color: warna.teksRedup, paddingVertical: 8 },
+  judulKartu: { flex: 1, fontSize: ukuran.hurufSedang, fontWeight: '700', color: warna.teks, marginBottom: 4 },
+  hitungan: { fontSize: 14, fontWeight: '700', color: warna.teksRedup },
+  kosong: { fontSize: 14, color: warna.teksRedup, paddingVertical: 8 },
   barisKeranjang: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48,
+    flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44,
     borderBottomWidth: 1, borderBottomColor: '#EEF2F6',
   },
   namaKeranjang: { fontSize: ukuran.hurufNormal, color: warna.teks },
-  tagManual: { backgroundColor: warna.peringatanLatar, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
-  teksTagManual: { color: warna.peringatan, fontSize: 12, fontWeight: '800' },
-  beratKeranjang: { marginLeft: 'auto', fontSize: ukuran.hurufNormal, fontWeight: '800', color: warna.teks },
+  tagManual: { backgroundColor: warna.peringatanLatar, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 2 },
+  teksTagManual: { color: warna.peringatan, fontSize: 11, fontWeight: '700' },
+  beratKeranjang: { marginLeft: 'auto', fontSize: ukuran.hurufNormal, fontWeight: '700', color: warna.teks },
   tombolHapus: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   garis: { height: 1, backgroundColor: warna.garis, marginVertical: 10 },
   barisTotal: { flexDirection: 'row', alignItems: 'flex-end' },
-  labelKecil: { fontSize: 12, fontWeight: '800', color: warna.teksRedup, letterSpacing: 0.6 },
-  total: { fontSize: 28, fontWeight: '800', color: warna.utama, marginTop: 2 },
-  selisih: { fontSize: 22, fontWeight: '800', color: warna.teks, marginTop: 2 },
-  info: { fontSize: 14, color: warna.teksRedup, marginTop: 8 },
+  labelKecil: { fontSize: 11, fontWeight: '700', color: warna.teksRedup },
+  total: { fontSize: 22, fontWeight: '700', color: warna.utama, marginTop: 2 },
+  selisih: { fontSize: 18, fontWeight: '700', color: warna.teks, marginTop: 2 },
+  info: { fontSize: 13, color: warna.teksRedup, marginTop: 8 },
   panelSelisih: {
-    backgroundColor: warna.galatLatar, borderWidth: 1.5, borderColor: warna.galat,
-    borderRadius: 14, padding: 14, marginBottom: 14,
+    backgroundColor: warna.galatLatar, borderWidth: 1, borderColor: warna.galat,
+    borderRadius: 6, padding: 14, marginBottom: 14,
   },
-  judulSelisih: { fontSize: ukuran.hurufSedang, fontWeight: '800', color: warna.galat },
-  teksSelisih: { fontSize: 15, color: warna.teks, marginTop: 4, lineHeight: 21 },
-  kotakUsulan: { backgroundColor: warna.utamaMuda, borderRadius: 10, padding: 12, marginBottom: 12 },
+  judulSelisih: { fontSize: ukuran.hurufSedang, fontWeight: '700', color: warna.galat },
+  teksSelisih: { fontSize: 14, color: warna.teks, marginTop: 4, lineHeight: 19 },
+  kotakUsulan: { backgroundColor: warna.utamaMuda, borderRadius: 6, padding: 12, marginBottom: 12 },
   teksUsulan: { fontSize: ukuran.hurufNormal, color: warna.utama },
-  keteranganUsulan: { fontSize: 14, color: warna.teksRedup, marginTop: 2 },
+  keteranganUsulan: { fontSize: 13, color: warna.teksRedup, marginTop: 2 },
   tombolUsulan: { minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' },
-  teksTombolUsulan: { color: warna.utama, fontWeight: '800', fontSize: 15, textDecorationLine: 'underline' },
+  teksTombolUsulan: { color: warna.utama, fontWeight: '700', fontSize: 14, textDecorationLine: 'underline' },
   bilahBawah: {
     backgroundColor: warna.putih, borderTopWidth: 1, borderTopColor: '#E4EBF1',
     paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12,
   },
-  ringkasBawah: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', marginBottom: 6, fontWeight: '600' },
+  ringkasBawah: { fontSize: 13, color: warna.teksRedup, textAlign: 'center', marginBottom: 6, fontWeight: '500' },
 });

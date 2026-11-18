@@ -16,7 +16,7 @@ export default function LembarQR({ kedatangan, onTutup }) {
         {k ? (
           // Pressable dalam agar ketukan di kartu tidak menutup jendela
           <Pressable style={s.kartu} onPress={() => {}}>
-            <Text style={s.labelKecil}>QR KEDATANGAN</Text>
+            <Text style={s.labelKecil}>QR kedatangan</Text>
             <Text style={s.nomor}>{k.nomor_kedatangan}</Text>
             <View style={s.wadahQR}>
               <KodeQR nilai={k.nomor_kedatangan} ukuran={240} />
@@ -41,18 +41,17 @@ export default function LembarQR({ kedatangan, onTutup }) {
 const s = StyleSheet.create({
   latar: {
     flex: 1, backgroundColor: 'rgba(16,42,67,0.6)',
-    alignItems: 'center', justifyContent: 'center', padding: 20,
+    alignItems: 'center', justifyContent: 'center', padding: 16,
   },
   kartu: {
-    width: '100%', maxWidth: 380, backgroundColor: warna.putih, borderRadius: 18,
-    padding: 20, alignItems: 'center',
-  },
-  labelKecil: { fontSize: 12, fontWeight: '800', color: warna.teksRedup, letterSpacing: 0.6 },
-  nomor: { fontSize: 28, fontWeight: '800', color: warna.utama, letterSpacing: 1, marginTop: 4 },
+    width: '100%', maxWidth: 380, backgroundColor: warna.putih, borderRadius: 6,
+    padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#E4EBF1' },
+  labelKecil: { fontSize: 11, fontWeight: '700', color: warna.teksRedup },
+  nomor: { fontSize: 22, fontWeight: '700', color: warna.utama, marginTop: 4 },
   wadahQR: {
-    marginTop: 12, padding: 8, borderRadius: 12, borderWidth: 1, borderColor: '#E4EBF1', backgroundColor: warna.putih,
+    marginTop: 12, padding: 8, borderRadius: 4, borderWidth: 1, borderColor: '#E4EBF1', backgroundColor: warna.putih,
   },
-  kapal: { fontSize: 18, fontWeight: '800', color: warna.teks, marginTop: 12, textAlign: 'center' },
-  redup: { fontSize: 15, color: warna.teksRedup, marginTop: 2, textAlign: 'center' },
-  petunjuk: { fontSize: 15, color: warna.teks, marginTop: 14, textAlign: 'center', lineHeight: 21 },
+  kapal: { fontSize: 16, fontWeight: '700', color: warna.teks, marginTop: 12, textAlign: 'center' },
+  redup: { fontSize: 14, color: warna.teksRedup, marginTop: 2, textAlign: 'center' },
+  petunjuk: { fontSize: 14, color: warna.teks, marginTop: 14, textAlign: 'center', lineHeight: 19 },
 });

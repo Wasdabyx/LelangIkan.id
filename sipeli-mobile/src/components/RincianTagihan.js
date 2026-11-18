@@ -64,15 +64,15 @@ export default function RincianTagihan({ t, tampilRetribusi = true }) {
 
 const s = StyleSheet.create({
   barisJudul: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  kode: { fontSize: 20, fontWeight: '800', color: warna.teks, letterSpacing: 0.3 },
-  lot: { fontSize: 15, fontWeight: '700', color: warna.teks, marginTop: 6 },
-  redup: { fontSize: 13, color: warna.teksRedup, marginTop: 2, lineHeight: 19 },
+  kode: { fontSize: 17, fontWeight: '700', color: warna.teks },
+  lot: { fontSize: 14, fontWeight: '600', color: warna.teks, marginTop: 6 },
+  redup: { fontSize: 12, color: warna.teksRedup, marginTop: 2, lineHeight: 17 },
   kotak: { backgroundColor: warna.latar, borderRadius: ukuran.radius, padding: 12, marginTop: 12, gap: 8 },
   garis: { height: 1, backgroundColor: warna.garis },
-  catatan: { fontSize: 12, color: warna.teksRedup, marginTop: 8, lineHeight: 18 },
-  subjudul: { fontSize: 16, fontWeight: '800', color: warna.teks, marginBottom: 4 },
+  catatan: { fontSize: 11, color: warna.teksRedup, marginTop: 8, lineHeight: 16 },
+  subjudul: { fontSize: 15, fontWeight: '700', color: warna.teks, marginBottom: 4 },
   barisBayar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#E4EBF1' },
-  metode: { fontSize: 15, fontWeight: '700', color: warna.teks },
-  redupKecil: { fontSize: 12, color: warna.teksRedup, marginTop: 1 },
-  nominal: { fontSize: 15, fontWeight: '800', color: warna.sukses },
+  metode: { fontSize: 14, fontWeight: '600', color: warna.teks },
+  redupKecil: { fontSize: 11, color: warna.teksRedup, marginTop: 1 },
+  nominal: { fontSize: 14, fontWeight: '700', color: warna.sukses },
 });

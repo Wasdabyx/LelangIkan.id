@@ -69,11 +69,11 @@ export default function PilihJenisIkan({ tampil, daftar, terpilih, onPilih, onTu
 const s = StyleSheet.create({
   layar: { flex: 1, backgroundColor: warna.putih, paddingTop: 36 },
   kepala: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 8 },
-  judul: { flex: 1, fontSize: 20, fontWeight: '700', color: warna.teks },
+  judul: { flex: 1, fontSize: 17, fontWeight: '600', color: warna.teks },
   tombolTutup: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   kotakCari: {
     flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginBottom: 8,
-    height: ukuran.tinggiInput, borderWidth: 1.5, borderColor: warna.garis, borderRadius: ukuran.radius, paddingHorizontal: 12,
+    height: ukuran.tinggiInput, borderWidth: 1, borderColor: warna.garis, borderRadius: ukuran.radius, paddingHorizontal: 12,
   },
   inputCari: { flex: 1, fontSize: ukuran.hurufSedang, color: warna.teks, height: '100%' },
   item: {
@@ -81,7 +81,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: warna.abu,
   },
   itemAktif: { backgroundColor: warna.suksesLatar },
-  namaItem: { fontSize: ukuran.hurufSedang, color: warna.teks, fontWeight: '600' },
-  kategori: { fontSize: 13, color: warna.teksRedup, marginTop: 2, textTransform: 'capitalize' },
+  namaItem: { fontSize: ukuran.hurufSedang, color: warna.teks, fontWeight: '500' },
+  kategori: { fontSize: 12, color: warna.teksRedup, marginTop: 2, textTransform: 'capitalize' },
   kosong: { textAlign: 'center', color: warna.teksRedup, marginTop: 24, fontSize: ukuran.hurufNormal },
 });

@@ -349,7 +349,7 @@ export default function FormKedatangan({ idDraf, onBatal, onTersimpan }) {
 
               {/* Kartu data pemilik (FR-02) */}
               <View style={s.kartuPemilik}>
-                <Text style={s.labelKecil}>PEMILIK KAPAL</Text>
+                <Text style={s.labelKecil}>Pemilik kapal</Text>
                 <Text style={s.namaPemilik}>{kapal.pemilik.nama}</Text>
                 <View style={s.barisInfo}>
                   <Ikon nama="telepon" ukuran={16} warna={warna.teksRedup} />
@@ -361,14 +361,14 @@ export default function FormKedatangan({ idDraf, onBatal, onTersimpan }) {
                     {kapal.pemilik.nama_bank || '-'} {kapal.pemilik.no_rekening || ''}
                   </Text>
                 </View>
-                <Text style={[s.labelKecil, { marginTop: 10 }]}>KEDATANGAN TERAKHIR</Text>
+                <Text style={[s.labelKecil, { marginTop: 10 }]}>Kedatangan terakhir</Text>
                 <Text style={s.teksInfo}>
                   {kapal.kedatangan_terakhir
                     ? `${tanggalPendek(kapal.kedatangan_terakhir.tanggal)} - Kapten ${kapal.kedatangan_terakhir.nama_kapten} - ${formatKg(kapal.kedatangan_terakhir.total_berat_estimasi)}`
                     : 'Belum pernah tercatat'}
                 </Text>
               </View>
-              <Tombol judul="Ganti Kapal" jenis="garis" onPress={() => setKapal(null)} gaya={{ marginTop: 12, minHeight: 48 }} />
+              <Tombol judul="Ganti Kapal" jenis="garis" onPress={() => setKapal(null)} gaya={{ marginTop: 12, minHeight: 44 }} />
             </View>
           ) : (
             <View>
@@ -555,12 +555,12 @@ export default function FormKedatangan({ idDraf, onBatal, onTersimpan }) {
         {/* ===== Ringkasan & sinkronisasi ===== */}
         <View style={[s.kartu, s.ringkasan]}>
           <View style={{ flex: 1 }}>
-            <Text style={s.labelKecil}>TOTAL BERAT ESTIMASI</Text>
+            <Text style={s.labelKecil}>Total berat estimasi</Text>
             <Text style={s.total}>{formatKg(totalBerat)}</Text>
             <Text style={s.teksRedup}>{baris.length} baris, {jumlahBarisValid} lengkap</Text>
           </View>
           <View style={{ alignItems: 'flex-end', gap: 6 }}>
-            <Text style={s.labelKecil}>STATUS</Text>
+            <Text style={s.labelKecil}>Status</Text>
             <Lencana ikon="awan" teks={STATUS_KIRIM.teks} latar={STATUS_KIRIM.latar} warnaTeks={STATUS_KIRIM.warna} />
           </View>
         </View>
@@ -622,52 +622,52 @@ const s = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: warna.garis, paddingRight: 16,
   },
   tombolKembali: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
-  judulKepala: { flex: 1, fontSize: ukuran.hurufSedang, fontWeight: '700', color: warna.teks },
+  judulKepala: { flex: 1, fontSize: ukuran.hurufSedang, fontWeight: '600', color: warna.teks },
   isi: { padding: 16, paddingBottom: 40 },
-  judulBagian: { fontSize: 15, fontWeight: '800', color: warna.teksRedup, marginBottom: 8, marginTop: 6, letterSpacing: 0.3 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 14, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  judulBagian: { fontSize: 14, fontWeight: '700', color: warna.teksRedup, marginBottom: 8, marginTop: 6 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E4EBF1' },
   kartuBaris: { marginBottom: 12 },
-  label: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.teks, marginBottom: 6 },
-  labelKecil: { fontSize: 12, fontWeight: '800', color: warna.teksRedup, letterSpacing: 0.6 },
-  teksRedup: { fontSize: 14, color: warna.teksRedup },
-  teksGalat: { color: warna.galat, fontSize: 14, marginTop: 6, fontWeight: '600' },
+  label: { fontSize: ukuran.hurufNormal, fontWeight: '500', color: warna.teks, marginBottom: 6 },
+  labelKecil: { fontSize: 11, fontWeight: '700', color: warna.teksRedup },
+  teksRedup: { fontSize: 13, color: warna.teksRedup },
+  teksGalat: { color: warna.galat, fontSize: 13, marginTop: 6, fontWeight: '500' },
   galatBingkai: { borderColor: warna.galat, borderWidth: 2 },
   barisKapal: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   ikonBulat: {
     width: 48, height: 48, borderRadius: 24, backgroundColor: warna.utamaMuda,
     alignItems: 'center', justifyContent: 'center',
   },
-  namaKapal: { fontSize: 20, fontWeight: '800', color: warna.teks },
-  kartuPemilik: { backgroundColor: warna.latar, borderRadius: 10, padding: 12, marginTop: 12 },
-  namaPemilik: { fontSize: ukuran.hurufSedang, fontWeight: '700', color: warna.teks, marginTop: 2, marginBottom: 4 },
+  namaKapal: { fontSize: 17, fontWeight: '700', color: warna.teks },
+  kartuPemilik: { backgroundColor: warna.latar, borderRadius: 6, padding: 12, marginTop: 12 },
+  namaPemilik: { fontSize: ukuran.hurufSedang, fontWeight: '600', color: warna.teks, marginTop: 2, marginBottom: 4 },
   barisInfo: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  teksInfo: { fontSize: 15, color: warna.teks, marginTop: 2 },
+  teksInfo: { fontSize: 14, color: warna.teks, marginTop: 2 },
   saranKapal: {
     flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60,
     paddingHorizontal: 8, borderTopWidth: 1, borderTopColor: warna.abu,
   },
-  namaSaran: { fontSize: ukuran.hurufNormal, fontWeight: '700', color: warna.teks },
+  namaSaran: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.teks },
   saranKapten: {
     alignSelf: 'flex-start', backgroundColor: warna.utamaMuda, borderRadius: 999,
     paddingHorizontal: 12, minHeight: 36, justifyContent: 'center', marginBottom: 14,
   },
-  teksSaranKapten: { color: warna.utama, fontWeight: '700', fontSize: 14 },
+  teksSaranKapten: { color: warna.utama, fontWeight: '600', fontSize: 13 },
   kepalaBaris: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  judulBaris: { fontSize: ukuran.hurufSedang, fontWeight: '800', color: warna.utama },
+  judulBaris: { fontSize: ukuran.hurufSedang, fontWeight: '700', color: warna.utama },
   tombolHapus: { flexDirection: 'row', alignItems: 'center', gap: 4, minHeight: 44, paddingHorizontal: 8 },
-  teksHapus: { color: warna.galat, fontWeight: '700', fontSize: 15 },
+  teksHapus: { color: warna.galat, fontWeight: '600', fontSize: 14 },
   pilihan: {
-    height: ukuran.tinggiInput, borderWidth: 1.5, borderColor: warna.garis, borderRadius: ukuran.radius,
+    height: ukuran.tinggiInput, borderWidth: 1, borderColor: warna.garis, borderRadius: ukuran.radius,
     paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: warna.putih,
   },
   teksPilihan: { flex: 1, fontSize: ukuran.hurufSedang, color: warna.teks },
   segmen: {
-    flexDirection: 'row', borderWidth: 1.5, borderColor: warna.garis, borderRadius: ukuran.radius, overflow: 'hidden',
+    flexDirection: 'row', borderWidth: 1, borderColor: warna.garis, borderRadius: ukuran.radius, overflow: 'hidden',
   },
   itemSegmen: { flex: 1, height: 48, alignItems: 'center', justifyContent: 'center', backgroundColor: warna.putih },
   itemSegmenAktif: { backgroundColor: warna.utama },
-  teksSegmen: { fontSize: 20, fontWeight: '800', color: warna.utama },
+  teksSegmen: { fontSize: 17, fontWeight: '700', color: warna.utama },
   baris2: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   ringkasan: { flexDirection: 'row', alignItems: 'center', marginTop: 16, backgroundColor: warna.utamaMuda, borderColor: '#C5DCE8' },
-  total: { fontSize: 28, fontWeight: '800', color: warna.utama, marginVertical: 2 },
+  total: { fontSize: 22, fontWeight: '700', color: warna.utama, marginVertical: 2 },
 });

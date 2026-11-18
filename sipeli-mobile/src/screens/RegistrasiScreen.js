@@ -292,7 +292,7 @@ export default function RegistrasiScreen({ onKembali, onSelesai }) {
           />
           <KotakPesan teks={pesan} jenis="galat" gaya={{ marginTop: 12 }} />
 
-          <Tombol judul="DAFTAR" onPress={tekanDaftar} memuat={memuat} gaya={{ marginTop: 20 }} />
+          <Tombol judul="Daftar" onPress={tekanDaftar} memuat={memuat} gaya={{ marginTop: 20 }} />
           <Pressable onPress={onKembali} disabled={memuat} style={s.tautan} hitSlop={8}>
             <Text style={s.teksTautan}>
               Sudah punya akun? <Text style={s.tebal}>Masuk</Text>
@@ -355,32 +355,32 @@ const s = StyleSheet.create({
   layar: { flex: 1, backgroundColor: warna.utama },
   kepala: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 6 },
   tombolKembali: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-  judulKepala: { fontSize: 24, fontWeight: '800', color: warna.putih, marginLeft: 4 },
+  judulKepala: { fontSize: 20, fontWeight: '700', color: warna.putih, marginLeft: 4 },
   judulId: { color: '#8FD3F4' },
   isi: { padding: 16, paddingTop: 4, paddingBottom: 40 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 16, padding: 20 },
-  judulKartu: { fontSize: 22, fontWeight: '700', color: warna.teks },
-  subjudul: { fontSize: 15, color: warna.teksRedup, marginTop: 4, marginBottom: 18 },
-  label: { fontSize: ukuran.hurufNormal, fontWeight: '600', color: warna.teks, marginBottom: 6 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
+  judulKartu: { fontSize: 18, fontWeight: '600', color: warna.teks },
+  subjudul: { fontSize: 14, color: warna.teksRedup, marginTop: 4, marginBottom: 18 },
+  label: { fontSize: ukuran.hurufNormal, fontWeight: '500', color: warna.teks, marginBottom: 6 },
   input: {
-    height: ukuran.tinggiInput, borderWidth: 1.5, borderColor: warna.garis,
+    height: ukuran.tinggiInput, borderWidth: 1, borderColor: warna.garis,
     borderRadius: ukuran.radius, paddingHorizontal: 14, fontSize: ukuran.hurufSedang,
     color: warna.teks, backgroundColor: warna.putih,
   },
   inputGalat: { borderColor: warna.galat, borderWidth: 2 },
-  teksGalat: { color: warna.galat, fontSize: 14, marginTop: 6, fontWeight: '600' },
-  petunjuk: { color: warna.teksRedup, fontSize: 13, marginTop: 5 },
+  teksGalat: { color: warna.galat, fontSize: 13, marginTop: 6, fontWeight: '500' },
+  petunjuk: { color: warna.teksRedup, fontSize: 12, marginTop: 5 },
   barisSandi: { flexDirection: 'row', alignItems: 'center', paddingRight: 4 },
   inputSandi: { flex: 1, fontSize: ukuran.hurufSedang, color: warna.teks, height: '100%' },
   tombolLihat: { paddingHorizontal: 10, minHeight: 44, justifyContent: 'center' },
-  teksLihat: { color: warna.utama, fontWeight: '700', fontSize: 14 },
+  teksLihat: { color: warna.utama, fontWeight: '600', fontSize: 13 },
   syarat: {
     backgroundColor: warna.latar, borderRadius: ukuran.radius, padding: 12,
     marginTop: -4, marginBottom: 16, gap: 6,
   },
   barisSyarat: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  teksSyarat: { fontSize: 14, color: warna.teksRedup, fontWeight: '600' },
+  teksSyarat: { fontSize: 13, color: warna.teksRedup, fontWeight: '500' },
   tautan: { alignItems: 'center', minHeight: 44, justifyContent: 'center', marginTop: 8 },
-  teksTautan: { color: warna.teksRedup, fontSize: 15 },
-  tebal: { color: warna.utama, fontWeight: '800' },
+  teksTautan: { color: warna.teksRedup, fontSize: 14 },
+  tebal: { color: warna.utama, fontWeight: '700' },
 });

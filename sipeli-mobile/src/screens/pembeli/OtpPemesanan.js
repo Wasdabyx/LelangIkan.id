@@ -119,7 +119,7 @@ export default function OtpPemesanan({ lot, info, onBerhasil, onBatal }) {
               : `Kode berlaku ${formatMenit(sisaBerlaku)} lagi`}
           </Text>
 
-          <Tombol judul="KONFIRMASI PEMESANAN" onPress={() => konfirmasi()} memuat={memuat} gaya={{ marginTop: 16 }} />
+          <Tombol judul="Konfirmasi Pemesanan" onPress={() => konfirmasi()} memuat={memuat} gaya={{ marginTop: 16 }} />
           <Tombol
             judul={sisaKirim > 0 ? `Kirim Ulang Kode (${sisaKirim} dtk)` : 'Kirim Ulang Kode'}
             jenis="garis"
@@ -139,18 +139,18 @@ export default function OtpPemesanan({ lot, info, onBerhasil, onBatal }) {
 const s = StyleSheet.create({
   wadah: { flex: 1, backgroundColor: warna.latar },
   isi: { flexGrow: 1, padding: 16, paddingBottom: 32 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 16, padding: 20 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
   lingkaran: {
     width: 68, height: 68, borderRadius: 34, backgroundColor: warna.utamaMuda,
     alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 10,
   },
-  judul: { fontSize: 22, fontWeight: '700', color: warna.teks, textAlign: 'center' },
-  teks: { fontSize: 15, color: warna.teksRedup, textAlign: 'center', marginTop: 6, lineHeight: 22 },
-  tebal: { color: warna.teks, fontWeight: '700' },
+  judul: { fontSize: 18, fontWeight: '600', color: warna.teks, textAlign: 'center' },
+  teks: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', marginTop: 6, lineHeight: 20 },
+  tebal: { color: warna.teks, fontWeight: '600' },
   lot: { backgroundColor: warna.latar, borderRadius: ukuran.radius, padding: 12, marginTop: 16, gap: 8 },
   barisLot: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  label: { fontSize: 14, color: warna.teksRedup },
-  nilai: { fontSize: 14, color: warna.teks, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
-  nilaiTebal: { fontSize: 15, color: warna.teks, fontWeight: '800' },
-  waktu: { fontSize: 15, color: warna.teksRedup, textAlign: 'center', marginTop: 14, fontWeight: '600' },
+  label: { fontSize: 13, color: warna.teksRedup },
+  nilai: { fontSize: 13, color: warna.teks, fontWeight: '500', flexShrink: 1, textAlign: 'right' },
+  nilaiTebal: { fontSize: 14, color: warna.teks, fontWeight: '700' },
+  waktu: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', marginTop: 14, fontWeight: '500' },
 });

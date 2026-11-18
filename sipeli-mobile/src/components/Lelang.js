@@ -35,7 +35,7 @@ export function JamMundur({ sisa, status, perpanjangan, maksPerpanjangan }) {
   return (
     <View style={[s.jam, genting && s.jamGenting, !aktif && s.jamSelesai]}>
       <Text style={[s.labelJam, genting && { color: warna.galat }]}>
-        {aktif ? 'SISA WAKTU' : 'LELANG SELESAI'}
+        {aktif ? 'Sisa waktu' : 'Lelang selesai'}
       </Text>
       <Text style={[s.angkaJam, genting && { color: warna.galat }, !aktif && { color: warna.teksRedup }]} accessibilityLabel="Sisa waktu">
         {formatSisa(aktif ? sisa : 0)}
@@ -45,7 +45,7 @@ export function JamMundur({ sisa, status, perpanjangan, maksPerpanjangan }) {
           Diperpanjang {perpanjangan} dari {maksPerpanjangan} kali
         </Text>
       ) : aktif ? (
-        <Text style={s.perpanjangan}>Tawaran di 15 detik terakhir menambah waktu 30 detik</Text>
+        <Text style={s.perpanjangan}>Tawaran di 15 detik terakhir menambah 30 detik</Text>
       ) : null}
     </View>
   );
@@ -55,9 +55,9 @@ export function JamMundur({ sisa, status, perpanjangan, maksPerpanjangan }) {
 export function BarisRincian({ label, nilai, tebal, besar, warnaNilai }) {
   return (
     <View style={s.baris}>
-      <Text style={[s.label, besar && { fontSize: 16, color: warna.teks, fontWeight: '700' }]}>{label}</Text>
+      <Text style={[s.label, besar && { fontSize: 15, color: warna.teks, fontWeight: '600' }]}>{label}</Text>
       <Text
-        style={[s.nilai, tebal && { fontWeight: '800' }, besar && { fontSize: 18, fontWeight: '800' }, warnaNilai && { color: warnaNilai }]}
+        style={[s.nilai, tebal && { fontWeight: '700' }, besar && { fontSize: 16, fontWeight: '700' }, warnaNilai && { color: warnaNilai }]}
       >
         {nilai}
       </Text>
@@ -76,21 +76,21 @@ export const WARNA_TRANSAKSI = {
 const s = StyleSheet.create({
   tab: { flexDirection: 'row', backgroundColor: warna.putih, borderBottomWidth: 1, borderBottomColor: warna.garis },
   itemTab: {
-    flex: 1, minHeight: 50, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
-    borderBottomWidth: 3, borderBottomColor: 'transparent',
+    flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
+    borderBottomWidth: 2, borderBottomColor: 'transparent',
   },
   itemTabAktif: { borderBottomColor: warna.utama },
-  teksTab: { fontSize: 14, fontWeight: '600', color: warna.teksRedup },
-  teksTabAktif: { color: warna.utama, fontWeight: '800' },
-  jam: { backgroundColor: warna.utamaMuda, borderRadius: 14, paddingVertical: 12, alignItems: 'center' },
+  teksTab: { fontSize: 13, fontWeight: '500', color: warna.teksRedup },
+  teksTabAktif: { color: warna.utama, fontWeight: '700' },
+  jam: { backgroundColor: warna.utamaMuda, borderRadius: 6, paddingVertical: 12, alignItems: 'center' },
   jamGenting: { backgroundColor: warna.galatLatar },
   jamSelesai: { backgroundColor: warna.abu },
-  labelJam: { fontSize: 13, fontWeight: '800', color: warna.utama, letterSpacing: 1 },
-  angkaJam: { fontSize: 48, fontWeight: '800', color: warna.utama, fontVariant: ['tabular-nums'] },
-  perpanjangan: { fontSize: 13, color: warna.teksRedup, fontWeight: '600', marginTop: 2, textAlign: 'center', paddingHorizontal: 12 },
+  labelJam: { fontSize: 12, fontWeight: '700', color: warna.utama },
+  angkaJam: { fontSize: 34, fontWeight: '700', color: warna.utama, fontVariant: ['tabular-nums'] },
+  perpanjangan: { fontSize: 12, color: warna.teksRedup, fontWeight: '500', marginTop: 2, textAlign: 'center', paddingHorizontal: 12 },
   baris: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-  label: { fontSize: 14, color: warna.teksRedup, flexShrink: 1 },
-  nilai: { fontSize: 15, color: warna.teks, fontWeight: '600', textAlign: 'right', flexShrink: 1 },
+  label: { fontSize: 13, color: warna.teksRedup, flexShrink: 1 },
+  nilai: { fontSize: 14, color: warna.teks, fontWeight: '500', textAlign: 'right', flexShrink: 1 },
 });
 
 export { ukuran };

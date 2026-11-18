@@ -129,7 +129,7 @@ export default function AktivasiScreen({ namaPengguna, kataSandi, info, onBerhas
                 : `Kode berlaku ${formatMenit(sisaBerlaku)} lagi`}
             </Text>
 
-            <Tombol judul="AKTIFKAN AKUN" onPress={() => periksa()} memuat={memuat} gaya={{ marginTop: 16 }} />
+            <Tombol judul="Aktifkan Akun" onPress={() => periksa()} memuat={memuat} gaya={{ marginTop: 16 }} />
 
             <Tombol
               judul={sisaKirim > 0 ? `Kirim Ulang Kode (${sisaKirim} dtk)` : 'Kirim Ulang Kode'}
@@ -155,17 +155,17 @@ const s = StyleSheet.create({
   layar: { flex: 1, backgroundColor: warna.utama },
   kepala: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 6 },
   tombolKembali: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-  judulKepala: { fontSize: 24, fontWeight: '800', color: warna.putih, marginLeft: 4 },
+  judulKepala: { fontSize: 20, fontWeight: '700', color: warna.putih, marginLeft: 4 },
   judulId: { color: '#8FD3F4' },
   isi: { flexGrow: 1, justifyContent: 'center', padding: 16, paddingBottom: 32 },
-  kartu: { backgroundColor: warna.kartu, borderRadius: 16, padding: 20 },
+  kartu: { backgroundColor: warna.kartu, borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#E4EBF1' },
   lingkaran: {
     width: 72, height: 72, borderRadius: 36, backgroundColor: warna.utamaMuda,
     alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 12,
   },
-  judul: { fontSize: 22, fontWeight: '700', color: warna.teks, textAlign: 'center' },
-  teks: { fontSize: 15, color: warna.teksRedup, textAlign: 'center', marginTop: 8, lineHeight: 22 },
-  tebal: { color: warna.teks, fontWeight: '700' },
-  waktu: { fontSize: 15, color: warna.teksRedup, textAlign: 'center', marginTop: 14, fontWeight: '600' },
-  catatan: { fontSize: 13, color: warna.teksRedup, textAlign: 'center', marginTop: 16, lineHeight: 19 },
+  judul: { fontSize: 18, fontWeight: '600', color: warna.teks, textAlign: 'center' },
+  teks: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', marginTop: 8, lineHeight: 20 },
+  tebal: { color: warna.teks, fontWeight: '600' },
+  waktu: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', marginTop: 14, fontWeight: '500' },
+  catatan: { fontSize: 12, color: warna.teksRedup, textAlign: 'center', marginTop: 16, lineHeight: 17 },
 });
