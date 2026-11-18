@@ -29,6 +29,8 @@ const GARIS = {
   bagikan: 'M12 3v12 M7 8l5-5l5 5 M5 13v7h14v-7',
   senter: 'M8 3h8v4l-2 3v11h-4V10L8 7z M12 13v2',
   kamera: 'M4 8h3l2-3h6l2 3h3v12H4z M12 10.5a3.5 3.5 0 1 1 0 7a3.5 3.5 0 1 1 0-7z',
+  surel: 'M3 6h18v12H3z M3 7l9 6.5l9-6.5',
+  gembok: 'M6 11h12v10H6z M8.5 11V8a3.5 3.5 0 0 1 7 0v3 M12 15v2',
   pensil: 'M4 20h4L19 9l-4-4L4 16z M13.5 6.5l4 4',
 };
 

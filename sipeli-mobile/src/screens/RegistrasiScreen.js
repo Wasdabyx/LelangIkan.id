@@ -27,7 +27,8 @@ import {
  * Setiap kolom divalidasi dengan Regular Expression dari src/validasi.js:
  * - saat kolom ditinggalkan (onBlur), lalu ulang setiap kali diketik setelah itu
  * - semua kolom sekaligus saat tombol DAFTAR ditekan
- * Akun yang berhasil dibuat berstatus NONAKTIF sampai identitasnya diverifikasi.
+ * Akun yang berhasil dibuat berstatus NONAKTIF; Tugas 2: kode aktivasi dikirim ke surel,
+ * lalu pengguna langsung dibawa ke layar Aktivasi (AktivasiScreen).
  */
 const KOSONG = {
   nama_lengkap: '',
@@ -57,7 +58,6 @@ export default function RegistrasiScreen({ onKembali, onSelesai }) {
   const [lihatSandi, setLihatSandi] = useState(false);
   const [memuat, setMemuat] = useState(false);
   const [pesan, setPesan] = useState(null);
-  const [hasil, setHasil] = useState(null); // data akun setelah berhasil daftar
 
   const ref = {
     nik: useRef(null),
@@ -122,7 +122,19 @@ export default function RegistrasiScreen({ onKembali, onSelesai }) {
         kata_sandi: data.kata_sandi,
         konfirmasi_sandi: data.konfirmasi_sandi,
       });
-      setHasil(respons);
+      // Tugas 2: lanjut ke layar Aktivasi (kata sandi hanya disimpan di memori untuk meminta/memeriksa kode)
+      onSelesai({
+        namaPengguna: respons.pengguna.nama_pengguna,
+        kataSandi: data.kata_sandi,
+        info: {
+          pesan: respons.pesan,
+          surelTerkirim: respons.aktivasi.surel_terkirim,
+          surelTersamar: respons.aktivasi.surel_tersamar,
+          berlakuDetik: respons.aktivasi.berlaku_detik,
+          kirimUlangDetik: respons.aktivasi.kirim_ulang_detik,
+        },
+      });
+      return;
     } catch (e) {
       if (e.status === 422 && Object.keys(e.galatKolom).length > 0) {
         setGalat(e.galatKolom); // contoh: "NIK ini sudah terdaftar."
@@ -133,35 +145,6 @@ export default function RegistrasiScreen({ onKembali, onSelesai }) {
     } finally {
       setMemuat(false);
     }
-  }
-
-  // ---------- Tampilan setelah berhasil ----------
-  if (hasil) {
-    return (
-      <SafeAreaView style={s.layar} edges={['top', 'bottom']}>
-        <View style={s.tengah}>
-          <View style={s.kartu}>
-            <View style={s.lingkaranSukses}>
-              <Ikon nama="centang" ukuran={40} warna={warna.sukses} tebal={2.6} />
-            </View>
-            <Text style={[s.judulKartu, { textAlign: 'center' }]}>Pendaftaran Berhasil</Text>
-            <Text style={s.teksSukses}>{hasil.pesan}</Text>
-            <View style={s.ringkasan}>
-              <Baris label="Nama" nilai={hasil.pengguna.nama_lengkap} />
-              <Baris label="Nama pengguna" nilai={hasil.pengguna.nama_pengguna} />
-              <Baris label="Surel" nilai={hasil.pengguna.surel} />
-              <Baris label="Nomor HP" nilai={hasil.pengguna.no_hp} />
-              <Baris label="Status akun" nilai="Belum aktif" />
-            </View>
-            <Tombol
-              judul="Kembali ke Halaman Masuk"
-              onPress={() => onSelesai(hasil.pengguna.nama_pengguna)}
-              gaya={{ marginTop: 20 }}
-            />
-          </View>
-        </View>
-      </SafeAreaView>
-    );
   }
 
   // ---------- Formulir ----------
@@ -368,18 +351,8 @@ function KolomSandi({ label, galat, inputRef, lihat, onLihat, ...props }) {
   );
 }
 
-function Baris({ label, nilai }) {
-  return (
-    <View style={s.barisRingkas}>
-      <Text style={s.labelRingkas}>{label}</Text>
-      <Text style={s.nilaiRingkas}>{nilai}</Text>
-    </View>
-  );
-}
-
 const s = StyleSheet.create({
   layar: { flex: 1, backgroundColor: warna.utama },
-  tengah: { flex: 1, justifyContent: 'center', padding: 20 },
   kepala: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 6 },
   tombolKembali: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   judulKepala: { fontSize: 24, fontWeight: '800', color: warna.putih, marginLeft: 4 },
@@ -410,13 +383,4 @@ const s = StyleSheet.create({
   tautan: { alignItems: 'center', minHeight: 44, justifyContent: 'center', marginTop: 8 },
   teksTautan: { color: warna.teksRedup, fontSize: 15 },
   tebal: { color: warna.utama, fontWeight: '800' },
-  lingkaranSukses: {
-    width: 72, height: 72, borderRadius: 36, backgroundColor: warna.suksesLatar,
-    alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 12,
-  },
-  teksSukses: { fontSize: 15, color: warna.teksRedup, textAlign: 'center', marginTop: 8, lineHeight: 21 },
-  ringkasan: { backgroundColor: warna.latar, borderRadius: ukuran.radius, padding: 12, marginTop: 16, gap: 8 },
-  barisRingkas: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  labelRingkas: { fontSize: 14, color: warna.teksRedup },
-  nilaiRingkas: { fontSize: 14, color: warna.teks, fontWeight: '700', flexShrink: 1, textAlign: 'right' },
 });

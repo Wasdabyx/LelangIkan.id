@@ -15,10 +15,11 @@ export function aturSaatSesiHabis(fungsi) {
 
 // Kesalahan dari API: berisi pesan, kode status, dan galat per kolom
 export class GalatApi extends Error {
-  constructor(pesan, status = 0, galatKolom = {}) {
+  constructor(pesan, status = 0, galatKolom = {}, data = null) {
     super(pesan);
     this.status = status;
     this.galatKolom = galatKolom;
+    this.data = data; // isi lengkap respons (contoh: kode BELUM_AKTIVASI, tunggu_detik)
   }
 }
 
@@ -65,14 +66,14 @@ async function permintaan(metode, jalur, data) {
       }
     }
     const pesan =
-      respons.status === 429 && !galatKolom.nama_pengguna
+      respons.status === 429 && !galatKolom.nama_pengguna && !(isi && isi.tunggu_detik)
         ? 'Terlalu banyak permintaan. Tunggu sebentar lalu coba lagi.'
         : respons.status === 401
         ? 'Sesi berakhir. Silakan masuk kembali.'
         : Object.values(galatKolom)[0] ||
           (isi && (isi.pesan || isi.message)) ||
           `Terjadi kesalahan pada server (kode ${respons.status}).`;
-    throw new GalatApi(pesan, respons.status, galatKolom);
+    throw new GalatApi(pesan, respons.status, galatKolom, isi);
   }
 
   return isi;
@@ -89,8 +90,63 @@ export const masuk = (namaPengguna, kataSandi) =>
 // Tugas Week 9: Registrasi Pembeli (tanpa token)
 export const daftar = (data) => permintaan('POST', '/registrasi', data);
 
+// Tugas 2: aktivasi akun dengan kode 6 digit dari surel (tanpa token)
+export const aktivasi = (namaPengguna, kataSandi, kodeOtp) =>
+  permintaan('POST', '/aktivasi', {
+    nama_pengguna: namaPengguna,
+    kata_sandi: kataSandi,
+    kode_otp: kodeOtp,
+    perangkat: `expo-${Platform.OS}`,
+  });
+export const kirimUlangAktivasi = (namaPengguna, kataSandi) =>
+  permintaan('POST', '/aktivasi/kirim-ulang', { nama_pengguna: namaPengguna, kata_sandi: kataSandi });
+
+// Tugas 2: Pembeli - lot siap lelang dan pemesanan dengan OTP
+export const pembeli = {
+  daftarLot: () => permintaan('GET', '/pembeli/lot'),
+  pemesananSaya: () => permintaan('GET', '/pembeli/pemesanan'),
+  mintaOtp: (idLot) => permintaan('POST', '/pembeli/pemesanan/otp', { id_lot: idLot }),
+  konfirmasi: (idLot, kodeOtp) => permintaan('POST', '/pembeli/pemesanan', { id_lot: idLot, kode_otp: kodeOtp }),
+};
+
 export const ambilSaya = () => permintaan('GET', '/saya');
 export const keluar = () => permintaan('POST', '/keluar');
+
+// Kunci idempotensi penawaran (UUID v4) - FR-20
+export const buatKunci = () =>
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+
+// UC-03 dan UC-05: Operator Lelang
+export const operator = {
+  antrean: () => permintaan('GET', '/operator/antrean'),
+  daftarSesi: () => permintaan('GET', '/operator/sesi'),
+  buka: (idLot, durasiDetik, kenaikanMinimum) =>
+    permintaan('POST', '/operator/sesi', { id_lot: idLot, durasi_detik: durasiDetik, kenaikan_minimum: kenaikanMinimum }),
+  status: (idSesi) => permintaan('GET', `/operator/sesi/${idSesi}`),
+  tutup: (idSesi, alasan) => permintaan('POST', `/operator/sesi/${idSesi}/tutup`, { alasan }),
+};
+
+// UC-04: Pembeli menawar (status diminta tiap 1 detik) + tagihan
+export const lelang = {
+  daftar: () => permintaan('GET', '/pembeli/lelang'),
+  status: (idSesi) => permintaan('GET', `/pembeli/lelang/${idSesi}`),
+  tawar: (idSesi, hargaPerKg, kunci) =>
+    permintaan('POST', `/pembeli/lelang/${idSesi}/tawar`, { harga_per_kg: hargaPerKg, kunci_idempotensi: kunci }),
+  tagihan: () => permintaan('GET', '/pembeli/tagihan'),
+  detailTagihan: (id) => permintaan('GET', `/pembeli/tagihan/${id}`),
+};
+
+// UC-06: Kasir TPI
+export const kasir = {
+  daftar: () => permintaan('GET', '/kasir/tagihan'),
+  cari: (kode) => permintaan('GET', `/kasir/tagihan/${encodeURIComponent(kode)}`),
+  bayar: (id, metode, nominal, nomorReferensi) =>
+    permintaan('POST', `/kasir/tagihan/${id}/bayar`, { metode, nominal, nomor_referensi: nomorReferensi || null }),
+  verifikasiNota: (isiQr) => permintaan('GET', `/nota/verifikasi?kode=${encodeURIComponent(isiQr)}`),
+};
 
 // Dipakai tampilan berikutnya (kedatangan, penimbangan)
 export const api = {

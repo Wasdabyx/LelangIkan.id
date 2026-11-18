@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\TransaksiPenjualan;
+use App\Services\LelangService;
+use App\Services\PembayaranService;
+use Illuminate\Http\Request;
+
+/** UC-04 Penawaran real-time dan tagihan milik Pembeli (A4). */
+class LelangPembeliController extends Controller
+{
+    public function __construct(private LelangService $lelang, private PembayaranService $pembayaran)
+    {
+    }
+
+    /** GET /api/pembeli/lelang */
+    public function daftar(Request $request)
+    {
+        return response()->json(['data' => $this->lelang->daftarSesiPembeli($request->user())]);
+    }
+
+    /** GET /api/pembeli/lelang/{id}  (dipanggil tiap 1 detik) */
+    public function status(Request $request, int $id)
+    {
+        return response()->json(['data' => $this->lelang->status($id, $request->user(), false)]);
+    }
+
+    /** POST /api/pembeli/lelang/{id}/tawar  { harga_per_kg, kunci_idempotensi } */
+    public function tawar(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'harga_per_kg'      => 'required|integer|between:100,99999999',
+            'kunci_idempotensi' => 'required|uuid',
+        ], [
+            'harga_per_kg.required'      => 'Harga tawaran wajib diisi.',
+            'harga_per_kg.integer'       => 'Harga tawaran harus berupa angka rupiah tanpa titik atau koma.',
+            'harga_per_kg.between'       => 'Harga tawaran Rp100 sampai Rp99.999.999 per kg.',
+            'kunci_idempotensi.required' => 'Kunci idempotensi wajib dikirim.',
+            'kunci_idempotensi.uuid'     => 'Kunci idempotensi tidak valid.',
+        ]);
+
+        [$penawaran, $duplikat] = $this->lelang->ajukanTawaran(
+            $request->user(), $id, (float) $data['harga_per_kg'], strtolower($data['kunci_idempotensi']), $request->ip(),
+        );
+
+        return response()->json([
+            'pesan'    => $duplikat ? 'Tawaran ini sudah diterima sebelumnya.' : 'Tawaran diterima. Anda penawar tertinggi.',
+            'duplikat' => $duplikat,
+            'data'     => $this->lelang->status($penawaran->getIdSesi(), $request->user(), false),
+        ], $duplikat ? 200 : 201);
+    }
+
+    /** GET /api/pembeli/tagihan */
+    public function tagihan(Request $request)
+    {
+        $data = TransaksiPenjualan::where('id_pembeli', $request->user()->getIdPengguna())
+            ->orderByDesc('id_transaksi')
+            ->get()
+            ->map(fn ($t) => $this->pembayaran->rincian($t, false));
+
+        return response()->json(['data' => $data]);
+    }
+
+    /** GET /api/pembeli/tagihan/{id} */
+    public function detailTagihan(Request $request, int $id)
+    {
+        $t = TransaksiPenjualan::where('id_pembeli', $request->user()->getIdPengguna())->find($id);
+        if (! $t) {
+            return response()->json(['message' => 'Tagihan tidak ditemukan.'], 404);
+        }
+
+        return response()->json(['data' => $this->pembayaran->rincian($t)]);
+    }
+}

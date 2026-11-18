@@ -21,8 +21,9 @@ import { validasiMasuk } from '../validasi';
  * Atribut: namaPengguna, kataSandi, pesanKesalahan
  * Metode : masuk(namaPengguna, kataSandi), tampilkanKesalahan(pesan)
  * Week 9: format nama pengguna diperiksa dengan RegEx (src/validasi.js) dan ada tautan ke Registrasi Pembeli.
+ * Tugas 2: akun pembeli yang belum aktivasi diarahkan ke layar Aktivasi (kode dari surel).
  */
-export default function LoginScreen({ onBerhasil, pesanAwal, infoAwal, namaAwal, onDaftar }) {
+export default function LoginScreen({ onBerhasil, pesanAwal, infoAwal, namaAwal, onDaftar, onPerluAktivasi }) {
   const [namaPengguna, setNamaPengguna] = useState(namaAwal || '');
   const [kataSandi, setKataSandi] = useState('');
   const [lihatSandi, setLihatSandi] = useState(false);
@@ -67,8 +68,17 @@ export default function LoginScreen({ onBerhasil, pesanAwal, infoAwal, namaAwal,
       const hasil = await masuk(namaPengguna.trim(), kataSandi);
       await onBerhasil(hasil.token, hasil.pengguna);
     } catch (e) {
-      tampilkanKesalahan(e);
       setMemuat(false);
+      if (e.status === 403 && e.data?.kode === 'BELUM_AKTIVASI' && onPerluAktivasi) {
+        // Tugas 2: buka layar Aktivasi; kode baru langsung diminta ke surel
+        onPerluAktivasi({
+          namaPengguna: namaPengguna.trim(),
+          kataSandi,
+          info: { mintaKode: true, surelTersamar: e.data.surel_tersamar, pesan: e.message, surelTerkirim: false },
+        });
+        return;
+      }
+      tampilkanKesalahan(e);
     }
   }
 

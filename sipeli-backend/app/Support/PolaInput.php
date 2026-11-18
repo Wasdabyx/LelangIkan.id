@@ -34,4 +34,7 @@ final class PolaInput
     // Nomor surat izin berlayar: SPB atau SIB / kode pelabuhan 2-5 huruf / TTBBHH / urut 2 digit
     // contoh: SPB/PLR/261014/01
     public const NOMOR_SURAT = '#^(SPB|SIB)/[A-Z]{2,5}/\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])/\d{2}$#';
+
+    // Tugas 2: kode OTP / aktivasi tepat 6 digit angka
+    public const KODE_OTP = '/^\d{6}$/';
 }

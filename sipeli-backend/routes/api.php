@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\AutentikasiController;
+use App\Http\Controllers\Api\KasirController;
 use App\Http\Controllers\Api\KedatanganController;
+use App\Http\Controllers\Api\LelangPembeliController;
+use App\Http\Controllers\Api\OperatorLelangController;
+use App\Http\Controllers\Api\PembeliController;
 use App\Http\Controllers\Api\PenimbanganController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +18,8 @@ use Illuminate\Support\Facades\Route;
 // Tanpa token
 Route::post('/masuk', [AutentikasiController::class, 'masuk']);
 Route::post('/registrasi', [AutentikasiController::class, 'daftar']); // Week 9: Registrasi Pembeli (UC-11)
+Route::post('/aktivasi', [AutentikasiController::class, 'aktivasi']);                   // Tugas 2
+Route::post('/aktivasi/kirim-ulang', [AutentikasiController::class, 'kirimUlangAktivasi']); // Tugas 2
 
 // Wajib token (header: Authorization: Bearer <token>)
 Route::middleware('auth:sanctum')->group(function () {
@@ -33,4 +39,38 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/lot', [PenimbanganController::class, 'simpan'])->middleware('peran:2');
     Route::get('/lot/{kode}', [PenimbanganController::class, 'lihatLot'])->middleware('peran:1,2,3');
     Route::post('/lot/{id}/cetak', [PenimbanganController::class, 'catatCetak'])->whereNumber('id')->middleware('peran:2');
+
+    // Tugas 2: Pembeli (A4) memesan / ikut lelang lot dengan konfirmasi OTP surel
+    Route::middleware('peran:4')->prefix('pembeli')->group(function () {
+        Route::get('/lot', [PembeliController::class, 'lot']);
+        Route::get('/pemesanan', [PembeliController::class, 'pemesanan']);
+        Route::post('/pemesanan/otp', [PembeliController::class, 'kirimOtp']);
+        Route::post('/pemesanan', [PembeliController::class, 'konfirmasi']);
+
+        // UC-04 penawaran real-time (polling 1 detik) dan tagihan
+        Route::get('/lelang', [LelangPembeliController::class, 'daftar']);
+        Route::get('/lelang/{id}', [LelangPembeliController::class, 'status'])->whereNumber('id');
+        Route::post('/lelang/{id}/tawar', [LelangPembeliController::class, 'tawar'])->whereNumber('id');
+        Route::get('/tagihan', [LelangPembeliController::class, 'tagihan']);
+        Route::get('/tagihan/{id}', [LelangPembeliController::class, 'detailTagihan'])->whereNumber('id');
+    });
+
+    // UC-03 dan UC-05: Operator Lelang (A3)
+    Route::middleware('peran:3')->prefix('operator')->group(function () {
+        Route::get('/antrean', [OperatorLelangController::class, 'antrean']);
+        Route::get('/sesi', [OperatorLelangController::class, 'daftarSesi']);
+        Route::post('/sesi', [OperatorLelangController::class, 'buka']);
+        Route::get('/sesi/{id}', [OperatorLelangController::class, 'status'])->whereNumber('id');
+        Route::post('/sesi/{id}/tutup', [OperatorLelangController::class, 'tutup'])->whereNumber('id');
+    });
+
+    // UC-06: Kasir TPI (A5)
+    Route::middleware('peran:5')->prefix('kasir')->group(function () {
+        Route::get('/tagihan', [KasirController::class, 'daftar']);
+        Route::get('/tagihan/{kode}', [KasirController::class, 'cari']);
+        Route::post('/tagihan/{id}/bayar', [KasirController::class, 'bayar'])->whereNumber('id');
+    });
+
+    // FR-31: periksa keaslian nota (Kasir, Pimpinan, Operator)
+    Route::get('/nota/verifikasi', [KasirController::class, 'verifikasiNota'])->middleware('peran:3,5,6');
 });

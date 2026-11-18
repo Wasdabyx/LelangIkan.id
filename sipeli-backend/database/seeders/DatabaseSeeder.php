@@ -63,6 +63,7 @@ class DatabaseSeeder extends Seeder
                 'id_peran'      => $idPeran,
                 'id_tpi'        => $idPeran === 7 ? null : $tpi->id_tpi,
                 'status_aktif'  => true,
+                'surel_terverifikasi_pada' => now(),   // Tugas 2: akun contoh dianggap sudah aktivasi
             ]);
         }
 

@@ -10,7 +10,13 @@ import { ukuran, warna } from '../../tema';
  * Jendela pemindai QR memakai kamera belakang (expo-camera).
  * onHasil(teks) dipanggil SEKALI saat kode QR terbaca.
  */
-export default function PemindaiQR({ tampil, onHasil, onTutup }) {
+export default function PemindaiQR({
+  tampil,
+  onHasil,
+  onTutup,
+  petunjuk = 'Arahkan kamera ke kode QR kedatangan atau label lot',
+  alasanIzin = 'Kamera dipakai untuk memindai kode QR kedatangan dan label lot. Foto tidak disimpan.',
+}) {
   const [izin, mintaIzin] = useCameraPermissions();
   const [senter, setSenter] = useState(false);
   const sudahTerbaca = useRef(false);
@@ -46,7 +52,7 @@ export default function PemindaiQR({ tampil, onHasil, onTutup }) {
           </View>
           <Text style={s.judulIzin}>Izin kamera diperlukan</Text>
           <Text style={s.teksIzin}>
-            Kamera dipakai untuk memindai kode QR kedatangan dan label lot. Foto tidak disimpan.
+            {alasanIzin}
           </Text>
           {izin.canAskAgain ? (
             <Tombol judul="Izinkan Kamera" ikon="kamera" onPress={mintaIzin} gaya={{ marginTop: 18 }} />
@@ -69,7 +75,7 @@ export default function PemindaiQR({ tampil, onHasil, onTutup }) {
         />
         {/* Bingkai bidik */}
         <View style={s.lapisan} pointerEvents="none">
-          <Text style={s.petunjuk}>Arahkan kamera ke kode QR kedatangan atau label lot</Text>
+          <Text style={s.petunjuk}>{petunjuk}</Text>
           <View style={s.bingkai}>
             <View style={[s.sudut, s.kiriAtas]} />
             <View style={[s.sudut, s.kananAtas]} />

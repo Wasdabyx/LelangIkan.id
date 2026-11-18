@@ -30,7 +30,7 @@ class Pengguna extends Authenticatable
 
     protected $fillable = [
         'nama_lengkap', 'nama_pengguna', 'surel', 'nik', 'no_hp', 'kata_sandi',
-        'id_peran', 'id_tpi', 'status_aktif',
+        'id_peran', 'id_tpi', 'status_aktif', 'surel_terverifikasi_pada',
     ];
 
     protected $hidden = ['kata_sandi'];
@@ -41,6 +41,7 @@ class Pengguna extends Authenticatable
             'kata_sandi'   => 'hashed',   // otomatis di-hash bcrypt
             'status_aktif' => 'boolean',
             'waktu_dibuat' => 'datetime',
+            'surel_terverifikasi_pada' => 'datetime',
         ];
     }
 
@@ -137,6 +138,27 @@ class Pengguna extends Authenticatable
         return $this->waktu_dibuat;
     }
 
+    public function isSurelTerverifikasi(): bool
+    {
+        return $this->surel_terverifikasi_pada !== null;
+    }
+
+    public function isPembeli(): bool
+    {
+        return $this->getIdPeran() === KodePeran::PEMBELI->value;
+    }
+
+    /** Surel disamarkan untuk ditampilkan di aplikasi: sitinur@gmail.com -> s*****r@gmail.com */
+    public function getSurelTersamar(): string
+    {
+        [$nama, $domain] = array_pad(explode('@', $this->surel, 2), 2, '');
+        $samar = mb_strlen($nama) <= 2
+            ? mb_substr($nama, 0, 1) . '*'
+            : mb_substr($nama, 0, 1) . str_repeat('*', mb_strlen($nama) - 2) . mb_substr($nama, -1);
+
+        return $samar . '@' . $domain;
+    }
+
     // ---------------- relasi ----------------
 
     public function peran()
@@ -186,6 +208,14 @@ class Pengguna extends Authenticatable
         $this->status_aktif = false;
         $this->simpan();
         $this->tokens()->delete();
+    }
+
+    /** Tugas 2: kode aktivasi benar -> surel terverifikasi dan akun langsung aktif. */
+    public function tandaiSurelTerverifikasi(): void
+    {
+        $this->surel_terverifikasi_pada = now();
+        $this->status_aktif = true;
+        $this->simpan();
     }
 
     public function aktifkan(): void

@@ -42,6 +42,9 @@ export const POLA = {
 
   // Nomor surat izin berlayar: SPB atau SIB / kode pelabuhan / TTBBHH / urut, contoh SPB/PLR/261014/01
   nomorSurat: /^(SPB|SIB)\/[A-Z]{2,5}\/\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\/\d{2}$/,
+
+  // Tugas 2: kode aktivasi / OTP tepat 6 digit angka
+  kodeOtp: /^\d{6}$/,
 };
 
 // Syarat kata sandi satu per satu (untuk daftar centang di layar Registrasi)
@@ -155,4 +158,11 @@ export function validasiMasuk(namaPengguna, kataSandi) {
   }
   if (!kataSandi) g.kata_sandi = 'Kata sandi wajib diisi.';
   return g;
+}
+
+// Tugas 2: kode aktivasi / OTP
+export function periksaKodeOtp(nilai) {
+  if (!nilai) return 'Kode wajib diisi.';
+  if (!POLA.kodeOtp.test(nilai)) return 'Kode harus 6 digit angka.';
+  return null;
 }
