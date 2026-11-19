@@ -119,15 +119,10 @@ LelangIkan.id/
 ### 2. Aplikasi mobile
 
 1. Jalankan `npm install` di folder `sipeli-mobile`.
-2. Cari IP laptop dengan `ipconfig` (baris IPv4 Address pada adaptor Wi-Fi), lalu ubah `src/config.js`:
-
-   ```js
-   export const API_URL = 'http://IP_LAPTOP:8000/api';
-   ```
-
+2. Salin `.env.example` menjadi `.env`, lalu isi `EXPO_PUBLIC_API_URL` dengan alamat backend yang dapat dijangkau perangkat. Untuk ponsel fisik, gunakan alamat jaringan laptop Anda; jangan commit file `.env`.
 3. Jalankan `npx expo start --clear`, lalu pindai QR yang muncul dengan aplikasi Expo Go.
 
-Bila HP tidak bisa membuka `http://IP_LAPTOP:8000/up`, izinkan `php.exe` pada Windows Firewall untuk jaringan Private.
+Pastikan ponsel dan laptop berada di jaringan yang sama, backend dijalankan pada port 8000, dan Windows Firewall mengizinkan `php.exe` pada jaringan Private.
 
 ## Akun demo
 
