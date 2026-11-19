@@ -148,7 +148,7 @@ class Pengguna extends Authenticatable
         return $this->getIdPeran() === KodePeran::PEMBELI->value;
     }
 
-    /** Surel disamarkan untuk ditampilkan di aplikasi: sitinur@gmail.com -> s*****r@gmail.com */
+    /** Mengembalikan alamat surel dengan bagian nama disamarkan. */
     public function getSurelTersamar(): string
     {
         [$nama, $domain] = array_pad(explode('@', $this->surel, 2), 2, '');

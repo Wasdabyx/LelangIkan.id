@@ -29,7 +29,7 @@ export function fotoContoh(namaJenis) {
   return ketemu ? ketemu[1] : null;
 }
 
-/** Alamat lengkap foto lot di server, contoh http://192.168.1.5:8000/api/foto-lot/xxxx.jpg */
+/** Membentuk URL foto lot dari alamat API yang dikonfigurasi. */
 export function alamatFotoLot(foto) {
   return foto ? `${API_URL}/${foto}` : null;
 }
