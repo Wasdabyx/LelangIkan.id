@@ -148,6 +148,48 @@ export const kasir = {
   verifikasiNota: (isiQr) => permintaan('GET', `/nota/verifikasi?kode=${encodeURIComponent(isiQr)}`),
 };
 
+// Foto lot oleh Petugas Timbang (multipart). foto = { uri, nama, tipe, blob? } dari components/AmbilFoto.js
+export async function unggahFotoLot(idLot, foto) {
+  const isian = new FormData();
+  if (foto.blob) {
+    isian.append('foto', foto.blob, foto.nama); // Chrome
+  } else {
+    isian.append('foto', { uri: foto.uri, name: foto.nama, type: foto.tipe }); // HP (Expo Go)
+  }
+  const pengendali = new AbortController();
+  const batas = setTimeout(() => pengendali.abort(), BATAS_WAKTU * 4);
+  let respons;
+  try {
+    respons = await fetch(`${API_URL}/lot/${idLot}/foto`, {
+      method: 'POST',
+      headers: { Accept: 'application/json', ...(tokenAktif ? { Authorization: `Bearer ${tokenAktif}` } : {}) },
+      body: isian,
+      signal: pengendali.signal,
+    });
+  } catch (e) {
+    throw new GalatApi('Foto gagal dikirim. Periksa Wi-Fi dan pastikan server LelangIkan.id menyala.');
+  } finally {
+    clearTimeout(batas);
+  }
+  let isi = null;
+  try {
+    isi = await respons.json();
+  } catch (e) {
+    // respons bukan JSON
+  }
+  if (!respons.ok) {
+    if (respons.status === 401 && saatSesiHabis) saatSesiHabis();
+    const galatFoto = isi && isi.errors && isi.errors.foto ? isi.errors.foto[0] : null;
+    throw new GalatApi(
+      respons.status === 413
+        ? 'Ukuran foto terlalu besar untuk server.'
+        : galatFoto || (isi && (isi.pesan || isi.message)) || `Foto gagal disimpan (kode ${respons.status}).`,
+      respons.status
+    );
+  }
+  return isi;
+}
+
 // Dipakai tampilan berikutnya (kedatangan, penimbangan)
 export const api = {
   get: (jalur) => permintaan('GET', jalur),

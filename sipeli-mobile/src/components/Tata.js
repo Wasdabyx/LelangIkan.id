@@ -112,9 +112,10 @@ export function Segmen({ pilihan, nilai, onGanti, label }) {
   );
 }
 
-export function BarisDaftar({ onPress, children, kanan, terakhir, gaya }) {
+export function BarisDaftar({ onPress, children, kiri, kanan, terakhir, gaya }) {
   const isi = (
     <>
+      {kiri || null}
       <View style={{ flex: 1 }}>{children}</View>
       {kanan || null}
     </>

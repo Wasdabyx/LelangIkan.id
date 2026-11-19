@@ -22,7 +22,7 @@ class LotLelang extends Model
     protected $fillable = [
         'kode_lot', 'id_tangkapan', 'berat_aktual', 'selisih_persen', 'perlu_verifikasi',
         'harga_pembukaan', 'status', 'id_petugas_timbang', 'waktu_timbang',
-        'timbang_manual', 'perangkat_timbang', 'alasan', 'jumlah_cetak', 'waktu_cetak_terakhir',
+        'timbang_manual', 'perangkat_timbang', 'alasan', 'jumlah_cetak', 'waktu_cetak_terakhir', 'foto',
     ];
 
     // Lot baru selalu dimulai sebagai DRAFT_HARGA
@@ -149,6 +149,18 @@ class LotLelang extends Model
     public function getJumlahCetak(): int
     {
         return (int) $this->jumlah_cetak;
+    }
+
+    /** Nama berkas foto lot (null bila belum dipotret). */
+    public function getFoto(): ?string
+    {
+        return $this->foto;
+    }
+
+    /** Alamat foto relatif terhadap API, contoh "foto-lot/xxxx.jpg"; null bila belum ada. */
+    public function getAlamatFoto(): ?string
+    {
+        return $this->foto ? 'foto-lot/' . $this->foto : null;
     }
 
     public function getWaktuCetakTerakhir(): ?\DateTimeInterface

@@ -5,6 +5,7 @@ import { DialogKonfirmasi, KolomTeks, KotakPesan, Tombol } from '../../component
 import FormGulir from '../../components/FormGulir';
 import { BarisRincian } from '../../components/Lelang';
 import { Bagian, Info, Segmen } from '../../components/Tata';
+import FotoIkan from '../../components/FotoIkan';
 import { formatKg, formatRupiah } from '../../format';
 import { ukuran, warna } from '../../tema';
 import { hanyaAngka } from '../../validasi';
@@ -52,6 +53,7 @@ export default function FormBukaSesi({ lot, onBatal, onDibuka }) {
         <Bagian>
           <Text style={s.judul}>Buka Sesi Lelang</Text>
           <Text style={s.kode}>{lot.kode_lot}</Text>
+          <FotoIkan lot={lot} tinggi={180} gaya={{ marginTop: 10 }} />
           <View style={s.rincian}>
             <Info label="Jenis ikan" nilai={`${lot.nama_jenis} (Grade ${lot.kode_grade})`} />
             <Info label="Berat aktual" nilai={formatKg(lot.berat_aktual)} />

@@ -25,6 +25,33 @@ Tahap pertama mencakup tiga tampilan pada aplikasi mobile. Setelah login, penggu
 
 Catatan: timbangan digital pada tahap ini masih berupa simulasi di aplikasi, dan tersedia juga input berat manual (wajib disertai alasan).
 
+## Foto lot dan foto contoh jenis ikan
+
+Setiap lot dapat memiliki foto agar Operator Lelang dan Pembeli bisa melihat kondisi ikan.
+
+- **Foto lot (opsional).** Petugas Timbang memotret ikan dari layar Label Lot dengan tombol **Ambil Foto**. Di HP tombol ini membuka kamera belakang. Di Chrome tombol ini membuka webcam, dan tersedia juga tombol **Pilih File**. Foto hanya dapat diambil atau diganti sebelum lot dilelang (status DRAFT_HARGA atau MENUNGGU_LELANG). Foto disimpan di `sipeli-backend/storage/app/private/foto-lot/` dengan nama acak, lalu ditampilkan melalui `GET /api/foto-lot/{nama}`.
+- **Foto contoh jenis ikan.** Lot yang belum difoto menampilkan foto contoh sesuai jenis ikannya, dengan tanda "Contoh" agar tidak dikira foto lot asli. Foto contoh tersimpan di `sipeli-mobile/assets/ikan/`.
+- **Lokasi tampil:**
+  - Petugas Timbang: daftar baris kedatangan dan Label Lot.
+  - Operator Lelang: Antrean Lot, Buka Sesi Lelang, dan pemantauan sesi.
+  - Pembeli: daftar lot, tab Pesanan, tab Lelang, dan Ruang Lelang.
+- Ketuk foto untuk melihatnya dalam ukuran besar.
+
+### Sumber foto contoh
+
+Semua foto contoh berasal dari [Wikimedia Commons](https://commons.wikimedia.org). Foto telah diperkecil dan diberi latar buram menjadi 480 x 320 piksel. Hasil ubahan tersebut berlisensi sama dengan foto aslinya.
+
+| Berkas | Jenis ikan | Pembuat | Lisensi | Sumber |
+|---|---|---|---|---|
+| `cakalang.jpg` | Cakalang (Katsuwonus pelamis) | Sahat Ratmuangkhwang | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) | [Katsuwonus pelamis Thailand.jpg](https://commons.wikimedia.org/wiki/File:Katsuwonus_pelamis_Thailand.jpg) |
+| `tongkol.jpg` | Tongkol (Euthynnus affinis) | Mohammad Moazzam Khan | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) | [Euthynnus affinis.jpg](https://commons.wikimedia.org/wiki/File:Euthynnus_affinis.jpg) |
+| `tuna.jpg` | Tuna Sirip Kuning (Thunnus albacares) | Hugues Evano (IFREMER) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | [Thon albacore (Thunnus albacares) (Ifremer 00764-87616).jpg](https://commons.wikimedia.org/wiki/File:Thon_albacore_%28Thunnus_albacares%29_%28Ifremer_00764-87616%29.jpg) |
+| `kembung.jpg` | Kembung (Rastrelliger kanagurta) | Sahat Ratmuangkhwang | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) | [Rastrelliger kanagurta Thailand.jpg](https://commons.wikimedia.org/wiki/File:Rastrelliger_kanagurta_Thailand.jpg) |
+| `layur.jpg` | Layur (Trichiurus lepturus) | D. Ross Robertson | Domain publik | [Trichiurus lepturus SI.jpg](https://commons.wikimedia.org/wiki/File:Trichiurus_lepturus_SI.jpg) |
+| `kakap.jpg` | Kakap Merah (Lutjanus malabaricus) | U.S. Food and Drug Administration | Domain publik | [Lutjanus malabaricus (FDA 164).jpg](https://commons.wikimedia.org/wiki/File:Lutjanus_malabaricus_%28FDA_164%29.jpg) |
+| `udang.jpg` | Udang Jerbung (Penaeus merguiensis) | RubyGoes | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) | [Penaeus merguiensis.jpg](https://commons.wikimedia.org/wiki/File:Penaeus_merguiensis.jpg) |
+| `cumi.jpg` | Cumi-cumi (contoh: Loligo vulgaris) | Hans Hillewaert | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | [Loligo vulgaris.jpg](https://commons.wikimedia.org/wiki/File:Loligo_vulgaris.jpg) |
+
 ## Teknologi
 
 | Bagian | Teknologi |
@@ -122,7 +149,7 @@ Kata sandi semua akun: `sipeli12345`
 
 ## Daftar API
 
-Semua alamat berawalan `/api`. Selain `/masuk`, setiap permintaan wajib menyertakan header `Authorization: Bearer <token>`.
+Semua alamat berawalan `/api`. Selain `/masuk` dan `/foto-lot/{nama}`, setiap permintaan wajib menyertakan header `Authorization: Bearer <token>`.
 
 | Metode | Alamat | Peran | Fungsi |
 |---|---|---|---|
@@ -139,3 +166,5 @@ Semua alamat berawalan `/api`. Selain `/masuk`, setiap permintaan wajib menyerta
 | POST | `/lot` | Petugas Timbang | Menyimpan hasil timbang dan membuat lot lelang (UC-02) |
 | GET | `/lot/{kode}` | Petugas Pendataan, Petugas Timbang, Operator Lelang | Data lot (dipakai untuk cetak ulang label) |
 | POST | `/lot/{id}/cetak` | Petugas Timbang | Mencatat pencetakan label |
+| POST | `/lot/{id}/foto` | Petugas Timbang | Mengunggah atau mengganti foto lot (JPG/PNG/WEBP, maks. 5 MB, sebelum lot dilelang) |
+| GET | `/foto-lot/{nama}` | Tanpa token | Menampilkan foto lot (nama berkas acak) |

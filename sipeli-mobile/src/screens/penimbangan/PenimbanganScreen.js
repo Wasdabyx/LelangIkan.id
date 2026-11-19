@@ -119,6 +119,10 @@ export default function PenimbanganScreen({ pengguna, onKeluar }) {
                 : 'Kembali ke Daftar Baris'
           }
           onKembali={() => setMode(asalLabel)}
+          onFotoBerubah={() => {
+            // segarkan foto pada daftar baris di belakang layar
+            if (kedatangan) muatKedatangan(kedatangan.nomor_kedatangan).catch(() => {});
+          }}
         />
       )}
 

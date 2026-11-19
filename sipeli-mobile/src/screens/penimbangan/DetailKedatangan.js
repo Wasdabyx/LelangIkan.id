@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { KotakPesan, Lencana, Tombol } from '../../components/Dasar';
+import FotoIkan from '../../components/FotoIkan';
 import Ikon from '../../components/Ikon';
 import { formatKg, formatRupiah, tanggalPendek } from '../../format';
 import { ukuran, warna } from '../../tema';
@@ -90,6 +91,7 @@ export default function DetailKedatangan({ kedatangan, onMuatUlang, onTimbang, o
 
               {lot ? (
                 <View style={s.infoLot}>
+                  <FotoIkan lot={{ ...lot, nama_jenis: lot.nama_jenis || t.nama_jenis }} lebar={56} tinggi={56} kecil bisaPerbesar={false} />
                   <View style={{ flex: 1 }}>
                     <Text style={s.kodeLot}>{lot.kode_lot}</Text>
                     <Text style={s.redup}>

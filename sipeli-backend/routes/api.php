@@ -20,6 +20,8 @@ Route::post('/masuk', [AutentikasiController::class, 'masuk']);
 Route::post('/registrasi', [AutentikasiController::class, 'daftar']); // Week 9: Registrasi Pembeli (UC-11)
 Route::post('/aktivasi', [AutentikasiController::class, 'aktivasi']);                   // Tugas 2
 Route::post('/aktivasi/kirim-ulang', [AutentikasiController::class, 'kirimUlangAktivasi']); // Tugas 2
+Route::get('/foto-lot/{nama}', [PenimbanganController::class, 'tampilFoto'])
+    ->where('nama', '[0-9a-f-]{36}\.(jpg|png|webp)');                                         // foto lot (opsional)
 
 // Wajib token (header: Authorization: Bearer <token>)
 Route::middleware('auth:sanctum')->group(function () {
@@ -39,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/lot', [PenimbanganController::class, 'simpan'])->middleware('peran:2');
     Route::get('/lot/{kode}', [PenimbanganController::class, 'lihatLot'])->middleware('peran:1,2,3');
     Route::post('/lot/{id}/cetak', [PenimbanganController::class, 'catatCetak'])->whereNumber('id')->middleware('peran:2');
+    Route::post('/lot/{id}/foto', [PenimbanganController::class, 'unggahFoto'])->whereNumber('id')->middleware('peran:2');
 
     // Tugas 2: Pembeli (A4) memesan / ikut lelang lot dengan konfirmasi OTP surel
     Route::middleware('peran:4')->prefix('pembeli')->group(function () {

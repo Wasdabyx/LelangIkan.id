@@ -4,6 +4,7 @@ import { operator } from '../../api';
 import { KotakPesan, Lencana, Tombol } from '../../components/Dasar';
 import Ikon from '../../components/Ikon';
 import { BarisDaftar, Ringkasan, Tabel } from '../../components/Tata';
+import FotoIkan from '../../components/FotoIkan';
 import { formatSisa } from '../../components/Lelang';
 import { formatKg, formatRupiah } from '../../format';
 import { usePolling } from '../../polling';
@@ -81,6 +82,7 @@ export default function AntreanLot({ tab, onPilihLot, onBukaSesi }) {
                   terakhir={i === berjalan.length - 1}
                   onPress={() => onBukaSesi(x.id_sesi)}
                   gaya={s.barisBerjalan}
+                  kiri={<FotoIkan lot={x.lot} lebar={56} tinggi={56} kecil bisaPerbesar={false} />}
                   kanan={
                     <View style={{ alignItems: 'flex-end' }}>
                       <Text style={[s.jam, x.sisa_detik <= 15 && { color: warna.galat }]}>{formatSisa(x.sisa_detik)}</Text>
@@ -147,6 +149,7 @@ function BarisAntrean({ lot, onPilih, terakhir }) {
   return (
     <BarisDaftar
       terakhir={terakhir}
+      kiri={<FotoIkan lot={lot} lebar={72} tinggi={72} kecil />}
       kanan={
         <View style={{ alignItems: 'flex-end', gap: 6 }}>
           <Text style={[s.peserta, { color: ada ? warna.sukses : warna.peringatan }]}>{lot.jumlah_peserta} peserta</Text>

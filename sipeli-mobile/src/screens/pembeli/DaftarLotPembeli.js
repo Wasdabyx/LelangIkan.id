@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Tex
 import { pembeli } from '../../api';
 import { DialogKonfirmasi, KotakPesan, Tombol } from '../../components/Dasar';
 import { BarisDaftar, TitikStatus } from '../../components/Tata';
+import FotoIkan from '../../components/FotoIkan';
 import Ikon from '../../components/Ikon';
 import { formatKg, formatRupiah, waktuPendek } from '../../format';
 import { ukuran, warna } from '../../tema';
@@ -126,6 +127,7 @@ function BarisLot({ lot, onPesan, onLihat, terakhir }) {
     <BarisDaftar
       terakhir={terakhir}
       onPress={sudah ? onLihat : undefined}
+      kiri={<FotoIkan lot={lot} lebar={84} tinggi={84} kecil />}
       kanan={
         <View style={s.kolomKanan}>
           <Text style={s.harga}>{formatRupiah(lot.harga_pembukaan)}</Text>
@@ -155,7 +157,12 @@ function BarisLot({ lot, onPesan, onLihat, terakhir }) {
 
 function BarisPesanan({ data, onPress, terakhir }) {
   return (
-    <BarisDaftar terakhir={terakhir} onPress={onPress} kanan={<Ikon nama="kanan" ukuran={18} warna={warna.teksRedup} />}>
+    <BarisDaftar
+      terakhir={terakhir}
+      onPress={onPress}
+      kiri={<FotoIkan lot={data} lebar={56} tinggi={56} kecil bisaPerbesar={false} />}
+      kanan={<Ikon nama="kanan" ukuran={18} warna={warna.teksRedup} />}
+    >
       <Text style={s.kodePesan}>{data.kode_pemesanan}</Text>
       <Text style={s.jenis}>
         {data.kode_lot} - {data.nama_jenis} <Text style={s.grade}>Grade {data.kode_grade}</Text>
@@ -186,7 +193,7 @@ const s = StyleSheet.create({
   angka: { fontSize: 13, fontWeight: '600', color: warna.teks, marginTop: 2 },
   redup: { fontSize: 12, color: warna.teksRedup, marginTop: 2 },
   teksRedup: { fontSize: 13, color: warna.teksRedup, marginTop: 4 },
-  kolomKanan: { alignItems: 'flex-end', minWidth: 110 },
+  kolomKanan: { alignItems: 'flex-end', minWidth: 104 },
   harga: { fontSize: 16, fontWeight: '700', color: warna.teks, fontVariant: ['tabular-nums'] },
   labelHarga: { fontSize: 11, color: warna.teksRedup },
   tautanKode: { fontSize: 13, fontWeight: '600', color: warna.utama, marginTop: 6 },

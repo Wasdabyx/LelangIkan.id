@@ -115,6 +115,7 @@ class PemesananService
             'nilai_lot'       => round($harga * (float) $lot->getBeratAktual()),
             'status_lot'      => $lot->getStatus()->value,
             'nama_kapal'      => $t->kedatangan->kapal->getNamaKapal(),
+            'foto'            => $lot->getAlamatFoto(),
         ];
     }
 

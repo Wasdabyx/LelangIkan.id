@@ -156,6 +156,7 @@ class PenimbanganService
             'nomor_kedatangan'  => $t->kedatangan->getNomorKedatangan(),
             'nama_kapal'        => $t->kedatangan->kapal->getNamaKapal(),
             'jumlah_cetak'      => $lot->getJumlahCetak(),
+            'foto'              => $lot->getAlamatFoto(),
         ];
     }
 }

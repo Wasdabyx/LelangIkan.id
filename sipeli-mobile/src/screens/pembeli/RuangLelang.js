@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, Vibration, View } from 
 import { buatKunci, lelang } from '../../api';
 import { DialogKonfirmasi, KolomTeks, KotakPesan, Tombol } from '../../components/Dasar';
 import FormGulir from '../../components/FormGulir';
+import FotoIkan from '../../components/FotoIkan';
 import { PanelLelang } from '../../components/Lelang';
 import { Bagian, Info, Tabel } from '../../components/Tata';
 import { formatKg, formatRupiah } from '../../format';
@@ -123,13 +124,18 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
     <View style={{ flex: 1, backgroundColor: warna.latar }}>
       <FormGulir gayaIsi={s.isi}>
         <Bagian>
-          <View style={s.barisJudul}>
-            <Text style={s.kode}>{lot.kode_lot}</Text>
-            <Text style={s.psn}>{data.kode_pemesanan}</Text>
+          <View style={s.barisLot}>
+            <FotoIkan lot={lot} lebar={108} tinggi={72} kecil />
+            <View style={{ flex: 1 }}>
+              <View style={s.barisJudul}>
+                <Text style={s.kode}>{lot.kode_lot}</Text>
+                <Text style={s.psn}>{data.kode_pemesanan}</Text>
+              </View>
+              <Text style={s.jenis}>
+                {lot.nama_jenis} <Text style={{ color: warna.aksen }}>Grade {lot.kode_grade}</Text> | {formatKg(lot.berat_aktual)}
+              </Text>
+            </View>
           </View>
-          <Text style={s.jenis}>
-            {lot.nama_jenis} <Text style={{ color: warna.aksen }}>Grade {lot.kode_grade}</Text> | {formatKg(lot.berat_aktual)}
-          </Text>
           <View style={{ marginTop: 12 }}>
             <PanelLelang
               sisa={data.sisa_detik}
@@ -254,9 +260,10 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
 }
 
 const s = StyleSheet.create({
+  barisLot: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   tengah: { flex: 1, backgroundColor: warna.latar, alignItems: 'center', justifyContent: 'center', padding: 16 },
   isi: { paddingTop: 0, paddingBottom: 32 },
-  barisJudul: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  barisJudul: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', columnGap: 8 },
   kode: { fontSize: 17, fontWeight: '700', color: warna.teks, fontVariant: ['tabular-nums'] },
   psn: { fontSize: 12, fontWeight: '600', color: warna.sukses },
   jenis: { fontSize: 14, color: warna.teks, marginTop: 2 },

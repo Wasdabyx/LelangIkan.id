@@ -3,6 +3,7 @@ import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View }
 import { lelang } from '../../api';
 import { KotakPesan, Lencana, Tombol } from '../../components/Dasar';
 import { Bagian, BarisDaftar, Tabel, TitikStatus } from '../../components/Tata';
+import FotoIkan from '../../components/FotoIkan';
 import { formatSisa, WARNA_TRANSAKSI } from '../../components/Lelang';
 import { formatKg, formatRupiah, waktuPendek } from '../../format';
 import { usePolling } from '../../polling';
@@ -133,6 +134,7 @@ function SesiBerjalan({ sesi, onPress }) {
   return (
     <View style={s.berjalan}>
       <View style={s.barisAtas}>
+        <FotoIkan lot={sesi.lot} lebar={72} tinggi={56} kecil />
         <View style={{ flex: 1 }}>
           <Text style={s.kode}>{sesi.lot.kode_lot}</Text>
           <Text style={s.jenis}>
@@ -161,6 +163,7 @@ function SesiSelesai({ sesi, onPress, terakhir }) {
     <BarisDaftar
       terakhir={terakhir}
       onPress={onPress}
+      kiri={<FotoIkan lot={sesi.lot} lebar={48} tinggi={48} kecil bisaPerbesar={false} />}
       kanan={
         <View style={{ alignItems: 'flex-end' }}>
           {sesi.menang ? (
