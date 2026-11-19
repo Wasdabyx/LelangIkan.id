@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SimpanLotRequest;
+use App\Models\FotoLot;
 use App\Models\LotLelang;
 use App\Services\PenimbanganService;
 use Illuminate\Http\Request;
@@ -98,14 +99,13 @@ class PenimbanganController extends Controller
         $berkas = $request->file('foto');
         $ekstensi = strtolower($berkas->getClientOriginalExtension() ?: $berkas->extension() ?: 'jpg');
         $ekstensi = $ekstensi === 'jpeg' ? 'jpg' : $ekstensi;
-        $nama = Str::uuid() . '.' . $ekstensi;
-        Storage::disk('local')->putFileAs('foto-lot', $berkas, $nama);
+        $path = Storage::disk('local')->putFileAs('foto-lot', $berkas, Str::uuid() . '.' . $ekstensi);
 
-        if ($lot->getFoto()) {
-            Storage::disk('local')->delete('foto-lot/' . $lot->getFoto());
+        // Aplikasi memakai satu foto per lot: foto lama dihapus, lalu foto baru dicatat
+        foreach ($lot->foto as $lama) {
+            $lama->hapus();
         }
-        $lot->foto = $nama;
-        $lot->save();
+        FotoLot::unggah($lot, $path, $request->user());
 
         return response()->json([
             'pesan' => 'Foto lot disimpan.',
@@ -117,7 +117,7 @@ class PenimbanganController extends Controller
     public function tampilFoto(string $nama)
     {
         $jalur = 'foto-lot/' . $nama;
-        if (! Storage::disk('local')->exists($jalur)) {
+        if (! FotoLot::where('path_berkas', $jalur)->exists() || ! Storage::disk('local')->exists($jalur)) {
             return response()->json(['message' => 'Foto tidak ditemukan.'], 404);
         }
 

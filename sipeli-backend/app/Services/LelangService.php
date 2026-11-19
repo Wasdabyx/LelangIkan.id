@@ -413,7 +413,7 @@ class LelangService
             'nilai_lot'       => round((float) $lot->getHargaPembukaan() * (float) $lot->getBeratAktual()),
             'nama_kapal'      => $t->kedatangan->kapal->getNamaKapal(),
             'waktu_timbang'   => $lot->getWaktuTimbang()?->format('H:i'),
-            'foto'            => $lot->getAlamatFoto(),
+            'foto'            => $lot->foto()->first()?->urlPublik(),
         ];
     }
 

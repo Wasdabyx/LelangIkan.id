@@ -29,7 +29,7 @@ Catatan: timbangan digital pada tahap ini masih berupa simulasi di aplikasi, dan
 
 Setiap lot dapat memiliki foto agar Operator Lelang dan Pembeli bisa melihat kondisi ikan.
 
-- **Foto lot (opsional).** Petugas Timbang memotret ikan dari layar Label Lot dengan tombol **Ambil Foto**. Di HP tombol ini membuka kamera belakang. Di Chrome tombol ini membuka webcam, dan tersedia juga tombol **Pilih File**. Foto hanya dapat diambil atau diganti sebelum lot dilelang (status DRAFT_HARGA atau MENUNGGU_LELANG). Foto disimpan di `sipeli-backend/storage/app/private/foto-lot/` dengan nama acak, lalu ditampilkan melalui `GET /api/foto-lot/{nama}`.
+- **Foto lot (opsional).** Petugas Timbang memotret ikan dari layar Label Lot dengan tombol **Ambil Foto**. Di HP tombol ini membuka kamera belakang. Di Chrome tombol ini membuka webcam, dan tersedia juga tombol **Pilih File**. Foto hanya dapat diambil atau diganti sebelum lot dilelang (status DRAFT_HARGA atau MENUNGGU_LELANG). Berkas foto disimpan di `sipeli-backend/storage/app/private/foto-lot/` dengan nama acak dan dicatat di tabel `foto_lot` (kelas FotoLot, relasi lot_lelang 1 --- 0..* foto_lot). Foto ditampilkan melalui `GET /api/foto-lot/{nama}`.
 - **Foto contoh jenis ikan.** Lot yang belum difoto menampilkan foto contoh sesuai jenis ikannya, dengan tanda "Contoh" agar tidak dikira foto lot asli. Foto contoh tersimpan di `sipeli-mobile/assets/ikan/`.
 - **Lokasi tampil:**
   - Petugas Timbang: daftar baris kedatangan dan Label Lot.
