@@ -149,7 +149,6 @@ function BarisLot({ lot, onPesan, onLihat, terakhir }) {
         {lot.nama_kapal} | nilai {formatRupiah(lot.nilai_lot)}
       </Text>
       {sudah ? <Text style={s.tautanKode}>{`Lihat Kode ${lot.kode_pemesanan}`}</Text> : null}
-      {sudah ? <Text style={s.kodePesanKecil}>{lot.kode_pemesanan}</Text> : null}
     </BarisDaftar>
   );
 }
@@ -182,7 +181,6 @@ const s = StyleSheet.create({
   teksKosong: { fontSize: 14, color: warna.teksRedup, textAlign: 'center', lineHeight: 20 },
   kodeLot: { fontSize: 15, fontWeight: '600', color: warna.teks, fontVariant: ['tabular-nums'] },
   kodePesan: { fontSize: 15, fontWeight: '600', color: warna.sukses, fontVariant: ['tabular-nums'] },
-  kodePesanKecil: { fontSize: 12, fontWeight: '600', color: warna.sukses, marginTop: 2 },
   jenis: { fontSize: 14, color: warna.teks, marginTop: 2 },
   grade: { color: warna.aksen, fontWeight: '500' },
   angka: { fontSize: 13, fontWeight: '600', color: warna.teks, marginTop: 2 },
