@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AutentikasiController;
+use App\Http\Controllers\Api\DepositController;
 use App\Http\Controllers\Api\KasirController;
 use App\Http\Controllers\Api\KedatanganController;
 use App\Http\Controllers\Api\LelangPembeliController;
@@ -72,6 +73,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/tagihan', [KasirController::class, 'daftar']);
         Route::get('/tagihan/{kode}', [KasirController::class, 'cari']);
         Route::post('/tagihan/{id}/bayar', [KasirController::class, 'bayar'])->whereNumber('id');
+        Route::get('/saldo/pembeli', [DepositController::class, 'cariPembeli']);
+        Route::get('/saldo/pembeli/{id}', [DepositController::class, 'rincian'])->whereNumber('id');
+        Route::post('/saldo/pembeli/{id}/mutasi', [DepositController::class, 'mutasi'])->whereNumber('id');
+    });
+
+    Route::middleware('peran:6')->prefix('pimpinan')->group(function () {
+        Route::get('/saldo/penyesuaian', [DepositController::class, 'menungguPersetujuan']);
+        Route::post('/saldo/penyesuaian/{id}/keputusan', [DepositController::class, 'putuskan'])->whereNumber('id');
     });
 
     // FR-31: periksa keaslian nota (Kasir, Pimpinan, Operator)

@@ -146,6 +146,15 @@ export const kasir = {
   bayar: (id, metode, nominal, nomorReferensi) =>
     permintaan('POST', `/kasir/tagihan/${id}/bayar`, { metode, nominal, nomor_referensi: nomorReferensi || null }),
   verifikasiNota: (isiQr) => permintaan('GET', `/nota/verifikasi?kode=${encodeURIComponent(isiQr)}`),
+  cariPembeliSaldo: (cari) => permintaan('GET', `/kasir/saldo/pembeli?cari=${encodeURIComponent(cari)}`),
+  saldoPembeli: (id) => permintaan('GET', `/kasir/saldo/pembeli/${id}`),
+  mutasiSaldo: (id, data) => permintaan('POST', `/kasir/saldo/pembeli/${id}/mutasi`, data),
+};
+
+export const pimpinan = {
+  penyesuaianSaldo: () => permintaan('GET', '/pimpinan/saldo/penyesuaian'),
+  putuskanPenyesuaianSaldo: (id, keputusan, catatan) =>
+    permintaan('POST', `/pimpinan/saldo/penyesuaian/${id}/keputusan`, { keputusan, catatan }),
 };
 
 // Foto lot oleh Petugas Timbang (multipart). foto = { uri, nama, tipe, blob? } dari components/AmbilFoto.js

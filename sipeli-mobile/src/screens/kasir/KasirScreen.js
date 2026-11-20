@@ -7,6 +7,7 @@ import { warna } from '../../tema';
 import DaftarTagihanKasir from './DaftarTagihanKasir';
 import FormBayar from './FormBayar';
 import PeriksaNota from './PeriksaNota';
+import KelolaSaldo from './KelolaSaldo';
 
 /**
  * Layar utama Kasir TPI (A5) - UC-06 Pembayaran dan Penyelesaian Transaksi (simulasi, tanpa payment gateway).
@@ -33,11 +34,11 @@ export default function KasirScreen({ pengguna, onKeluar }) {
     isi = (
       <>
         <TabAtas
-          daftar={[['tagihan', 'Tagihan'], ['lunas', 'Lunas Hari Ini'], ['nota', 'Periksa Nota']]}
+          daftar={[['tagihan', 'Tagihan'], ['lunas', 'Lunas Hari Ini'], ['saldo', 'Saldo'], ['nota', 'Periksa Nota']]}
           aktif={tab}
           onGanti={setTab}
         />
-        {tab === 'nota' ? <PeriksaNota /> : <DaftarTagihanKasir tab={tab} onBuka={setTagihan} />}
+        {tab === 'nota' ? <PeriksaNota /> : tab === 'saldo' ? <KelolaSaldo /> : <DaftarTagihanKasir tab={tab} onBuka={setTagihan} />}
       </>
     );
   }
