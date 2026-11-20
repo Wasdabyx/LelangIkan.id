@@ -59,6 +59,7 @@ export default function OperatorScreen({ pengguna, onKeluar }) {
         />
         <AntreanLot
           tab={tab}
+          idTpi={pengguna.id_tpi}
           onPilihLot={(l) => {
             setLot(l);
             setMode('atur');

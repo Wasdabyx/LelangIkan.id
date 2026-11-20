@@ -8,10 +8,11 @@ import FotoIkan from '../../components/FotoIkan';
 import { formatSisa } from '../../components/Lelang';
 import { formatKg, formatRupiah } from '../../format';
 import { usePolling } from '../../polling';
+import { useSesiDimulai } from '../../realtime';
 import { warna } from '../../tema';
 
 /** FR-12: antrean lot siap lelang + daftar sesi hari ini (diperbarui tiap 3 detik). */
-export default function AntreanLot({ tab, onPilihLot, onBukaSesi }) {
+export default function AntreanLot({ tab, idTpi, onPilihLot, onBukaSesi }) {
   const [antrean, setAntrean] = useState(null);
   const [sesi, setSesi] = useState(null);
   const [galat, setGalat] = useState(null);
@@ -29,7 +30,8 @@ export default function AntreanLot({ tab, onPilihLot, onBukaSesi }) {
       setSegar(false);
     }
   }, []);
-  usePolling(muat, 3000);
+  usePolling(muat, 3000); // fallback jika WebSocket tidak tersedia
+  useSesiDimulai(idTpi, () => muat());
 
   if (!antrean || !sesi) {
     return (

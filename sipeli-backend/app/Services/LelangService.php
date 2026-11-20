@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\StatusLot;
+use App\Events\SesiLelangDimulai;
 use App\Enums\StatusPenawaran;
 use App\Enums\StatusSesi;
 use App\Models\DaftarPantauan;
@@ -16,6 +17,7 @@ use App\Models\TransaksiPenjualan;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -63,7 +65,7 @@ class LelangService
     public function buka(Pengguna $operator, int $idLot, int $durasi, ?float $kenaikan, string $mode = 'NAIK', ?float $hargaAwal = null, ?float $batasBawah = null, ?float $penurunan = null, ?int $interval = null): SesiLelang
     {
         $modeEnum = \App\Enums\ModeLelang::from($mode);
-        return DB::transaction(function () use ($operator, $idLot, $durasi, $kenaikan, $modeEnum, $hargaAwal, $batasBawah, $penurunan, $interval) {
+        $sesi = DB::transaction(function () use ($operator, $idLot, $durasi, $kenaikan, $modeEnum, $hargaAwal, $batasBawah, $penurunan, $interval) {
             $lot = LotLelang::whereKey($idLot)->lockForUpdate()->first();
             $this->pastikanLotDiTpi($lot, $operator);
 
@@ -93,6 +95,22 @@ class LelangService
 
             return $sesi;
         });
+
+        // Dijalankan setelah DB::transaction commit agar klien tidak menerima sesi yang gagal tersimpan.
+        try {
+            event(new SesiLelangDimulai(
+                (int) $operator->getIdTpi(),
+                $sesi->getIdSesi(),
+                $sesi->getIdLot(),
+                $sesi->getMode()->value,
+                $sesi->getWaktuMulai()->format('Y-m-d H:i:s'),
+            ));
+        } catch (\Throwable $e) {
+            // Kegagalan WebSocket tidak boleh membatalkan atau menyamarkan sesi yang sudah tersimpan.
+            Log::warning('Gagal menyiarkan peristiwa SESI_DIMULAI.', ['id_sesi' => $sesi->getIdSesi()]);
+        }
+
+        return $sesi;
     }
 
     // ================= UC-04 =================

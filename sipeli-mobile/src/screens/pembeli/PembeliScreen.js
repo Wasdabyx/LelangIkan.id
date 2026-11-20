@@ -104,6 +104,7 @@ export default function PembeliScreen({ pengguna, onKeluar }) {
         ) : (
           <DaftarLelangPembeli
             tab={tab}
+            idTpi={pengguna.id_tpi}
             onMasukRuang={(id) => {
               setIdSesi(id);
               setMode('ruang');

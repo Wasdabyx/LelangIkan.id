@@ -7,13 +7,14 @@ import FotoIkan from '../../components/FotoIkan';
 import { formatSisa, WARNA_TRANSAKSI } from '../../components/Lelang';
 import { formatKg, formatRupiah, waktuPendek } from '../../format';
 import { usePolling } from '../../polling';
+import { useSesiDimulai } from '../../realtime';
 import { warna } from '../../tema';
 
 /**
  * Tab "Lelang" (sesi pada lot yang dipesan, diperbarui tiap 3 detik)
  * dan tab "Tagihan" (transaksi hasil menang lelang).
  */
-export default function DaftarLelangPembeli({ tab, onMasukRuang, onBukaTagihan }) {
+export default function DaftarLelangPembeli({ tab, idTpi, onMasukRuang, onBukaTagihan }) {
   const [sesi, setSesi] = useState(null);
   const [tagihan, setTagihan] = useState(null);
   const [galat, setGalat] = useState(null);
@@ -31,7 +32,8 @@ export default function DaftarLelangPembeli({ tab, onMasukRuang, onBukaTagihan }
       setSegar(false);
     }
   }, []);
-  usePolling(muat, 3000);
+  usePolling(muat, 3000); // fallback jika WebSocket tidak tersedia
+  useSesiDimulai(idTpi, () => muat());
 
   if (!sesi || !tagihan) {
     return (
