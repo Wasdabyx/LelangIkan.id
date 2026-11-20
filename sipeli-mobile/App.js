@@ -9,6 +9,7 @@ import AktivasiScreen from './src/screens/AktivasiScreen';
 import KasirScreen from './src/screens/kasir/KasirScreen';
 import KedatanganScreen from './src/screens/kedatangan/KedatanganScreen';
 import OperatorScreen from './src/screens/operator/OperatorScreen';
+import PersetujuanSaldo from './src/screens/pimpinan/PersetujuanSaldo';
 import PembeliScreen from './src/screens/pembeli/PembeliScreen';
 import PenimbanganScreen from './src/screens/penimbangan/PenimbanganScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -22,7 +23,8 @@ const PERAN_PENDATAAN = 1;
 const PERAN_TIMBANG = 2;
 const PERAN_OPERATOR = 3; // Fitur Lelang
 const PERAN_PEMBELI = 4; // Tugas 2 + Fitur Lelang
-const PERAN_KASIR = 5; // Fitur Pembayaran
+const PERAN_KASIR = 5;
+const PERAN_PIMPINAN = 6;
 
 export default function App() {
   const [memuat, setMemuat] = useState(true);
@@ -144,6 +146,8 @@ export default function App() {
     layar = <PembeliScreen pengguna={pengguna} onKeluar={saatKeluar} />;
   } else if (pengguna.id_peran === PERAN_KASIR) {
     layar = <KasirScreen pengguna={pengguna} onKeluar={saatKeluar} />;
+  } else if (pengguna.id_peran === PERAN_PIMPINAN) {
+    layar = <PersetujuanSaldo pengguna={pengguna} onKeluar={saatKeluar} />;
   } else {
     layar = (
       <BerandaSementara

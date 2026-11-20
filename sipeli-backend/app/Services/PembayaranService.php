@@ -21,6 +21,10 @@ use Illuminate\Validation\ValidationException;
  */
 class PembayaranService
 {
+    public function __construct(private DepositService $deposit)
+    {
+    }
+
     /** Tagihan yang belum lunas di TPI kasir (terbaru dulu). */
     public function tagihanTerbuka(Pengguna $kasir): array
     {
@@ -66,10 +70,6 @@ class PembayaranService
     /** UC-06 langkah 3-7 (FR-29, FR-30). */
     public function bayar(Pengguna $kasir, int $idTransaksi, MetodeBayar $metode, float $nominal, ?string $referensi): TransaksiPenjualan
     {
-        if ($metode === MetodeBayar::SALDO) {
-            $this->tolak('metode', 'Metode saldo belum tersedia. Fitur Deposit Saldo (UC-07) belum dibuat.');
-        }
-
         return DB::transaction(function () use ($kasir, $idTransaksi, $metode, $nominal, $referensi) {
             $trx = $this->kueriTpi($kasir)->whereKey($idTransaksi)->lockForUpdate()->first();
             if (! $trx) {
@@ -90,7 +90,10 @@ class PembayaranService
                     : 'Nominal melebihi sisa tagihan ' . $this->rp($sisa) . '.');
             }
 
-            if ($metode === MetodeBayar::QRIS) {
+            if ($metode === MetodeBayar::SALDO) {
+                $this->deposit->potongSaldo($kasir, $trx->getIdPembeli(), $nominal, 'Pembayaran ' . $trx->getKodeTransaksi());
+                $referensi = null;
+            } elseif ($metode === MetodeBayar::QRIS) {
                 $referensi = 'QRIS-' . now()->format('ymdHis') . '-' . strtoupper(Str::random(4));   // simulasi
             } elseif ($metode === MetodeBayar::TUNAI) {
                 $referensi = null;

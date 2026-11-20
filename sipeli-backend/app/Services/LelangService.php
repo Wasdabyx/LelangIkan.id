@@ -134,7 +134,10 @@ class LelangService
                 if ($hargaPerKg > $batasAtas) {
                     $this->tolak('harga_per_kg', 'Tawaran lebih dari 10 kali harga pembukaan. Periksa kembali angka yang Anda ketik.');
                 }
-                // FR-21 (saldo / limit kredit) diterapkan setelah fitur Deposit Saldo (UC-07) dibuat.
+                $nilaiTawaran = $hargaPerKg * (float) $sesi->lot->getBeratAktual();
+                if (! app(DepositService::class)->periksaDayaBeli($pembeli->getIdPengguna(), $nilaiTawaran)) {
+                    $this->tolak('harga_per_kg', 'Daya beli tidak mencukupi untuk tawaran ini. Silakan hubungi kasir untuk menambah saldo atau limit.');
+                }
 
                 // Langkah 7-8: simpan sebagai TERTINGGI, yang lama menjadi TERTINGGAL
                 if ($tertinggi) {
@@ -144,7 +147,7 @@ class LelangService
                     'id_sesi'           => $sesi->getIdSesi(),
                     'id_pembeli'        => $pembeli->getIdPengguna(),
                     'harga_per_kg'      => (string) $hargaPerKg,
-                    'nominal'           => (string) round($hargaPerKg * (float) $sesi->lot->getBeratAktual()),
+                    'nominal'           => (string) round($nilaiTawaran),
                     'waktu_penawaran'   => now(),
                     'status'            => StatusPenawaran::TERTINGGI->value,
                     'kanal'             => 'JARAK_JAUH',

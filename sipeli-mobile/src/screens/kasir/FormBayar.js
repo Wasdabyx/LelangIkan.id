@@ -16,7 +16,7 @@ const METODE = [
   { kode: 'TUNAI', judul: 'Tunai', ikon: 'dompet', ket: 'Uang tunai di loket' },
   { kode: 'TRANSFER', judul: 'Transfer', ikon: 'pensil', ket: 'Wajib nomor referensi' },
   { kode: 'QRIS', judul: 'QRIS', ikon: 'qr', ket: 'Simulasi' },
-  { kode: 'SALDO', judul: 'Saldo', ikon: 'gembok', ket: 'Belum tersedia', mati: true },
+  { kode: 'SALDO', judul: 'Saldo', ikon: 'dompet', ket: 'Potong dari saldo pembeli' },
 ];
 const POLA_REFERENSI = /^[A-Za-z0-9-]{6,40}$/;
 
@@ -107,7 +107,7 @@ export default function FormBayar({ awal, onKembali }) {
               pilihan={METODE.map((m) => ({ kunci: m.kode, judul: m.judul, nonaktif: m.mati }))}
             />
             <Text style={s.ketMetode}>
-              {METODE.find((m) => m.kode === metode).ket}. Saldo belum tersedia (menunggu UC-07).
+              {METODE.find((m) => m.kode === metode).ket}.
             </Text>
 
             <KolomTeks

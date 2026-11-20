@@ -6,6 +6,7 @@ use App\Enums\KodePeran;
 use App\Enums\TujuanOtp;
 use App\Models\Konfigurasi;
 use App\Models\Pengguna;
+use App\Models\SaldoPembeli;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -73,6 +74,10 @@ class AutentikasiService
             'id_tpi'        => (int) Konfigurasi::nilai('id_tpi_aktif', 1),
             'status_aktif'  => false,
         ]);
+        SaldoPembeli::firstOrCreate(
+            ['id_pembeli' => $pengguna->getIdPengguna()],
+            ['saldo' => 0, 'limit_kredit' => 0, 'status' => 'AKTIF'],
+        );
 
         try {
             $info = $this->otp->kirim($pengguna, TujuanOtp::AKTIVASI) + ['surel_terkirim' => true];
