@@ -31,7 +31,12 @@ class OperatorLelangController extends Controller
         $data = $request->validate([
             'id_lot'           => 'required|integer',
             'durasi_detik'     => 'required|integer|between:' . LelangService::DURASI_MIN . ',' . LelangService::DURASI_MAKS,
+            'mode' => 'nullable|in:NAIK,TURUN',
             'kenaikan_minimum' => 'nullable|integer|between:100,1000000',
+            'harga_awal' => 'required_if:mode,TURUN|nullable|integer|min:100',
+            'harga_batas_bawah' => 'required_if:mode,TURUN|nullable|integer|min:100',
+            'penurunan_per_langkah' => 'required_if:mode,TURUN|nullable|integer|min:1',
+            'interval_detik' => 'required_if:mode,TURUN|nullable|integer|between:1,600',
         ], [
             'id_lot.required'          => 'Lot wajib dipilih.',
             'durasi_detik.required'    => 'Durasi sesi wajib diisi.',
@@ -44,6 +49,10 @@ class OperatorLelangController extends Controller
         $sesi = $this->lelang->buka(
             $request->user(), (int) $data['id_lot'], (int) $data['durasi_detik'],
             isset($data['kenaikan_minimum']) ? (float) $data['kenaikan_minimum'] : null,
+            $data['mode'] ?? 'NAIK', isset($data['harga_awal']) ? (float) $data['harga_awal'] : null,
+            isset($data['harga_batas_bawah']) ? (float) $data['harga_batas_bawah'] : null,
+            isset($data['penurunan_per_langkah']) ? (float) $data['penurunan_per_langkah'] : null,
+            isset($data['interval_detik']) ? (int) $data['interval_detik'] : null,
         );
 
         return response()->json([

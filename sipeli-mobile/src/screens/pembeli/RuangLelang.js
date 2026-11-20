@@ -72,6 +72,13 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
     kirim();
   }
 
+  async function ambil() {
+    setMengirim(true); setPesan(null);
+    try { const r = await lelang.ambil(idSesi, buatKunci()); setData(r.data); setPesan({ jenis: 'sukses', teks: r.pesan }); }
+    catch (e) { setPesan({ jenis: 'galat', teks: e.message }); muat(); }
+    finally { setMengirim(false); }
+  }
+
   async function kirim() {
     setTanyaBesar(false);
     const n = Number(harga);
@@ -142,9 +149,9 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
               status={data.status}
               perpanjangan={data.jumlah_perpanjangan}
               maksPerpanjangan={data.maks_perpanjangan}
-              labelHarga={data.harga_tertinggi ? 'Harga tertinggi' : 'Harga pembukaan'}
+              labelHarga={data.mode === 'TURUN' ? 'Harga berjalan (Turun)' : (data.harga_tertinggi ? 'Harga tertinggi' : 'Harga pembukaan')}
               harga={formatRupiah(data.harga_tertinggi ?? data.harga_pembukaan)}
-              info={`${data.jumlah_penawaran} tawaran | ${data.jumlah_penawar} penawar | kenaikan ${formatRupiah(data.kenaikan_minimum)}`}
+              info={data.mode === 'TURUN' ? `Turun ${formatRupiah(data.penurunan_per_langkah)}/kg tiap ${data.interval_detik} detik | batas ${formatRupiah(data.harga_batas_bawah)}` : `${data.jumlah_penawaran} tawaran | ${data.jumlah_penawar} penawar | kenaikan ${formatRupiah(data.kenaikan_minimum)}`}
             />
           </View>
           {!hasil ? (
@@ -180,7 +187,12 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
             ) : null}
           </Bagian>
         ) : (
-          <Bagian judul="Ajukan tawaran">
+          (data.mode === 'TURUN' ? <Bagian judul="Ambil harga berjalan">
+            <KotakPesan jenis={pesan?.jenis === 'sukses' ? 'sukses' : 'galat'} teks={pesan?.teks} gaya={{ marginBottom: 12 }} />
+            <Text style={s.minimal}>Harga saat ini {formatRupiah(data.harga_tertinggi)}/kg</Text>
+            <Tombol judul="Ambil Sekarang" onPress={ambil} memuat={mengirim} gaya={{ marginTop: 12 }} />
+            <Text style={s.catatan}>Pembeli pertama yang menekan tombol akan memenangkan lot pada harga yang tampil.</Text>
+          </Bagian> : <Bagian judul="Ajukan tawaran">
             <KotakPesan jenis={pesan?.jenis === 'sukses' ? 'sukses' : 'galat'} teks={pesan?.teks} gaya={{ marginBottom: 12 }} />
             <KolomTeks
               label="Harga per kg (Rp)"
@@ -216,7 +228,7 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
               gaya={{ marginTop: 12 }}
             />
             {data.posisi === 'TERTINGGI' ? <Text style={s.catatan}>Anda sedang memimpin.</Text> : null}
-          </Bagian>
+          </Bagian>)
         )}
 
         <Bagian judul="Riwayat tawaran">

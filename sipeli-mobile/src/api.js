@@ -123,8 +123,8 @@ export const buatKunci = () =>
 export const operator = {
   antrean: () => permintaan('GET', '/operator/antrean'),
   daftarSesi: () => permintaan('GET', '/operator/sesi'),
-  buka: (idLot, durasiDetik, kenaikanMinimum) =>
-    permintaan('POST', '/operator/sesi', { id_lot: idLot, durasi_detik: durasiDetik, kenaikan_minimum: kenaikanMinimum }),
+  buka: (idLot, durasiDetik, kenaikanMinimum, turun = {}) =>
+    permintaan('POST', '/operator/sesi', { id_lot: idLot, durasi_detik: durasiDetik, kenaikan_minimum: kenaikanMinimum, ...turun }),
   status: (idSesi) => permintaan('GET', `/operator/sesi/${idSesi}`),
   tutup: (idSesi, alasan) => permintaan('POST', `/operator/sesi/${idSesi}/tutup`, { alasan }),
 };
@@ -135,6 +135,7 @@ export const lelang = {
   status: (idSesi) => permintaan('GET', `/pembeli/lelang/${idSesi}`),
   tawar: (idSesi, hargaPerKg, kunci) =>
     permintaan('POST', `/pembeli/lelang/${idSesi}/tawar`, { harga_per_kg: hargaPerKg, kunci_idempotensi: kunci }),
+  ambil: (idSesi, kunci) => permintaan('POST', `/pembeli/lelang/${idSesi}/ambil`, { kunci_idempotensi: kunci }),
   tagihan: () => permintaan('GET', '/pembeli/tagihan'),
   detailTagihan: (id) => permintaan('GET', `/pembeli/tagihan/${id}`),
 };

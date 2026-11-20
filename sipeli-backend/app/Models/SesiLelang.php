@@ -22,7 +22,8 @@ class SesiLelang extends Model
     protected $fillable = [
         'id_lot', 'id_operator', 'mode', 'waktu_mulai', 'waktu_selesai_rencana', 'durasi_detik',
         'harga_berjalan', 'id_penawaran_pemenang', 'status', 'kenaikan_minimum', 'jumlah_perpanjangan',
-        'maks_perpanjangan', 'ambang_perpanjangan_detik', 'waktu_selesai_aktual', 'alasan_tutup',
+        'maks_perpanjangan', 'ambang_perpanjangan_detik', 'harga_awal', 'harga_batas_bawah',
+        'penurunan_per_langkah', 'interval_detik', 'waktu_selesai_aktual', 'alasan_tutup',
     ];
 
     protected $casts = [
@@ -31,6 +32,9 @@ class SesiLelang extends Model
         'waktu_selesai_aktual'  => 'datetime',
         'harga_berjalan'        => 'decimal:2',
         'kenaikan_minimum'      => 'decimal:2',
+        'harga_awal'            => 'decimal:2',
+        'harga_batas_bawah'     => 'decimal:2',
+        'penurunan_per_langkah' => 'decimal:2',
     ];
 
     // ---------------- get ----------------
@@ -43,10 +47,14 @@ class SesiLelang extends Model
     public function getDurasiDetik(): int { return (int) $this->durasi_detik; }
     public function getHargaBerjalan(): ?string { return $this->harga_berjalan; }
     public function getStatus(): StatusSesi { return StatusSesi::from($this->status); }
-    public function getKenaikanMinimum(): string { return $this->kenaikan_minimum; }
+    public function getKenaikanMinimum(): ?string { return $this->kenaikan_minimum; }
     public function getJumlahPerpanjangan(): int { return (int) $this->jumlah_perpanjangan; }
     public function getMaksPerpanjangan(): int { return (int) $this->maks_perpanjangan; }
     public function getAlasanTutup(): ?string { return $this->alasan_tutup; }
+    public function getHargaAwal(): ?string { return $this->harga_awal; }
+    public function getHargaBatasBawah(): ?string { return $this->harga_batas_bawah; }
+    public function getPenurunanPerLangkah(): ?string { return $this->penurunan_per_langkah; }
+    public function getIntervalDetik(): ?int { return $this->interval_detik === null ? null : (int) $this->interval_detik; }
 
     // ---------------- relasi ----------------
     public function lot()
@@ -94,6 +102,42 @@ class SesiLelang extends Model
         return $this->harga_berjalan ?? $this->lot->getHargaPembukaan();
     }
 
+    public function hargaTurunSaatIni(): float
+    {
+        if ($this->getMode() !== ModeLelang::TURUN) {
+            return (float) $this->harga_berjalan;
+        }
+        $interval = max(1, (int) $this->interval_detik);
+        $langkah = (int) floor(max(0, $this->waktu_mulai->diffInSeconds(now(), false)) / $interval);
+
+        return max((float) $this->harga_batas_bawah,
+            (float) $this->harga_awal - $langkah * (float) $this->penurunan_per_langkah);
+    }
+
+    public function perbaruiHargaTurun(): void
+    {
+        if ($this->getMode() !== ModeLelang::TURUN) {
+            return;
+        }
+        $harga = $this->hargaTurunSaatIni();
+        if ((float) $this->harga_berjalan !== $harga) {
+            $this->harga_berjalan = (string) $harga;
+            $this->save();
+        }
+    }
+
+    public function hargaBatasBawahLewatSatuInterval(): bool
+    {
+        if ($this->getMode() !== ModeLelang::TURUN) {
+            return false;
+        }
+        $selisih = max(0, (float) $this->harga_awal - (float) $this->harga_batas_bawah);
+        $langkahKeBatas = (int) ceil($selisih / max(0.01, (float) $this->penurunan_per_langkah));
+        $detikKeBatas = $langkahKeBatas * max(1, (int) $this->interval_detik);
+
+        return now()->greaterThanOrEqualTo($this->waktu_mulai->copy()->addSeconds($detikKeBatas + (int) $this->interval_detik));
+    }
+
     /** FR-18 / ALG-01 langkah 5-6: tawaran pertama minimal harga pembukaan, berikutnya + kenaikan minimum. */
     public function hargaMinimumBerikut(): float
     {
@@ -123,20 +167,36 @@ class SesiLelang extends Model
         return Penawaran::tertinggiPadaSesi($this->getIdSesi());
     }
 
-    public static function buka(LotLelang $lot, Pengguna $operator, int $durasi, float $kenaikan, int $maksPerpanjangan, int $ambang): self
-    {
+    public static function buka(
+        LotLelang $lot,
+        Pengguna $operator,
+        int $durasi,
+        ModeLelang $mode,
+        ?float $kenaikan,
+        ?float $hargaAwal,
+        ?float $hargaBatasBawah,
+        ?float $penurunan,
+        ?int $interval,
+        int $maksPerpanjangan,
+        int $ambang,
+    ): self {
         return static::create([
             'id_lot'                    => $lot->getIdLot(),
             'id_operator'               => $operator->getIdPengguna(),
-            'mode'                      => ModeLelang::NAIK->value,
+            'mode'                      => $mode->value,
             'waktu_mulai'               => now(),
             'waktu_selesai_rencana'     => now()->addSeconds($durasi),
             'durasi_detik'              => $durasi,
             'status'                    => StatusSesi::AKTIF->value,
-            'kenaikan_minimum'          => (string) $kenaikan,
+            'harga_berjalan'            => $mode === ModeLelang::TURUN ? (string) $hargaAwal : null,
+            'kenaikan_minimum'          => $kenaikan === null ? null : (string) $kenaikan,
+            'harga_awal'                => $hargaAwal === null ? null : (string) $hargaAwal,
+            'harga_batas_bawah'         => $hargaBatasBawah === null ? null : (string) $hargaBatasBawah,
+            'penurunan_per_langkah'     => $penurunan === null ? null : (string) $penurunan,
+            'interval_detik'            => $interval,
             'jumlah_perpanjangan'       => 0,
-            'maks_perpanjangan'         => $maksPerpanjangan,
-            'ambang_perpanjangan_detik' => $ambang,
+            'maks_perpanjangan'         => $mode === ModeLelang::NAIK ? $maksPerpanjangan : 0,
+            'ambang_perpanjangan_detik' => $mode === ModeLelang::NAIK ? $ambang : 0,
         ]);
     }
 

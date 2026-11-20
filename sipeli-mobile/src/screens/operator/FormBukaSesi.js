@@ -16,6 +16,11 @@ const PILIHAN_DURASI = [60, 120, 180, 300];
 export default function FormBukaSesi({ lot, onBatal, onDibuka }) {
   const [durasi, setDurasi] = useState('120');
   const [kenaikan, setKenaikan] = useState(String(lot.usulan_kenaikan));
+  const [mode, setMode] = useState('NAIK');
+  const [awal, setAwal] = useState(String(Number(lot.harga_pembukaan) * 2));
+  const [bawah, setBawah] = useState(String(lot.harga_pembukaan));
+  const [turun, setTurun] = useState('1000');
+  const [interval, setInterval] = useState('5');
   const [galat, setGalat] = useState({});
   const [pesan, setPesan] = useState(null);
   const [tanya, setTanya] = useState(false);
@@ -27,6 +32,7 @@ export default function FormBukaSesi({ lot, onBatal, onDibuka }) {
     const k = Number(kenaikan);
     if (!/^\d+$/.test(durasi) || d < 30 || d > 600) g.durasi_detik = 'Durasi 30 sampai 600 detik.';
     if (!/^\d+$/.test(kenaikan) || k < 100 || k > 1000000) g.kenaikan_minimum = 'Kenaikan minimum Rp100 sampai Rp1.000.000 per kg.';
+    if (mode === 'TURUN' && (Number(awal) <= Number(bawah) || Number(turun) < 1 || Number(interval) < 1)) g.harga_awal = 'Harga awal harus lebih tinggi dari batas bawah; penurunan dan interval harus positif.';
     setGalat(g);
     if (Object.keys(g).length === 0) setTanya(true);
   }
@@ -36,7 +42,7 @@ export default function FormBukaSesi({ lot, onBatal, onDibuka }) {
     setMemuat(true);
     setPesan(null);
     try {
-      const hasil = await operator.buka(lot.id_lot, Number(durasi), Number(kenaikan));
+      const hasil = await operator.buka(lot.id_lot, Number(durasi), Number(kenaikan), mode === 'TURUN' ? { mode, harga_awal: Number(awal), harga_batas_bawah: Number(bawah), penurunan_per_langkah: Number(turun), interval_detik: Number(interval) } : { mode });
       onDibuka(hasil.data);
     } catch (e) {
       setMemuat(false);
@@ -74,6 +80,15 @@ export default function FormBukaSesi({ lot, onBatal, onDibuka }) {
         </Bagian>
 
         <Bagian judul="Pengaturan sesi">
+          <Text style={s.label}>Mode lelang</Text>
+          <Segmen label="Mode lelang" nilai={mode} onGanti={setMode} pilihan={[{ kunci: 'NAIK', judul: 'Naik' }, { kunci: 'TURUN', judul: 'Turun' }]} />
+          {mode === 'TURUN' ? <>
+            <KolomTeks label="Harga awal (Rp/kg)" value={awal} onChangeText={(t) => setAwal(hanyaAngka(t))} keyboardType="number-pad" />
+            <KolomTeks label="Batas bawah (Rp/kg)" value={bawah} onChangeText={(t) => setBawah(hanyaAngka(t))} keyboardType="number-pad" />
+            <KolomTeks label="Penurunan per langkah (Rp/kg)" value={turun} onChangeText={(t) => setTurun(hanyaAngka(t))} keyboardType="number-pad" />
+            <KolomTeks label="Interval penurunan (detik)" value={interval} onChangeText={(t) => setInterval(hanyaAngka(t))} keyboardType="number-pad" />
+            {galat.harga_awal ? <Text style={s.petunjuk}>{galat.harga_awal}</Text> : null}
+          </> : null}
           <Text style={s.label}>Durasi sesi (detik)</Text>
           <Segmen
             label="Pilihan durasi"
@@ -97,7 +112,7 @@ export default function FormBukaSesi({ lot, onBatal, onDibuka }) {
             accessibilityLabel="Durasi sesi"
           />
 
-          <KolomTeks
+          {mode === 'NAIK' ? <><KolomTeks
             label="Kenaikan minimum (Rp per kg)"
             value={kenaikan}
             onChangeText={(t) => {
@@ -110,7 +125,7 @@ export default function FormBukaSesi({ lot, onBatal, onDibuka }) {
           />
           <Text style={s.petunjuk}>
             Usulan sistem (ALG-02): {formatRupiah(lot.usulan_kenaikan)}/kg, menurut nilai lot. Boleh diubah.
-          </Text>
+          </Text></> : null}
 
           <Tombol judul="Mulai Lelang" onPress={periksa} memuat={memuat} gaya={{ marginTop: 18 }} />
           <Tombol judul="Batal" jenis="teks" onPress={onBatal} nonaktif={memuat} gaya={{ marginTop: 6 }} />
@@ -120,7 +135,7 @@ export default function FormBukaSesi({ lot, onBatal, onDibuka }) {
       <DialogKonfirmasi
         tampil={tanya}
         judul={`Mulai lelang ${lot.kode_lot}?`}
-        pesan={`Durasi ${durasi} detik, kenaikan minimum ${formatRupiah(kenaikan)}/kg. Peserta dapat langsung menawar setelah sesi dibuka.`}
+        pesan={mode === 'TURUN' ? `Harga mulai ${formatRupiah(awal)}/kg, turun ${formatRupiah(turun)}/kg tiap ${interval} detik sampai ${formatRupiah(bawah)}/kg. Pembeli pertama yang menekan Ambil menang.` : `Durasi ${durasi} detik, kenaikan minimum ${formatRupiah(kenaikan)}/kg. Peserta dapat langsung menawar setelah sesi dibuka.`}
         teksYa="Mulai Lelang"
         onYa={mulai}
         onTidak={() => setTanya(false)}
