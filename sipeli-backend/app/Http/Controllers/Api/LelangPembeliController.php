@@ -52,6 +52,20 @@ class LelangPembeliController extends Controller
         ], $duplikat ? 200 : 201);
     }
 
+    /** POST /api/pembeli/lelang/{id}/ambil: klaim harga berjalan lelang turun. */
+    public function ambil(Request $request, int $id)
+    {
+        $data = $request->validate(['kunci_idempotensi' => 'required|uuid']);
+        [$penawaran, $duplikat] = $this->lelang->ambilHargaTurun(
+            $request->user(), $id, strtolower($data['kunci_idempotensi']), $request->ip(),
+        );
+        return response()->json([
+            'pesan' => $duplikat ? 'Pengambilan ini sudah diproses.' : 'Harga berhasil diambil. Anda pemenang lelang.',
+            'duplikat' => $duplikat,
+            'data' => $this->lelang->status($id, $request->user(), false),
+        ], $duplikat ? 200 : 201);
+    }
+
     /** GET /api/pembeli/tagihan */
     public function tagihan(Request $request)
     {

@@ -60,9 +60,10 @@ class LelangService
     }
 
     /** FR-13, FR-14, FR-16: buka sesi lelang atas satu lot. */
-    public function buka(Pengguna $operator, int $idLot, int $durasi, ?float $kenaikan): SesiLelang
+    public function buka(Pengguna $operator, int $idLot, int $durasi, ?float $kenaikan, string $mode = 'NAIK', ?float $hargaAwal = null, ?float $batasBawah = null, ?float $penurunan = null, ?int $interval = null): SesiLelang
     {
-        return DB::transaction(function () use ($operator, $idLot, $durasi, $kenaikan) {
+        $modeEnum = \App\Enums\ModeLelang::from($mode);
+        return DB::transaction(function () use ($operator, $idLot, $durasi, $kenaikan, $modeEnum, $hargaAwal, $batasBawah, $penurunan, $interval) {
             $lot = LotLelang::whereKey($idLot)->lockForUpdate()->first();
             $this->pastikanLotDiTpi($lot, $operator);
 
@@ -75,11 +76,16 @@ class LelangService
                     : "Lot {$lot->getKodeLot()} berstatus {$lot->getStatus()->value}, bukan MENUNGGU_LELANG.");
             }
 
+            if ($modeEnum === \App\Enums\ModeLelang::TURUN && ($hargaAwal === null || $batasBawah === null || $penurunan === null || $interval === null || $batasBawah >= $hargaAwal)) {
+                $this->tolak('harga_awal', 'Pengaturan lelang turun tidak valid.');
+            }
+            if ($modeEnum === \App\Enums\ModeLelang::TURUN) {
+                $durasi = (int) ceil(($hargaAwal - $batasBawah) / $penurunan) * $interval + $interval;
+            }
             $sesi = SesiLelang::buka(
-                $lot,
-                $operator,
-                $durasi,
-                $kenaikan ?? $this->usulanKenaikan($lot),
+                $lot, $operator, $durasi, $modeEnum,
+                $modeEnum === \App\Enums\ModeLelang::NAIK ? ($kenaikan ?? $this->usulanKenaikan($lot)) : null,
+                $hargaAwal, $batasBawah, $penurunan, $interval,
                 (int) Konfigurasi::nilai('maks_perpanjangan', 5),
                 (int) Konfigurasi::nilai('ambang_perpanjangan_detik', 15),
             );
@@ -110,6 +116,9 @@ class LelangService
                     throw new HttpResponseException(response()->json(['message' => 'Sesi lelang tidak ditemukan.'], 404));
                 }
                 $this->pastikanPeserta($pembeli, $sesi);
+                if ($sesi->getMode() !== \App\Enums\ModeLelang::NAIK) {
+                    $this->tolak('harga_per_kg', 'Mode lelang turun memakai tombol Ambil, bukan tawaran nominal.');
+                }
 
                 // Langkah 4: sesi masih aktif dan waktunya belum habis
                 if (! $sesi->isMasihAktif()) {
@@ -176,11 +185,55 @@ class LelangService
         return [$hasil, false];
     }
 
+    /** Pembeli pertama yang mengambil harga berjalan memenangkan lelang turun secara atomik. */
+    public function ambilHargaTurun(Pengguna $pembeli, int $idSesi, string $kunci, ?string $ip): array
+    {
+        try {
+            $penawaran = DB::transaction(function () use ($pembeli, $idSesi, $kunci, $ip) {
+                $sesi = SesiLelang::with('lot')->whereKey($idSesi)->lockForUpdate()->first();
+                if (! $sesi || $sesi->getMode() !== \App\Enums\ModeLelang::TURUN) {
+                    throw new HttpResponseException(response()->json(['message' => 'Sesi lelang turun tidak ditemukan.'], 404));
+                }
+                $this->pastikanPeserta($pembeli, $sesi);
+                $sesi = $this->tutupBilaWaktuHabis($sesi);
+                if (! $sesi->isMasihAktif() || $sesi->tertinggi()) {
+                    $this->tolak('ambil', 'Harga sudah diambil atau sesi lelang telah berakhir.');
+                }
+                $harga = $sesi->hargaTurunSaatIni();
+                $nominal = $harga * (float) $sesi->lot->getBeratAktual();
+                if (! app(DepositService::class)->periksaDayaBeli($pembeli->getIdPengguna(), $nominal)) {
+                    $this->tolak('ambil', 'Daya beli tidak mencukupi pada harga saat ini.');
+                }
+                $p = Penawaran::create([
+                    'id_sesi' => $sesi->getIdSesi(), 'id_pembeli' => $pembeli->getIdPengguna(),
+                    'harga_per_kg' => (string) $harga, 'nominal' => (string) round($nominal),
+                    'waktu_penawaran' => now(), 'status' => StatusPenawaran::TERTINGGI->value,
+                    'kanal' => 'JARAK_JAUH', 'kunci_idempotensi' => strtolower($kunci), 'alamat_terminal' => $ip,
+                ]);
+                $sesi->harga_berjalan = (string) $harga;
+                $sesi->waktu_selesai_rencana = now();
+                $sesi->save();
+                return $p;
+            });
+        } catch (QueryException $e) {
+            if ($lama = Penawaran::cariKunci($kunci)) return [$lama, true];
+            throw $e;
+        }
+        return [$penawaran, false];
+    }
+
     // ================= UC-05 =================
 
     /** Tutup sesi bila waktunya sudah habis (dipanggil setiap kali status sesi diminta). */
     public function tutupBilaWaktuHabis(SesiLelang $sesi): SesiLelang
     {
+        if ($sesi->getMode() === \App\Enums\ModeLelang::TURUN) {
+            $sesi->perbaruiHargaTurun();
+            if ($sesi->tertinggi() || $sesi->hargaBatasBawahLewatSatuInterval()) {
+                return $this->tutup($sesi->getIdSesi(), null);
+            }
+            return $sesi;
+        }
         if ($sesi->getStatus() === StatusSesi::AKTIF && $sesi->sisaDetik() === 0) {
             return $this->tutup($sesi->getIdSesi(), null);
         }
@@ -302,9 +355,14 @@ class LelangService
         $data = [
             'id_sesi'               => $sesi->getIdSesi(),
             'status'                => $sesi->getStatus()->value,
+            'mode'                  => $sesi->getMode()->value,
             'lot'                   => $this->ringkasLot($sesi->lot),
             'harga_pembukaan'       => $sesi->lot->getHargaPembukaan(),
-            'harga_tertinggi'       => $sesi->getHargaBerjalan(),
+            'harga_tertinggi'       => $sesi->getMode() === \App\Enums\ModeLelang::TURUN ? $sesi->hargaTurunSaatIni() : $sesi->getHargaBerjalan(),
+            'harga_awal'            => $sesi->getHargaAwal(),
+            'harga_batas_bawah'     => $sesi->getHargaBatasBawah(),
+            'penurunan_per_langkah' => $sesi->getPenurunanPerLangkah(),
+            'interval_detik'        => $sesi->getIntervalDetik(),
             'kenaikan_minimum'      => $sesi->getKenaikanMinimum(),
             'harga_minimum_berikut' => $sesi->hargaMinimumBerikut(),
             'sisa_detik'            => $sesi->getStatus() === StatusSesi::AKTIF ? $sesi->sisaDetik() : 0,

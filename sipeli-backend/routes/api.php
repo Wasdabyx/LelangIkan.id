@@ -55,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/lelang', [LelangPembeliController::class, 'daftar']);
         Route::get('/lelang/{id}', [LelangPembeliController::class, 'status'])->whereNumber('id');
         Route::post('/lelang/{id}/tawar', [LelangPembeliController::class, 'tawar'])->whereNumber('id');
+        Route::post('/lelang/{id}/ambil', [LelangPembeliController::class, 'ambil'])->whereNumber('id');
         Route::get('/tagihan', [LelangPembeliController::class, 'tagihan']);
         Route::get('/tagihan/{id}', [LelangPembeliController::class, 'detailTagihan'])->whereNumber('id');
     });
