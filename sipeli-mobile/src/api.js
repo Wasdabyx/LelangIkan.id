@@ -6,6 +6,9 @@ let tokenAktif = null;
 export function aturToken(token) {
   tokenAktif = token;
 }
+export function ambilToken() {
+  return tokenAktif;
+}
 
 // Dipanggil bila server membalas 401 (token kedaluwarsa / dicabut)
 let saatSesiHabis = null;

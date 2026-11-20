@@ -11,6 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withBroadcasting(__DIR__.'/../routes/channels.php', [
+        'prefix' => 'api',
+        'middleware' => ['api', 'auth:sanctum'],
+    ])
     ->withMiddleware(function (Middleware $middleware) {
         // Permintaan API tanpa token tidak dialihkan ke halaman login (cukup balas 401)
         $middleware->redirectGuestsTo(fn ($request) => $request->is('api/*') ? null : '/');
