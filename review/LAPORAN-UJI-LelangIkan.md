@@ -147,3 +147,34 @@ setelah revisi dokumen v1.1 dan pembaruan kode, sebagian besar butir pada putara
 | `skrip-uji/` | `e2e2.py` (63 pemeriksaan fungsional + 10 cek endpoint), `fokus.py` (foto/2 pembeli/saldo/nota/idempotensi), `lelang_khusus.py` (turun, anti-sniping, auto-close), `ambil.py` (klaim lelang turun), `ui10.py` (login 6 peran) |
 
 Skrip uji memakai `php artisan tinker` untuk menerbitkan OTP (karena OTP disimpan sebagai hash) dan melakukan `migrate:fresh --seed` sebelum skenario; aman dijalankan di database pengembangan, **jangan** di database berisi data asli.
+
+---
+
+## 7. Hasil uji ulang 21 November 2026 (putaran D)
+
+Dijalankan dari basis data bersih (`php artisan migrate:fresh --seed`), API di `127.0.0.1:8000`, dan
+Reverb di `127.0.0.1:8080`. Skrip uji ada di `uji/` (tidak masuk repo).
+
+| Uji | Perintah | Hasil |
+|---|---|---|
+| PHPUnit (regresi fitur) | `php artisan test` | **20 lulus / 61 asersi** |
+| Rute resmi Tabel IV.6 | `python3 uji_rute_resmi.py` | **19/19** |
+| End-to-end 13 use case | `python3 e2e2.py` | **81/81** |
+| Fitur UC-09..UC-12 + FR-64 | `python3 uji_fitur.py` | **43/43** |
+| UC-08, UC-13, FR-66/67 | `python3 uji_settlement.py` | **29/29** |
+| WebSocket kelompok 1 (naik) | `python3 uji_ws.py` | 5 peristiwa diterima (LELANG_DIMULAI, PENAWARAN_BARU, OUTBID, HASIL_LELANG, SESI_DITUTUP) |
+| WebSocket kelompok 2 (turun/perpanjangan) | `python3 uji_ws2.py` | HARGA_TURUN + SESI_DIPERPANJANG diterima |
+| WebSocket kelompok 3 (pantauan/settlement) | `python3 uji_ws3.py` | LOT_DIPANTAU_DIBUKA + SETTLEMENT_DIBAYAR diterima |
+| Tabel domain | `information_schema` | **27** (sesuai dokumen) |
+| Rute API terdaftar | `php artisan route:list --path=api` | 85 rute |
+
+**Total: 192 pemeriksaan lulus** (20 + 19 + 81 + 43 + 29) ditambah 9 peristiwa real-time yang teramati klien.
+
+Catatan teknis:
+
+1. `uji_ws2.py` dan `uji_ws3.py` mengubah keadaan basis data (membuat sesi dan settlement), sehingga keduanya
+   harus dijalankan **masing-masing dari basis data baru**. Bila dijalankan setelah uji lain, keduanya berhenti
+   dengan `Call to a member function getIdLot() on null` — itu keterbatasan skrip, bukan kegagalan aplikasi.
+2. Uji beban NFR-01/NFR-02 yang sesungguhnya **belum** dilakukan: `uji_akhir.py` hanya menunjukkan latensi
+   ±13 ms per tawaran secara berurutan pada data bersih, dan penolakan 422 pada uji itu terjadi karena
+   pembeli uji belum memiliki saldo — bukan karena kinerja.

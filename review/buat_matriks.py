@@ -125,6 +125,9 @@ STATUS_DOKUMEN = [
     ("FR-07 timbangan, FR-63 kanal jarak jauh",
      "Lihat baris masing-masing pada Matriks FR",
      "Sebagian (disengaja) - dinyatakan pada SKPL Tabel IV.4 dan Tabel III.13"),
+    ("Hasil uji ulang 21 Nov 2026",
+     "PHPUnit 20/61, rute resmi 19/19, e2e 81/81, fitur 43/43, settlement 29/29, 9 peristiwa real-time teramati; 27 tabel domain; 85 rute API",
+     "Lulus - rincian pada LAPORAN-UJI-LelangIkan.md bagian 7"),
 ]
 
 wb = Workbook()
