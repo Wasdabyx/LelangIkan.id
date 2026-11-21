@@ -58,6 +58,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/lelang/{id}/ambil', [LelangPembeliController::class, 'ambil'])->whereNumber('id');
         Route::get('/tagihan', [LelangPembeliController::class, 'tagihan']);
         Route::get('/tagihan/{id}', [LelangPembeliController::class, 'detailTagihan'])->whereNumber('id');
+        Route::post('/tagihan/{id}/bayar-saldo', [LelangPembeliController::class, 'bayarSaldo'])->whereNumber('id');
+        Route::post('/tagihan/{id}/pengambilan', [LelangPembeliController::class, 'jadwalkanPengambilan'])->whereNumber('id');
     });
 
     // UC-03 dan UC-05: Operator Lelang (A3)

@@ -87,4 +87,27 @@ class LelangPembeliController extends Controller
 
         return response()->json(['data' => $this->pembayaran->rincian($t)]);
     }
+
+    public function bayarSaldo(Request $request, int $id)
+    {
+        $trx = $this->pembayaran->bayarDenganSaldo($request->user(), $id);
+
+        return response()->json([
+            'pesan' => 'Tagihan lunas menggunakan saldo.',
+            'data' => $this->pembayaran->rincian($trx),
+        ]);
+    }
+
+    public function jadwalkanPengambilan(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'tanggal_pengambilan' => ['required', 'date_format:Y-m-d'],
+        ]);
+        $trx = $this->pembayaran->jadwalkanPengambilan($request->user(), $id, $data['tanggal_pengambilan']);
+
+        return response()->json([
+            'pesan' => 'Jadwal pengambilan tersimpan.',
+            'data' => $this->pembayaran->rincian($trx),
+        ]);
+    }
 }
