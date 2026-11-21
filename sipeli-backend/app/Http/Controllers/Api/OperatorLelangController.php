@@ -19,10 +19,12 @@ class OperatorLelangController extends Controller
         return response()->json(['data' => $this->lelang->antrean($this->lelang->idTpi($request->user()))]);
     }
 
-    /** GET /api/operator/sesi  (aktif + hari ini) */
+    /** GET /api/operator/sesi?halaman=1  (aktif + hari ini; 50 baris per halaman, NFR-11) */
     public function daftarSesi(Request $request)
     {
-        return response()->json(['data' => $this->lelang->daftarSesiOperator($request->user())]);
+        $halaman = (int) $request->query('halaman', 1);
+
+        return response()->json($this->lelang->daftarSesiOperator($request->user(), $halaman));
     }
 
     /** POST /api/operator/sesi  { id_lot, durasi_detik, kenaikan_minimum? } */

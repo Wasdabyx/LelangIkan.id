@@ -30,7 +30,8 @@ class AutentikasiController extends Controller
         $hasil = $this->autentikasi->masuk(
             $data['nama_pengguna'],
             $data['kata_sandi'],
-            $data['perangkat'] ?? 'aplikasi-mobile'
+            $data['perangkat'] ?? 'aplikasi-mobile',
+            $request->ip(),   // NFR-06: batas percobaan juga dihitung per alamat IP
         );
 
         return response()->json(['pesan' => 'Berhasil masuk.'] + $hasil);
@@ -68,7 +69,8 @@ class AutentikasiController extends Controller
         ]);
 
         $hasil = $this->autentikasi->aktivasi(
-            $data['nama_pengguna'], $data['kata_sandi'], $data['kode_otp'], $data['perangkat'] ?? 'aplikasi-mobile'
+            $data['nama_pengguna'], $data['kata_sandi'], $data['kode_otp'],
+            $data['perangkat'] ?? 'aplikasi-mobile', $request->ip()
         );
 
         return response()->json(['pesan' => 'Akun berhasil diaktivasi. Selamat datang di LelangIkan.id.'] + $hasil);
@@ -78,7 +80,7 @@ class AutentikasiController extends Controller
     public function kirimUlangAktivasi(Request $request)
     {
         $data = $request->validate($this->aturanKredensial(), $this->pesanKredensial());
-        $info = $this->autentikasi->kirimUlangAktivasi($data['nama_pengguna'], $data['kata_sandi']);
+        $info = $this->autentikasi->kirimUlangAktivasi($data['nama_pengguna'], $data['kata_sandi'], $request->ip());
 
         return response()->json(['pesan' => "Kode aktivasi baru telah dikirim ke {$info['surel_tersamar']}."] + $info);
     }
