@@ -16,12 +16,15 @@ return Application::configure(basePath: dirname(__DIR__))
         'middleware' => ['api', 'auth:sanctum'],
     ])
     ->withMiddleware(function (Middleware $middleware) {
-        // Permintaan API tanpa token tidak dialihkan ke halaman login (cukup balas 401)
-        $middleware->redirectGuestsTo(fn ($request) => $request->is('api/*') ? null : '/');
+        // Permintaan API tanpa token tidak dialihkan ke halaman login (cukup balas 401).
+        // Antarmuka web memakai halaman masuk tersendiri; papan lelang tetap dapat dibuka tanpa masuk.
+        $middleware->redirectGuestsTo(fn ($request) => $request->is('api/*') ? null : '/masuk');
 
         // Alias middleware hak akses berbasis peran: ->middleware('peran:1,2')
         $middleware->alias([
             'peran' => \App\Http\Middleware\CekPeran::class,
+            // Antarmuka web: 403 dalam bentuk halaman, bukan JSON
+            'web.peran' => \App\Http\Middleware\WebCekPeran::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

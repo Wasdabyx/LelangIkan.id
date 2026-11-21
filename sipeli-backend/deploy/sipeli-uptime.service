@@ -1,0 +1,10 @@
+[Unit]
+Description=Pantau ketersediaan SIPELI (NFR-03: uptime >= 99% pukul 04.00-12.00)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/var/www/sipeli
+Environment=SIPELI_UPTIME=https://sipeli.tpi.local
+Environment=SIPELI_LOG=/var/log/sipeli/uptime.jsonl
+ExecStart=/usr/bin/python3 dokumen/skrip/pantau_uptime.py --pantau --interval 15 --durasi 55
