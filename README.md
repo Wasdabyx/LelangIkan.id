@@ -116,6 +116,16 @@ LelangIkan.id/
 
 3. Buka `http://127.0.0.1:8000/up` di browser. Halaman "Application up" menandakan server berjalan.
 
+### Menjalankan pengujian backend
+
+Setelah dependensi backend terpasang (`composer install`), jalankan seluruh tes Laravel dari folder `sipeli-backend`:
+
+```bash
+php artisan test
+```
+
+Tes unit saat ini memeriksa usulan kenaikan minimum lelang bertingkat, pembulatan kenaikan, dan aturan perubahan status/harga lot.
+
 ### 2. Aplikasi mobile
 
 1. Jalankan `npm install` di folder `sipeli-mobile`.
@@ -142,6 +152,10 @@ Kata sandi semua akun: `sipeli12345`
 | KDT-00043 sampai KDT-00045 | TERDAFTAR | Siap ditimbang oleh Petugas Timbang |
 | KDT-00046 | DRAF | Contoh draf yang dapat dilengkapi oleh Petugas Pendataan |
 
+## Pembayaran dan pengambilan hasil lelang
+
+Penawaran tidak lagi memerlukan pemeriksaan daya beli. Pembeli mengonfirmasi setiap tawaran sebelum dikirim; bila menang, tagihan harus dilunasi maksimal 2 jam setelah sesi ditutup. Tagihan tanpa pembayaran yang melewati batas waktu dibatalkan dan lot kembali berstatus tidak terjual. Pembeli dapat melunasi dari saldo aplikasi atau membayar melalui Kasir TPI dengan tunai, transfer, atau QRIS (simulasi). Setelah lunas, pembeli memilih pengambilan hari ini atau besok.
+
 ## Daftar API
 
 Semua alamat berawalan `/api`. Selain `/masuk` dan `/foto-lot/{nama}`, setiap permintaan wajib menyertakan header `Authorization: Bearer <token>`.
@@ -163,3 +177,5 @@ Semua alamat berawalan `/api`. Selain `/masuk` dan `/foto-lot/{nama}`, setiap pe
 | POST | `/lot/{id}/cetak` | Petugas Timbang | Mencatat pencetakan label |
 | POST | `/lot/{id}/foto` | Petugas Timbang | Mengunggah atau mengganti foto lot (JPG/PNG/WEBP, maks. 5 MB, sebelum lot dilelang) |
 | GET | `/foto-lot/{nama}` | Tanpa token | Menampilkan foto lot (nama berkas acak) |
+| POST | `/pembeli/tagihan/{id}/bayar-saldo` | Pembeli | Melunasi sisa tagihan dari saldo aplikasi |
+| POST | `/pembeli/tagihan/{id}/pengambilan` | Pembeli | Menjadwalkan pengambilan hari ini atau besok setelah lunas |
