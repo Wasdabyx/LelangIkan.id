@@ -52,7 +52,7 @@ Setiap lot dapat memiliki foto agar Operator Lelang dan Pembeli bisa melihat kon
 - **Foto contoh jenis ikan.** Lot yang belum difoto menampilkan foto contoh sesuai jenis ikannya, dengan tanda "Contoh" agar tidak dikira foto lot asli. Foto contoh tersimpan di `sipeli-mobile/assets/ikan/`.
 - **Lokasi tampil:**
   - Petugas Timbang: daftar baris kedatangan dan Label Lot.
-  - Operator Lelang: Antrean Lot, Buka Sesi Lelang, dan pemantauan sesi.
+  - Operator Lelang (antarmuka web): Antrean Lelang dan pemantauan sesi.
   - Pembeli: daftar lot, tab Pesanan, tab Lelang, dan Ruang Lelang.
 - Ketuk foto untuk melihatnya dalam ukuran besar.
 
@@ -176,15 +176,20 @@ Pastikan ponsel dan laptop berada di jaringan yang sama, backend dijalankan pada
 
 Kata sandi semua akun: `sipeli12345`
 
-| Nama pengguna | Peran | Tampilan setelah login |
-|---|---|---|
-| `pendata` | Petugas Pendataan | Form Kedatangan & Tangkapan |
-| `timbang` | Petugas Timbang | Form Penimbangan & Label Lot |
-| `operator` | Operator Lelang | Antrean, buka sesi, dan pantau sesi lelang |
-| `pembeli` | Pembeli | Pemesanan lot, lelang, tagihan, dan pengambilan |
-| `kasir` | Kasir TPI | Tagihan, pembayaran, saldo pembeli, dan verifikasi nota |
-| `pimpinan` | Pimpinan | Ringkasan operasional, persetujuan saldo, dan verifikasi nota |
-| `admin` | Administrator | Beranda sementara (belum dikembangkan) |
+| Nama pengguna | Peran | Platform | Tampilan setelah login |
+|---|---|---|---|
+| `pendata` | Petugas Pendataan | mobile | Form Kedatangan & Tangkapan |
+| `timbang` | Petugas Timbang | mobile | Form Penimbangan & Label Lot |
+| `pembeli` | Pembeli | mobile | Pemesanan lot, lelang real-time, tagihan, dan pengambilan |
+| `operator` | Operator Lelang | **web** | Antrean lot, buka sesi, pantau sesi, tutup sesi |
+| `kasir` | Kasir TPI | **web** | Tagihan & pelunasan, settlement nelayan, saldo pembeli |
+| `pimpinan` | Pimpinan | **web** | Ringkasan harian, laporan & analitik, persetujuan saldo |
+| `admin` | Administrator | **web** | Data master, pengguna & peran, konfigurasi, jejak audit |
+
+Aplikasi mobile hanya memuat layar untuk peran **pendata, timbang, dan pembeli** (UC-01, UC-02,
+UC-04). Bila akun `operator`, `kasir`, atau `pimpinan` masuk lewat aplikasi mobile, aplikasi
+menampilkan pengarah agar memakai dasbor web — layar lama ketiga peran itu sudah dihapus pada
+putaran ini sesuai SKPL v1.1 Bagian I.B.
 
 `php artisan migrate --seed` mengisi riwayat lot 30 hari, enam kedatangan hari ini, serta skenario lelang hari ini: satu sesi aktif, dua sesi terjual (satu tagihan lunas dan satu dibayar sebagian), dan satu sesi tidak terjual. Menjalankan `php artisan db:seed` lagi tidak menggandakan data demo.
 
