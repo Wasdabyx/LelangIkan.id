@@ -273,7 +273,11 @@ Tegaskan pada uraian UC-13:
 
 ---
 
-## E. Lampiran A — Riwayat Revisi (tabel baru untuk kedua dokumen)
+## E. Lampiran A — Riwayat Revisi (**dibatalkan**)
+
+> **Keputusan akhir:** halaman/tabel RIWAYAT REVISI DOKUMEN **tidak dipakai** pada v1.1 dan sudah dihapus
+> dari kedua dokumen (SKPL 55 halaman, DPPL 86 halaman). Bagian di bawah dipertahankan hanya sebagai
+> catatan usulan yang tidak jadi diterapkan; jangan disisipkan lagi.
 
 | Versi | Tanggal | Penyusun | Ringkasan perubahan |
 |---|---|---|---|
