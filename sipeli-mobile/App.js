@@ -30,6 +30,10 @@ const PERAN_PEMBELI = 4; // UC-04 penawaran real-time
 const PERAN_KASIR = 5;
 const PERAN_PIMPINAN = 6;
 
+// Peran yang dilayani antarmuka web (SKPL v1.1 I.B). Dipakai untuk menolak masuk di
+// aplikasi mobile; API tetap menerima token mereka seperti biasa (SKPL Tabel IV.6).
+const PERAN_WEB = [PERAN_OPERATOR, PERAN_KASIR, PERAN_PIMPINAN];
+
 export default function App() {
   const [memuat, setMemuat] = useState(true);
   const [pengguna, setPengguna] = useState(null);
@@ -56,8 +60,18 @@ export default function App() {
         aturToken(sesi.token);
         try {
           const hasil = await ambilSaya(); // cek token masih berlaku
-          setPengguna(hasil.pengguna);
-          await simpanSesi(sesi.token, hasil.pengguna);
+          if (PERAN_WEB.includes(hasil.pengguna?.id_peran)) {
+            // Sesi lama milik peran web (mis. dari versi aplikasi sebelumnya): buang.
+            aturToken(null);
+            await hapusSesi();
+            setPesanMasuk(
+              'Peran ' + (hasil.pengguna?.nama_peran || 'ini') +
+                ' dilayani antarmuka web LelangIkan.id. Silakan masuk dengan akun petugas atau pembeli.'
+            );
+          } else {
+            setPengguna(hasil.pengguna);
+            await simpanSesi(sesi.token, hasil.pengguna);
+          }
         } catch (e) {
           if (e.status !== 401) {
             setPengguna(sesi.pengguna); // server tak terjangkau: pakai data tersimpan
@@ -69,6 +83,28 @@ export default function App() {
   }, []);
 
   async function saatMasuk(token, dataPengguna) {
+    // Tolak peran web sebelum sesi disimpan: cabut token agar tidak tertinggal di perangkat.
+    if (PERAN_WEB.includes(dataPengguna?.id_peran)) {
+      try {
+        aturToken(token);
+        await keluar();
+      } catch (e) {
+        // token tetap dibuang dari perangkat di bawah
+      }
+      aturToken(null);
+      await hapusSesi();
+      setPesanMasuk(
+        'Peran ' + (dataPengguna?.nama_peran || 'ini') +
+          ' dilayani antarmuka web LelangIkan.id, bukan aplikasi mobile. ' +
+          'Buka dasbor web pada peramban di alamat server yang sama.'
+      );
+      setInfoMasuk(null);
+      setDataAktivasi(null);
+      setLayarTamu('masuk');
+      setPengguna(null);
+      return;
+    }
+
     aturToken(token);
     await simpanSesi(token, dataPengguna);
     setPesanMasuk(null);
@@ -128,7 +164,7 @@ export default function App() {
   } else if (!pengguna) {
     layar = (
       <LoginScreen
-        key={namaAwal + (infoMasuk || '')}
+        key={namaAwal + (infoMasuk || '') + (pesanMasuk || '')}
         onBerhasil={saatMasuk}
         pesanAwal={pesanMasuk}
         infoAwal={infoMasuk}
@@ -151,11 +187,12 @@ export default function App() {
     pengguna.id_peran === PERAN_KASIR ||
     pengguna.id_peran === PERAN_PIMPINAN
   ) {
-    // SKPL v1.1 I.B: operator lelang, kasir, dan pimpinan memakai antarmuka web.
+    // Jaring pengaman: peran web sudah ditolak saat masuk, cabang ini hanya untuk
+    // keadaan tak terduga (mis. data sesi diubah manual).
     layar = (
       <BerandaSementara
         pengguna={pengguna}
-        pesan="Peran ini dilayani antarmuka web LelangIkan.id, bukan aplikasi mobile. Buka dasbor web pada peramban: /dasbor."
+        pesan="Peran ini dilayani antarmuka web LelangIkan.id, bukan aplikasi mobile."
         onKeluar={saatKeluar}
       />
     );

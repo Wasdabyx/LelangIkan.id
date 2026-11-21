@@ -213,3 +213,28 @@ Cakupan `uji_web.py` (42 pemeriksaan):
 Yang **belum** ada di antarmuka web dan disengaja: pembukaan sesi **lelang turun** dari web
 (parameter harga awal/batas bawah/penurunan/interval masih lewat aplikasi mobile atau API),
 serta seluruh alur petugas pendataan, petugas timbang, dan pembeli yang tetap mobile.
+
+## 9. Penolakan peran web di aplikasi mobile (putaran F)
+
+Sesuai arahan: **Tabel IV.6 tidak diubah** — seluruh rute API tetap ada dan tetap menerima token
+peran mana pun sesuai wewenangnya. Yang ditambahkan hanya penolakan pada lapisan tampilan
+aplikasi mobile, agar akun yang dilayani web tidak masuk lewat jalur yang salah.
+
+| Perubahan `sipeli-mobile/App.js` | Perilaku |
+|---|---|
+| `PERAN_WEB = [3, 5, 6]` | daftar peran yang dilayani antarmuka web (operator, kasir, pimpinan) |
+| `saatMasuk()` | setelah kredensial benar, peran web ditolak: token yang baru terbit dicabut (`POST /api/keluar`), sesi tidak disimpan, layar masuk menampilkan pesan pengarah |
+| pembukaan aplikasi | sesi lama milik peran web yang masih tersimpan di perangkat dibuang |
+| layar pengarah di routing | dipertahankan sebagai jaring pengaman untuk keadaan tak terduga |
+
+| Uji | Perintah | Hasil |
+|---|---|---|
+| Penolakan mobile (node, tanpa emulator) | `node dokumen/skrip/uji_penolakan_mobile.mjs` | **7/7** |
+| PHPUnit | `php artisan test` | **25 lulus / 86 asersi** |
+| Rute resmi Tabel IV.6 (tidak berubah) | `python3 uji_rute_resmi.py` | **19/19** |
+| Antarmuka web | `python3 uji_web.py` | **42/42** |
+
+`uji_penolakan_mobile.mjs` memeriksa enam akun: `operator`, `kasir`, `pimpinan` ditolak dengan token
+benar-benar dicabut (dibuktikan dengan `GET /api/saya` memakai token itu → gagal), sedangkan
+`pendata`, `timbang`, `pembeli` tetap masuk dan tokennya tetap berlaku; ditambah satu kasus sesi
+tersimpan milik peran web yang dibuang saat aplikasi dibuka.

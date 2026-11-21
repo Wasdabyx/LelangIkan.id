@@ -187,9 +187,14 @@ Kata sandi semua akun: `sipeli12345`
 | `admin` | Administrator | **web** | Data master, pengguna & peran, konfigurasi, jejak audit |
 
 Aplikasi mobile hanya memuat layar untuk peran **pendata, timbang, dan pembeli** (UC-01, UC-02,
-UC-04). Bila akun `operator`, `kasir`, atau `pimpinan` masuk lewat aplikasi mobile, aplikasi
-menampilkan pengarah agar memakai dasbor web — layar lama ketiga peran itu sudah dihapus pada
-putaran ini sesuai SKPL v1.1 Bagian I.B.
+UC-04). Akun `operator`, `kasir`, atau `pimpinan` **ditolak saat masuk** di aplikasi mobile:
+aplikasi langsung mencabut token yang baru diterbitkan, tidak menyimpan sesi, dan menampilkan
+pesan bahwa peran tersebut dilayani dasbor web. Sesi lama milik peran web yang masih tersimpan di
+perangkat juga dibuang saat aplikasi dibuka.
+
+Yang **tidak** berubah: rute API tetap lengkap sesuai **SKPL Tabel IV.6**, termasuk `/api/operator`,
+`/api/kasir`, dan `/api/pimpinan`. Penolakan hanya pada lapisan tampilan aplikasi mobile, sehingga
+pengujian wewenang per peran (`uji_rute_resmi.py`) dan integrasi lain tetap berjalan.
 
 `php artisan migrate --seed` mengisi riwayat lot 30 hari, enam kedatangan hari ini, serta skenario lelang hari ini: satu sesi aktif, dua sesi terjual (satu tagihan lunas dan satu dibayar sebagian), dan satu sesi tidak terjual. Menjalankan `php artisan db:seed` lagi tidak menggandakan data demo.
 
