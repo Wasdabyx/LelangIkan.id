@@ -8,6 +8,7 @@ import { PanelLelang } from '../../components/Lelang';
 import { Bagian, Info, Tabel } from '../../components/Tata';
 import { formatKg, formatRupiah } from '../../format';
 import { usePolling } from '../../polling';
+import { JEDA_PENGGANTI, useKanalRealtime } from '../../realtime';
 import { ukuran, warna } from '../../tema';
 import { hanyaAngka } from '../../validasi';
 
@@ -18,11 +19,16 @@ const POSISI = {
 };
 
 /**
- * UC-04 Ruang Lelang Pembeli. Status diminta setiap 1 detik (FR-17).
+ * UC-04 Ruang Lelang Pembeli.
+ *
+ * NFR-10: peristiwa PENAWARAN_BARU datang lewat kanal real-time pada kanal TPI; selama
+ * kanal sehat layar tidak melakukan pengambilan berkala. Bila kanal terputus, layar
+ * berpindah ke polling 2 detik sampai kanal pulih (JEDA_PENGGANTI). Status awal tetap
+ * diminta sekali lewat HTTP agar layar terisi sebelum peristiwa pertama tiba.
  * Getar + pesan saat posisi berubah menjadi tertinggal (FR-22).
  * Kunci idempotensi dibuat per tawaran; bila koneksi putus, kirim ulang memakai kunci yang sama (FR-20).
  */
-export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
+export default function RuangLelang({ idSesi, idTpi, onKembali, onLihatTagihan }) {
   const [data, setData] = useState(null);
   const [galat, setGalat] = useState(null);
   const [harga, setHarga] = useState('');
@@ -60,7 +66,10 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
     }
   }, [idSesi, terima]);
   const aktif = !data || data.status === 'AKTIF';
-  usePolling(muat, 1000, aktif);
+  const kanalId = aktif ? (idTpi ? `tpi.${idTpi}` : null) : null;
+  const tersambung = useKanalRealtime(kanalId, 'PENAWARAN_BARU', () => muat());
+  // Kanal sehat -> tidak ada pengambilan berkala; kanal putus -> polling 2 detik (NFR-10).
+  usePolling(muat, JEDA_PENGGANTI, aktif && !tersambung);
 
   function periksa() {
     setPesan(null);

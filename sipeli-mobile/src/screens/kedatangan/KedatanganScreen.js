@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BilahAtas, DialogKonfirmasi, Lencana, Tombol } from '../../components/Dasar';
@@ -6,6 +6,8 @@ import Ikon from '../../components/Ikon';
 import KodeQR from '../../components/KodeQR';
 import { formatKg, tanggalPendek } from '../../format';
 import { ukuran, warna } from '../../tema';
+import { api } from '../../api';
+import { daftarAntrean, kirimUlangAntrean } from '../../antrean';
 import DaftarKedatangan from './DaftarKedatangan';
 import FormKedatangan from './FormKedatangan';
 
@@ -19,6 +21,43 @@ export default function KedatanganScreen({ pengguna, onKeluar }) {
   const [hasil, setHasil] = useState(null);
   const [idDraf, setIdDraf] = useState(null);
   const [tanyaKeluar, setTanyaKeluar] = useState(false);
+  // NFR-09: kiriman yang tersimpan lokal saat jaringan putus.
+  const [antrean, setAntrean] = useState([]);
+  const [infoAntrean, setInfoAntrean] = useState(null);
+
+  async function segarkanAntrean() {
+    setAntrean(await daftarAntrean());
+  }
+
+  // Dibaca setiap layar dibuka (termasuk setelah aplikasi ditutup/dimatikan), lalu
+  // langsung dicoba kirim ulang bila jaringan sudah tersedia.
+  useEffect(() => {
+    let hidup = true;
+    (async () => {
+      await segarkanAntrean();
+      const hasil = await kirimUlangAntrean((item) =>
+        item.metode === 'put' ? api.put(item.jalur, item.muatan) : api.post(item.jalur, item.muatan));
+      if (!hidup) return;
+      await segarkanAntrean();
+      if (hasil.terkirim) {
+        setInfoAntrean(`${hasil.terkirim} kiriman yang tersimpan lokal berhasil dikirim ulang.`);
+      } else if (hasil.sisa) {
+        setInfoAntrean(`${hasil.sisa} kiriman masih menunggu jaringan.`);
+      } else {
+        setInfoAntrean(null);
+      }
+    })();
+    return () => { hidup = false; };
+  }, []);
+
+  async function cobaKirimUlang() {
+    const hasil = await kirimUlangAntrean((item) =>
+      item.metode === 'put' ? api.put(item.jalur, item.muatan) : api.post(item.jalur, item.muatan));
+    await segarkanAntrean();
+    setInfoAntrean(hasil.terkirim
+      ? `${hasil.terkirim} kiriman berhasil dikirim ulang.`
+      : (hasil.sisa ? `${hasil.sisa} kiriman masih menunggu jaringan.` : 'Antrean kosong.'));
+  }
 
   // id = null: kedatangan baru, id berisi: lengkapi draf
   function bukaForm(id = null) {
@@ -31,7 +70,24 @@ export default function KedatanganScreen({ pengguna, onKeluar }) {
       <BilahAtas pengguna={pengguna} onKeluar={() => setTanyaKeluar(true)} />
 
       {mode === 'daftar' && (
-        <DaftarKedatangan onTambah={() => bukaForm()} onLengkapi={(k) => bukaForm(k.id_kedatangan)} />
+        <>
+          {antrean.length > 0 && (
+            <View style={s.panelAntrean}>
+              <Text style={s.judulAntrean}>
+                {antrean.length} kedatangan tersimpan di perangkat, belum terkirim
+              </Text>
+              <Text style={s.isiAntrean}>
+                Data aman walau aplikasi ditutup. Akan dikirim otomatis saat jaringan tersedia.
+                {antrean.find((a) => a.perluPerhatian) ? ' Sebagian sudah dicoba berkali-kali.' : ''}
+              </Text>
+              <Tombol judul="Kirim ulang sekarang" jenis="garis" onPress={cobaKirimUlang} />
+            </View>
+          )}
+          {infoAntrean && !antrean.length && (
+            <View style={s.panelInfo}><Text style={s.isiInfo}>{infoAntrean}</Text></View>
+          )}
+          <DaftarKedatangan onTambah={() => bukaForm()} onLengkapi={(k) => bukaForm(k.id_kedatangan)} />
+        </>
       )}
 
       {mode === 'form' && (
@@ -131,6 +187,17 @@ function Baris({ label, nilai }) {
 }
 
 const s = StyleSheet.create({
+  panelAntrean: {
+    margin: 12, padding: 12, borderRadius: 6, borderWidth: 1,
+    borderColor: warna.garis, backgroundColor: warna.peringatanLatar,
+  },
+  judulAntrean: { fontSize: ukuran.hurufNormal, fontWeight: '700', color: warna.peringatan, marginBottom: 4 },
+  isiAntrean: { fontSize: 13, color: warna.teks, marginBottom: 8, lineHeight: 18 },
+  panelInfo: {
+    margin: 12, padding: 10, borderRadius: 6, borderWidth: 1,
+    borderColor: warna.garis, backgroundColor: warna.suksesLatar,
+  },
+  isiInfo: { fontSize: 13, color: warna.sukses },
   layar: { flex: 1, backgroundColor: warna.latar },
   isiSukses: { padding: 16, paddingBottom: 40, alignItems: 'stretch' },
   strip: {

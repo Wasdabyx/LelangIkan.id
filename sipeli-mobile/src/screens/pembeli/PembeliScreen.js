@@ -73,6 +73,7 @@ export default function PembeliScreen({ pengguna, onKeluar }) {
   } else if (mode === 'ruang' && idSesi) {
     isi = (
       <RuangLelang
+        idTpi={pengguna?.id_tpi}
         idSesi={idSesi}
         onKembali={() => kembaliKeDaftar('lelang')}
         onLihatTagihan={(id) => {

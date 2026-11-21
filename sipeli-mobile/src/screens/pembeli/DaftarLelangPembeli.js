@@ -7,7 +7,7 @@ import FotoIkan from '../../components/FotoIkan';
 import { formatSisa, WARNA_TRANSAKSI } from '../../components/Lelang';
 import { formatKg, formatRupiah, waktuPendek } from '../../format';
 import { usePolling } from '../../polling';
-import { useSesiDimulai } from '../../realtime';
+import { useSesiDimulai, JEDA_PENGGANTI } from '../../realtime';
 import { warna } from '../../tema';
 
 /**
@@ -38,8 +38,10 @@ export default function DaftarLelangPembeli({ tab, idTpi, onMasukRuang, onBukaTa
       setSegar(false);
     }
   }, []);
-  usePolling(muat, 3000); // fallback jika WebSocket tidak tersedia
-  useSesiDimulai(idTpi, () => muat());
+  // NFR-10: selama kanal real-time sehat tidak ada pengambilan berkala; bila kanal
+  // terputus, aplikasi berpindah ke polling 2 detik sampai kanal pulih.
+  const tersambung = useSesiDimulai(idTpi, () => muat());
+  usePolling(muat, JEDA_PENGGANTI, !tersambung);
 
   if (!sesi || !tagihan) {
     return (

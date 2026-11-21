@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { masuk } from '../api';
+import { aturToken as aturTokenLogin, keluar as keluarLogin, masuk } from '../api';
 import { ukuran, warna } from '../tema';
 import { validasiMasuk } from '../validasi';
 
@@ -23,7 +23,15 @@ import { validasiMasuk } from '../validasi';
  * Week 9: format nama pengguna diperiksa dengan RegEx (src/validasi.js) dan ada tautan ke Registrasi Pembeli.
  * Tugas 2: akun pembeli yang belum aktivasi diarahkan ke layar Aktivasi (kode dari surel).
  */
-export default function LoginScreen({ onBerhasil, pesanAwal, infoAwal, namaAwal, onDaftar, onPerluAktivasi }) {
+export default function LoginScreen({
+  onBerhasil,
+  pesanAwal,
+  infoAwal,
+  namaAwal,
+  onDaftar,
+  onPerluAktivasi,
+  tolakPengguna = [], // id_peran yang dilayani antarmuka web (mis. [3, 5, 6])
+}) {
   const [namaPengguna, setNamaPengguna] = useState(namaAwal || '');
   const [kataSandi, setKataSandi] = useState('');
   const [lihatSandi, setLihatSandi] = useState(false);
@@ -66,6 +74,30 @@ export default function LoginScreen({ onBerhasil, pesanAwal, infoAwal, namaAwal,
     setMemuat(true);
     try {
       const hasil = await masuk(namaPengguna.trim(), kataSandi);
+
+      // 2a. Peran yang dilayani antarmuka web ditolak di sini, sebelum sesi disimpan.
+      // Pesan ditampilkan pada layar ini (bukan lewat App) supaya tidak hilang karena
+      // layar ini me-render ulang ketika App berganti state; token yang baru terbit dicabut.
+      if (tolakPengguna.includes(hasil.pengguna?.id_peran)) {
+        try {
+          aturTokenLogin(hasil.token);
+          await keluarLogin();
+        } catch (e) {
+          // token tetap dibuang dari perangkat oleh aturTokenLogin(null) di bawah
+        }
+        aturTokenLogin(null);
+        setMemuat(false);
+        setKataSandi('');
+        setInfo(null);
+        setGalat({
+          umum:
+            'Peran ' + (hasil.pengguna?.nama_peran || 'ini') +
+            ' dilayani antarmuka web LelangIkan.id, bukan aplikasi mobile. ' +
+            'Buka dasbor web pada peramban di alamat server yang sama.',
+        });
+        return;
+      }
+
       await onBerhasil(hasil.token, hasil.pengguna);
     } catch (e) {
       setMemuat(false);

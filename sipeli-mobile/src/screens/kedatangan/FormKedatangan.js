@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api';
+import { antrekan } from '../../antrean';
 import { DialogKonfirmasi, KolomTeks, KotakPesan, Lencana, Tombol } from '../../components/Dasar';
 import FormGulir from '../../components/FormGulir';
 import Ikon from '../../components/Ikon';
@@ -262,6 +263,23 @@ export default function FormKedatangan({ idDraf, onBatal, onTersimpan }) {
       onTersimpan(hasil); // pindah ke layar sukses
     } catch (e) {
       if (e.status === 401) return; // sesi habis: App kembali ke layar masuk
+      // NFR-09: kegagalan jaringan (bukan penolakan server) -> simpan ke antrean lokal
+      // supaya data tidak hilang walau aplikasi ditutup atau perangkat dimatikan.
+      if (!e || e.status === 0) {
+        const panjang = await antrekan({
+          jenis: draf ? 'draf' : 'kedatangan',
+          jalur: modeDraf ? `/kedatangan/${idDraf}` : '/kedatangan',
+          metode: modeDraf ? 'put' : 'post',
+          muatan,
+          nomor_surat: muatan.nomor_surat,
+        });
+        setStatusKirim('tersimpanLokal');
+        setPesan(
+          `Koneksi terputus. Data tersimpan di perangkat (${panjang} kiriman menunggu) `
+          + 'dan akan dikirim otomatis saat jaringan tersedia.',
+        );
+        return;
+      }
       if (e.status === 422) {
         // Petakan galat server "tangkapan.N.kolom" ke kartu baris yang tepat
         const gS = {};
@@ -309,6 +327,7 @@ export default function FormKedatangan({ idDraf, onBatal, onTersimpan }) {
     belum: { teks: 'Belum terkirim', latar: warna.abu, warna: '#344054' },
     mengirim: { teks: 'Mengirim ke server...', latar: warna.utamaMuda, warna: warna.utama },
     gagal: { teks: 'Gagal terkirim', latar: warna.galatLatar, warna: warna.galat },
+    tersimpanLokal: { teks: 'Tersimpan di perangkat', latar: warna.peringatanLatar, warna: warna.peringatan },
   }[statusKirim];
 
   return (

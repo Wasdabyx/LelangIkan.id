@@ -9,8 +9,8 @@ export const warna = {
   kartu: '#FFFFFF',
   teks: '#102A43',
   teksRedup: '#486581',
-  garis: '#BCCCDC',
-  garisHalus: '#E3E8EF',   // pemisah baris dan tepi bagian
+  garis: '#7B8794',       // 3,66:1 terhadap putih, 3,41:1 terhadap latar (NFR-08)
+  garisHalus: '#7B8794',   // dahulu #E3E8EF (1,23:1) dan #BCCCDC (1,64:1), keduanya di bawah 3:1 (NFR-08)
   abu: '#F2F4F7',
   galat: '#B42318',
   galatLatar: '#FEF3F2',
