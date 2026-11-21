@@ -3,21 +3,25 @@
 namespace App\Services;
 
 use App\Enums\MetodeBayar;
+use App\Enums\StatusLot;
 use App\Enums\StatusTransaksi;
 use App\Models\Konfigurasi;
+use App\Models\LotLelang;
+use App\Models\MutasiSaldo;
 use App\Models\Pembayaran;
 use App\Models\Pengguna;
+use App\Models\SaldoPembeli;
 use App\Models\Tpi;
 use App\Models\TransaksiPenjualan;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
  * Kelas kendali PembayaranService - UC-06 Pembayaran dan Penyelesaian Transaksi (Kasir TPI, A5).
- * Metode: TUNAI, TRANSFER, QRIS (simulasi). SALDO menunggu fitur Deposit Saldo (UC-07).
- * Pembayaran daring bersifat simulasi sesuai SKPL (tidak memakai payment gateway).
+ * Pembayaran daring masih simulasi dan belum memakai payment gateway.
  */
 class PembayaranService
 {
@@ -70,6 +74,8 @@ class PembayaranService
     /** UC-06 langkah 3-7 (FR-29, FR-30). */
     public function bayar(Pengguna $kasir, int $idTransaksi, MetodeBayar $metode, float $nominal, ?string $referensi): TransaksiPenjualan
     {
+        $this->batalkanKedaluwarsa($idTransaksi);
+
         return DB::transaction(function () use ($kasir, $idTransaksi, $metode, $nominal, $referensi) {
             $trx = $this->kueriTpi($kasir)->whereKey($idTransaksi)->lockForUpdate()->first();
             if (! $trx) {
@@ -80,6 +86,9 @@ class PembayaranService
             }
             if ($trx->getStatus() === StatusTransaksi::DIBATALKAN) {
                 $this->tolak('nominal', "Transaksi {$trx->getKodeTransaksi()} sudah dibatalkan.");
+            }
+            if ($this->pembayaranLewatBatas($trx)) {
+                $this->tolak('nominal', 'Batas pembayaran telah lewat. Tagihan akan dibatalkan.');
             }
 
             // FR-30: nominal > 0 dan tidak melebihi sisa tagihan
@@ -115,6 +124,78 @@ class PembayaranService
         });
     }
 
+    public function bayarDenganSaldo(Pengguna $pembeli, int $idTransaksi): TransaksiPenjualan
+    {
+        $this->batalkanKedaluwarsa($idTransaksi);
+
+        return DB::transaction(function () use ($pembeli, $idTransaksi) {
+            $trx = TransaksiPenjualan::where('id_pembeli', $pembeli->getIdPengguna())
+                ->whereKey($idTransaksi)->lockForUpdate()->first();
+            if (! $trx) {
+                abort(404, 'Tagihan tidak ditemukan.');
+            }
+            if ($trx->getStatus() === StatusTransaksi::DIBATALKAN) {
+                $this->tolak('pembayaran', 'Batas pembayaran telah lewat. Hubungi petugas TPI.');
+            }
+            if ($trx->getStatus() === StatusTransaksi::LUNAS) {
+                $this->tolak('pembayaran', 'Tagihan ini sudah lunas.');
+            }
+            if ($this->pembayaranLewatBatas($trx)) {
+                $this->tolak('pembayaran', 'Batas pembayaran telah lewat. Tagihan akan dibatalkan.');
+            }
+
+            $nominal = $trx->sisaTagihan();
+            $saldo = SaldoPembeli::where('id_pembeli', $pembeli->getIdPengguna())->lockForUpdate()->first();
+            if (! $saldo || $saldo->status !== 'AKTIF' || (float) $saldo->saldo < $nominal) {
+                $this->tolak('pembayaran', 'Saldo aktif tidak cukup untuk melunasi tagihan ini.');
+            }
+
+            $saldo->saldo = (string) ((float) $saldo->saldo - $nominal);
+            $saldo->save();
+            MutasiSaldo::create([
+                'id_saldo' => $saldo->id_saldo,
+                'jenis' => 'PEMBAYARAN',
+                'arah' => 'DEBIT',
+                'nominal' => (string) $nominal,
+                'saldo_akhir' => (string) $saldo->saldo,
+                'status' => 'BERHASIL',
+                'id_kasir' => null,
+                'keterangan' => 'Pembayaran mandiri ' . $trx->getKodeTransaksi(),
+            ]);
+            Pembayaran::create([
+                'id_transaksi' => $trx->getIdTransaksi(),
+                'metode' => MetodeBayar::SALDO->value,
+                'nominal' => (string) $nominal,
+                'waktu_bayar' => now(),
+                'id_kasir' => null,
+            ]);
+            $trx->perbaruiStatusBayar();
+
+            return $trx->fresh();
+        });
+    }
+
+    public function jadwalkanPengambilan(Pengguna $pembeli, int $idTransaksi, string $tanggal): TransaksiPenjualan
+    {
+        $trx = TransaksiPenjualan::where('id_pembeli', $pembeli->getIdPengguna())->find($idTransaksi);
+        if (! $trx) {
+            abort(404, 'Tagihan tidak ditemukan.');
+        }
+        if ($trx->getStatus() !== StatusTransaksi::LUNAS) {
+            $this->tolak('tanggal_pengambilan', 'Jadwal pengambilan dapat dipilih setelah tagihan lunas.');
+        }
+
+        $pilihan = Carbon::createFromFormat('Y-m-d', $tanggal)->startOfDay();
+        if ($pilihan->lt(today()) || $pilihan->gt(today()->addDay())) {
+            $this->tolak('tanggal_pengambilan', 'Pengambilan hanya dapat dijadwalkan hari ini atau besok.');
+        }
+
+        $trx->tanggal_pengambilan = $pilihan->toDateString();
+        $trx->save();
+
+        return $trx->fresh();
+    }
+
     /** FR-31: isi QR nota = LELANGIKAN|TRX-000001|tanda-tangan (HMAC dengan APP_KEY). */
     public function isiQrNota(TransaksiPenjualan $t): string
     {
@@ -138,6 +219,8 @@ class PembayaranService
     /** FR-28: rincian tagihan. */
     public function rincian(TransaksiPenjualan $t, bool $lengkap = true): array
     {
+        $this->batalkanKedaluwarsa($t->getIdTransaksi());
+        $t->refresh();
         $t->loadMissing(['lot.tangkapan.jenisIkan', 'lot.tangkapan.grade', 'lot.tangkapan.kedatangan.kapal', 'pembeli', 'tarif']);
         $tg = $t->lot->tangkapan;
         $dibayar = $t->totalDibayar();
@@ -161,6 +244,9 @@ class PembayaranService
             'sisa_tagihan'       => $t->sisaTagihan(),
             'status'             => $t->getStatus()->value,
             'waktu_transaksi'    => $t->getWaktuTransaksi()->format('Y-m-d H:i'),
+            'batas_bayar'        => $t->batas_bayar?->format('Y-m-d H:i:s'),
+            'tanggal_pengambilan' => $t->tanggal_pengambilan?->format('Y-m-d'),
+            'saldo_tersedia'     => (float) (SaldoPembeli::where('id_pembeli', $t->getIdPembeli())->value('saldo') ?? 0),
         ];
 
         if ($lengkap) {
@@ -169,13 +255,45 @@ class PembayaranService
                 'nominal'         => $p->getNominal(),
                 'waktu_bayar'     => $p->getWaktuBayar()->format('Y-m-d H:i'),
                 'nomor_referensi' => $p->getNomorReferensi(),
-                'nama_kasir'      => $p->kasir->getNamaLengkap(),
+                'nama_kasir'      => $p->kasir?->getNamaLengkap() ?? 'Pembayaran mandiri',
             ])->all();
             $data['qr_nota'] = $this->isiQrNota($t);
             $data['nama_tpi'] = Tpi::find($tg->kedatangan->getIdTpi())?->getNamaTpi() ?? Konfigurasi::nilai('kode_tpi', 'PLR');
         }
 
         return $data;
+    }
+
+    private function pembayaranLewatBatas(TransaksiPenjualan $trx): bool
+    {
+        return $trx->getStatus() === StatusTransaksi::BELUM_DIBAYAR
+            && $trx->batas_bayar !== null
+            && ! $trx->batas_bayar->isFuture()
+            && $trx->totalDibayar() === 0.0;
+    }
+
+    private function batalkanKedaluwarsa(int $idTransaksi): void
+    {
+        $cek = TransaksiPenjualan::find($idTransaksi);
+        if (! $cek || $cek->getStatus() !== StatusTransaksi::BELUM_DIBAYAR
+            || ! $cek->batas_bayar || $cek->batas_bayar->isFuture() || $cek->totalDibayar() > 0) {
+            return;
+        }
+
+        DB::transaction(function () use ($idTransaksi) {
+            $trx = TransaksiPenjualan::whereKey($idTransaksi)->lockForUpdate()->first();
+            if (! $trx || $trx->getStatus() !== StatusTransaksi::BELUM_DIBAYAR
+                || ! $trx->batas_bayar || $trx->batas_bayar->isFuture() || $trx->totalDibayar() > 0) {
+                return;
+            }
+
+            $trx->status = StatusTransaksi::DIBATALKAN->value;
+            $trx->save();
+            $lot = LotLelang::whereKey($trx->getIdLot())->lockForUpdate()->first();
+            if ($lot?->getStatus() === StatusLot::TERJUAL) {
+                $lot->pindahStatus(StatusLot::TIDAK_TERJUAL);
+            }
+        });
     }
 
     private function kueriTpi(Pengguna $pengguna)

@@ -52,7 +52,7 @@ class LotLelang extends Model
         'DILELANG'        => ['DIPERPANJANG', 'TERJUAL', 'TIDAK_TERJUAL', 'DIBATALKAN'],
         'DIPERPANJANG'    => ['DILELANG'],                              // perpanjangan berjalan
         'TIDAK_TERJUAL'   => ['MENUNGGU_LELANG', 'SELESAI'],            // sesi ulang / tidak dilelang ulang
-        'TERJUAL'         => ['SELESAI'],                               // pembayaran lunas dan settlement
+        'TERJUAL'         => ['SELESAI', 'TIDAK_TERJUAL'],              // pembayaran lunas atau tagihan pemenang kedaluwarsa
         'DIBATALKAN'      => [],
         'SELESAI'         => [],
     ];

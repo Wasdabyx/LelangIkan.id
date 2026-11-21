@@ -141,6 +141,9 @@ export const lelang = {
   ambil: (idSesi, kunci) => permintaan('POST', `/pembeli/lelang/${idSesi}/ambil`, { kunci_idempotensi: kunci }),
   tagihan: () => permintaan('GET', '/pembeli/tagihan'),
   detailTagihan: (id) => permintaan('GET', `/pembeli/tagihan/${id}`),
+  bayarSaldo: (id) => permintaan('POST', `/pembeli/tagihan/${id}/bayar-saldo`, {}),
+  jadwalkanPengambilan: (id, tanggal) =>
+    permintaan('POST', `/pembeli/tagihan/${id}/pengambilan`, { tanggal_pengambilan: tanggal }),
 };
 
 // UC-06: Kasir TPI
