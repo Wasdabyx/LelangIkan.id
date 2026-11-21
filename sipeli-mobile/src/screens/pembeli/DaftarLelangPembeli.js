@@ -14,6 +14,12 @@ import { warna } from '../../tema';
  * Tab "Lelang" (sesi pada lot yang dipesan, diperbarui tiap 3 detik)
  * dan tab "Tagihan" (transaksi hasil menang lelang).
  */
+function tanggalPendek(tanggal) {
+  if (!tanggal) return '';
+  const [tahun, bulan, hari] = tanggal.split('-').map(Number);
+  return new Date(tahun, bulan - 1, hari).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 export default function DaftarLelangPembeli({ tab, idTpi, onMasukRuang, onBukaTagihan }) {
   const [sesi, setSesi] = useState(null);
   const [tagihan, setTagihan] = useState(null);
@@ -44,6 +50,7 @@ export default function DaftarLelangPembeli({ tab, idTpi, onMasukRuang, onBukaTa
   }
   const belumLunas = tagihan.filter((t) => t.status !== 'LUNAS');
   const totalSisa = belumLunas.reduce((a, t) => a + Number(t.sisa_tagihan), 0);
+  const saldoSaatIni = tagihan.length ? Number(tagihan[0].saldo_tersedia || 0) : null;
   const berjalan = sesi.filter((x) => x.status === 'AKTIF');
   const selesai = sesi.filter((x) => x.status !== 'AKTIF');
 
@@ -86,6 +93,9 @@ export default function DaftarLelangPembeli({ tab, idTpi, onMasukRuang, onBukaTa
                 ? `${belumLunas.length} tagihan belum lunas. Bayar dari saldo aplikasi atau ke Kasir TPI.`
                 : 'Tagihan dari lot yang Anda menangkan.'}
             </Text>
+            {saldoSaatIni !== null ? (
+              <Text style={s.keterangan}>Saldo aplikasi saat ini: {formatRupiah(saldoSaatIni)}</Text>
+            ) : null}
           </View>
           <Bagian tanpaJarak gaya={{ borderTopWidth: 0 }}>
             <View style={{ paddingHorizontal: 16 }}>
@@ -102,6 +112,13 @@ export default function DaftarLelangPembeli({ tab, idTpi, onMasukRuang, onBukaTa
                       <View>
                         <Text style={s.selKode}>{t.kode_transaksi}</Text>
                         <Text style={s.selKecil} numberOfLines={1}>{t.nama_jenis} | {t.kode_lot}</Text>
+                        {t.status === 'LUNAS' ? (
+                          <Text style={s.selKecil}>
+                            {t.tanggal_pengambilan ? `Pengambilan ${tanggalPendek(t.tanggal_pengambilan)}` : 'Pilih jadwal pengambilan'}
+                          </Text>
+                        ) : t.batas_bayar ? (
+                          <Text style={s.selKecil}>Batas bayar {t.batas_bayar.slice(0, 16).replace('T', ' ')}</Text>
+                        ) : null}
                       </View>
                     ),
                   },

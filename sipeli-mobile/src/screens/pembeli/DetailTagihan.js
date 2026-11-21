@@ -107,6 +107,10 @@ export default function DetailTagihan({ idTransaksi, onKembali }) {
       <FormGulir gayaIsi={s.isi}>
         <Bagian>
           <RincianTagihan t={t} />
+          <View style={s.saldo}>
+            <Text style={s.labelSaldo}>{lunas ? 'Sisa saldo aplikasi' : 'Saldo tersedia'}</Text>
+            <Text style={s.nilaiSaldo}>{formatRupiah(t.saldo_tersedia)}</Text>
+          </View>
           {galat ? <KotakPesan teks={galat} gaya={{ marginTop: 12 }} /> : null}
           {pesan ? <KotakPesan jenis="sukses" teks={pesan} gaya={{ marginTop: 12 }} /> : null}
           {kedaluwarsa ? (
@@ -118,10 +122,6 @@ export default function DetailTagihan({ idTransaksi, onKembali }) {
                 teks={`Lunasi sebelum ${t.batas_bayar?.slice(0, 16).replace('T', ' ') || 'batas waktu'}. Pembayaran dapat melalui saldo aplikasi atau ke kasir dengan tunai, transfer, atau QRIS.`}
                 gaya={{ marginTop: 14 }}
               />
-              <View style={s.saldo}>
-                <Text style={s.labelSaldo}>Saldo tersedia</Text>
-                <Text style={s.nilaiSaldo}>{formatRupiah(t.saldo_tersedia)}</Text>
-              </View>
               <Tombol
                 judul={memprosesSaldo ? 'Memproses pembayaran...' : `Bayar lunas dari saldo (${formatRupiah(sisa)})`}
                 onPress={() => setTanyaBayarSaldo(true)}
@@ -141,8 +141,9 @@ export default function DetailTagihan({ idTransaksi, onKembali }) {
               {t.tanggal_pengambilan ? (
                 <Text style={s.jadwal}>Terjadwal: {labelTanggal(t.tanggal_pengambilan)}</Text>
               ) : (
-                <Text style={s.catatan}>Pilih pengambilan hari ini atau besok, sesuai jam operasional TPI.</Text>
+                <Text style={s.catatan}>Pilih pengambilan hari ini atau besok.</Text>
               )}
+              <Text style={s.catatan}>Batas pengambilan: {labelTanggal(besok)}, pada jam operasional TPI.</Text>
               <View style={s.tombolTanggal}>
                 <Tombol
                   judul="Hari ini"
