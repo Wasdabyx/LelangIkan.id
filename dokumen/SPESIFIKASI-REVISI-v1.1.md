@@ -333,3 +333,19 @@ Catatan penyelarasan:
    `render_diagram.sh` (drawio-desktop + xvfb → PDF vektor) → `pangkas_diagram.py` (pangkas kanvas, buat
    PNG untuk DOCX) → `sunting_skpl.py` / `sunting_dppl.py` (+ `ganti_gambar.py`) → LibreOffice →
    `sisip_vektor.py` (ganti gambar raster pada kotak yang sama dengan vektor).
+
+---
+
+## H. Kejelasan tambahan hasil audit (kedua dokumen)
+
+Tiga kalimat ditambahkan setelah audit isi dokumen terhadap kode (lihat `review/AUDIT-DOKUMEN-vs-KODE.md`):
+
+1. **C-1 — catatan di bawah Tabel IV.6:** baris `/api/laporan/harga` dan `/api/laporan/retribusi` dilayani oleh
+   satu rute `/api/laporan/{jenis}` dengan nilai `{jenis}` = `harga`/`retribusi`, dan keduanya menerima
+   `?format=csv` atau `?format=pdf`. Tidak ada rute yang hilang; ini hanya penjelasan.
+2. **C-2 — FR-05 dan FR-06 (SKPL Tabel III.1):** ditambahkan catatan miring *"Pada versi 1.1 antrean luring
+   belum diimplementasikan; ketentuan ini berlaku untuk versi berikutnya."* (FR-05) dan kalimat serupa untuk
+   FR-06 (status sinkronisasi). Keduanya tetap berprioritas "Sedang".
+3. **C-3 — FR-07 (SKPL Tabel III.2):** ditambahkan catatan miring bahwa pada versi 1.1 pembacaan berat berasal
+   dari **timbangan simulasi** di dalam aplikasi, dan adaptor perangkat nyata (Tabel IV.4) masuk rencana versi
+   berikutnya.
