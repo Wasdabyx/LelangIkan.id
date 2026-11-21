@@ -321,8 +321,8 @@ Catatan penyelarasan:
    "Diagram memuat 35 kelas" pada SKPL hal. 48 dan DPPL hal. 63 diperbarui menjadi 37 kelas; judul gambar
    pada daftar gambar ikut berubah.
 3. **Enumerasi pada diagram kelas.** Diagram memuat 20 kelas enumerasi (19 pada v1.0 ditambah
-   `TujuanOtp`). Judul gambar tetap menyebut 19 enumerasi agar sama dengan Tabel 3.92; Tabel 3.92 dan
-   `TujuanOtp` sudah ditambahkan pada revisi C3 sehingga keduanya perlu diselaraskan pada revisi berikut.
+   `TujuanOtp`). Narasi dan judul gambar pada SKPL (hal. 46, 47) serta DPPL (hal. 62, 64) sudah
+   diselaraskan menjadi **20 enumerasi**, cocok dengan Tabel 3.92 yang memuat `TujuanOtp`.
 4. Ukuran gambar dihitung dari rasio asli lalu dibatasi lebar area teks, sehingga pemenggalan halaman
    tidak berubah: SKPL tetap 56 halaman, DPPL tetap 87 halaman. Kanvas kosong pada ekspor drawio dipangkas
    lebih dahulu agar diagram tampil sebesar mungkin (ERD 24,4 cm; diagram kelas 17,2 cm pada halaman
