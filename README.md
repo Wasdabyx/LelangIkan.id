@@ -108,11 +108,11 @@ LelangIkan.id/
    composer install
    copy .env.example .env
    php artisan key:generate
-   php artisan migrate:fresh --seed
+   php artisan migrate --seed
    php artisan serve --host=0.0.0.0 --port=8000
    ```
 
-   Bila memakai Git Bash, ganti `copy` dengan `cp`. Sesuaikan `DB_USERNAME` dan `DB_PASSWORD` di `.env` bila berbeda dari bawaan XAMPP (`root` tanpa kata sandi).
+   Bila memakai Git Bash, ganti `copy` dengan `cp`. Sesuaikan `DB_USERNAME` dan `DB_PASSWORD` di `.env` bila berbeda dari bawaan XAMPP (`root` tanpa kata sandi). Seeder dapat dijalankan ulang dengan `php artisan db:seed` dan tidak menghapus data. Jangan gunakan `migrate:fresh` kecuali memang ingin menghapus seluruh isi database.
 
 3. Buka `http://127.0.0.1:8000/up` di browser. Halaman "Application up" menandakan server berjalan.
 
@@ -142,9 +142,13 @@ Kata sandi semua akun: `sipeli12345`
 |---|---|---|
 | `pendata` | Petugas Pendataan | Form Kedatangan & Tangkapan |
 | `timbang` | Petugas Timbang | Form Penimbangan & Label Lot |
-| `operator`, `pembeli`, `kasir`, `pimpinan`, `admin` | Peran lain | Beranda sementara (belum dikembangkan) |
+| `operator` | Operator Lelang | Antrean, buka sesi, dan pantau sesi lelang |
+| `pembeli` | Pembeli | Pemesanan lot, lelang, tagihan, dan pengambilan |
+| `kasir` | Kasir TPI | Tagihan, pembayaran, saldo pembeli, dan verifikasi nota |
+| `pimpinan` | Pimpinan | Ringkasan operasional, persetujuan saldo, dan verifikasi nota |
+| `admin` | Administrator | Beranda sementara (belum dikembangkan) |
 
-`php artisan migrate:fresh --seed` juga mengisi data demo: riwayat lelang 30 hari terakhir dan 6 kedatangan hari ini.
+`php artisan migrate --seed` mengisi riwayat lot 30 hari, enam kedatangan hari ini, serta skenario lelang hari ini: satu sesi aktif, dua sesi terjual (satu tagihan lunas dan satu dibayar sebagian), dan satu sesi tidak terjual. Menjalankan `php artisan db:seed` lagi tidak menggandakan data demo.
 
 | Nomor | Status | Kegunaan saat demo |
 |---|---|---|
@@ -155,6 +159,10 @@ Kata sandi semua akun: `sipeli12345`
 ## Pembayaran dan pengambilan hasil lelang
 
 Penawaran tidak lagi memerlukan pemeriksaan daya beli. Pembeli mengonfirmasi setiap tawaran sebelum dikirim; bila menang, tagihan harus dilunasi maksimal 2 jam setelah sesi ditutup. Tagihan tanpa pembayaran yang melewati batas waktu dibatalkan dan lot kembali berstatus tidak terjual. Pembeli dapat melunasi dari saldo aplikasi atau membayar melalui Kasir TPI dengan tunai, transfer, atau QRIS (simulasi). Setelah lunas, pembeli memilih pengambilan hari ini atau besok.
+
+## Ringkasan Pimpinan
+
+Pimpinan dapat melihat ringkasan sesi aktif dan ditutup, sesi yang menghasilkan penjualan atau tidak terjual (termasuk transaksi yang dibatalkan), nilai penjualan, pembayaran yang diterima, serta jumlah dan sisa tagihan belum lunas. Ringkasan dibatasi ke TPI pengguna yang masuk dan dapat difilter berdasarkan tanggal. Tanggal sesi memakai waktu mulai/penutupan, transaksi memakai waktu transaksi, dan pembayaran memakai waktu bayar.
 
 ## Daftar API
 
@@ -179,3 +187,4 @@ Semua alamat berawalan `/api`. Selain `/masuk` dan `/foto-lot/{nama}`, setiap pe
 | GET | `/foto-lot/{nama}` | Tanpa token | Menampilkan foto lot (nama berkas acak) |
 | POST | `/pembeli/tagihan/{id}/bayar-saldo` | Pembeli | Melunasi sisa tagihan dari saldo aplikasi |
 | POST | `/pembeli/tagihan/{id}/pengambilan` | Pembeli | Menjadwalkan pengambilan hari ini atau besok setelah lunas |
+| GET | `/pimpinan/ringkasan?tanggal=YYYY-MM-DD` | Pimpinan | Ringkasan operasional dan keuangan untuk tanggal tertentu (tanggal opsional, default hari ini) |

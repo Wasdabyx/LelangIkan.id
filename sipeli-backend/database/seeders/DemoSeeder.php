@@ -2,13 +2,26 @@
 
 namespace Database\Seeders;
 
+use App\Enums\MetodeBayar;
+use App\Enums\ModeLelang;
+use App\Enums\StatusLot;
+use App\Enums\StatusPenawaran;
+use App\Enums\StatusSesi;
+use App\Models\DaftarPantauan;
 use App\Models\GradeMutu;
 use App\Models\JenisIkan;
 use App\Models\Kapal;
+use App\Models\Konfigurasi;
 use App\Models\KedatanganKapal;
 use App\Models\LotLelang;
+use App\Models\Pembayaran;
 use App\Models\Pengguna;
+use App\Models\Penawaran;
+use App\Models\SesiLelang;
 use App\Models\Tangkapan;
+use App\Models\TarifRetribusi;
+use App\Models\TransaksiPenjualan;
+use App\Services\LelangService;
 use App\Services\LotService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -17,15 +30,13 @@ use Illuminate\Support\Facades\DB;
 /**
  * Data demo LelangIkan.id yang rapi untuk presentasi.
  *
- * 1. Riwayat 30 hari ke belakang (lot SELESAI) -> usulan harga ALG-06 selalu muncul.
- * 2. Kedatangan HARI INI dengan status campuran:
- *    - 2 kapal sudah ditimbang penuh (termasuk contoh lot perlu verifikasi & draf harga)
- *    - 1 kapal baru ditimbang sebagian
- *    - 2 kapal belum ditimbang (untuk diperagakan langsung)
- *    - 1 kedatangan masih DRAF
+ * 1. Riwayat 30 hari untuk usulan harga ALG-06.
+ * 2. Kedatangan hari ini dengan status campuran dan lot siap lelang.
+ * 3. Skenario sesi aktif, sesi terjual (satu lunas, satu dibayar sebagian), dan sesi tidak terjual.
  *
- * Tanggal mengikuti hari saat perintah dijalankan, jadi jalankan pada hari demo:
- *   php artisan migrate:fresh --seed
+ * Idempoten untuk data demo dan tidak menghapus data. Jalankan pada database pengembangan:
+ *   php artisan migrate --seed
+ *   php artisan db:seed
  */
 class DemoSeeder extends Seeder
 {
@@ -65,28 +76,165 @@ class DemoSeeder extends Seeder
 
     public function run(): void
     {
-        if (KedatanganKapal::exists()) {
-            $this->command->warn('Database sudah berisi kedatangan. Gunakan: php artisan migrate:fresh --seed');
-            return;
-        }
-
-        mt_srand(2026); // angka acak selalu sama setiap kali dijalankan
+        mt_srand(2026);
 
         $this->jenis     = JenisIkan::pluck('id_jenis', 'nama_jenis')->all();
         $this->grade     = GradeMutu::pluck('id_grade', 'kode_grade')->all();
         $this->kapal     = Kapal::orderBy('id_kapal')->pluck('id_kapal')->all();
         $this->idPendata = Pengguna::where('nama_pengguna', 'pendata')->value('id_pengguna');
         $this->idTimbang = Pengguna::where('nama_pengguna', 'timbang')->value('id_pengguna');
-        $this->idTpi     = Pengguna::where('nama_pengguna', 'pendata')->value('id_tpi');
+        $this->idTpi     = (int) Pengguna::where('nama_pengguna', 'pendata')->value('id_tpi');
 
-        DB::transaction(function () {
-            $this->buatRiwayat(30);
-            $this->buatHariIni();
-        });
+        if (! KedatanganKapal::exists()) {
+            DB::transaction(function () {
+                $this->buatRiwayat(30);
+                $this->buatHariIni();
+            });
+        }
+
+        $this->buatSkenarioLelang();
 
         $hariIni = KedatanganKapal::whereDate('tanggal', today())->count();
-        $this->command->info('Data demo dibuat: riwayat 30 hari (' . LotLelang::where('status', 'SELESAI')->count()
-            . ' lot) dan ' . $hariIni . ' kedatangan hari ini (' . today()->format('d-m-Y') . ').');
+        $this->command->info('Seeder siap: ' . LotLelang::count() . ' lot, ' . $hariIni
+            . ' kedatangan hari ini, dan ringkasan lelang hari ini terisi.');
+    }
+
+    private function buatSkenarioLelang(): void
+    {
+        $sesiHariIni = SesiLelang::whereHas('lot.tangkapan.kedatangan', fn ($query) => $query->where('id_tpi', $this->idTpi))
+            ->whereDate('waktu_mulai', today())
+            ->exists();
+        if ($sesiHariIni) {
+            return;
+        }
+
+        $lotSiap = LotLelang::whereHas('tangkapan.kedatangan', fn ($query) => $query
+                ->where('id_tpi', $this->idTpi)
+                ->whereIn('nama_kapten', self::KAPTEN))
+            ->where('status', StatusLot::MENUNGGU_LELANG->value)
+            ->orderBy('id_lot')
+            ->limit(4)
+            ->get();
+        if ($lotSiap->count() < 4) {
+            $this->command->warn('Skenario lelang demo dilewati: dibutuhkan minimal 4 lot siap lelang.');
+            return;
+        }
+
+        $operator = Pengguna::where('nama_pengguna', 'operator')->firstOrFail();
+        $pembeli = Pengguna::where('nama_pengguna', 'pembeli')->firstOrFail();
+        $kasir = Pengguna::where('nama_pengguna', 'kasir')->firstOrFail();
+        $tarif = TarifRetribusi::cariBerlaku(now());
+        if (! $tarif) {
+            $this->command->warn('Skenario lelang demo dilewati: tarif retribusi aktif belum tersedia.');
+            return;
+        }
+
+        DB::transaction(function () use ($lotSiap, $operator, $pembeli, $kasir, $tarif) {
+            $this->bukaSesiDemo($lotSiap[0], $operator, 600);
+            $this->buatPantauanDemo($pembeli, $lotSiap[0], 9001);
+
+            $sesiSebagian = $this->tutupSesiTerjualDemo($lotSiap[1], $operator, $pembeli, 9002, 2);
+            $transaksiSebagian = TransaksiPenjualan::dariSesi(
+                $sesiSebagian->fresh('lot'), $sesiSebagian->tertinggi(), $tarif,
+                (float) Konfigurasi::nilai('biaya_layanan', 2000),
+            );
+            $waktuTransaksiSebagian = $sesiSebagian->waktu_selesai_aktual;
+            $transaksiSebagian->waktu_transaksi = $waktuTransaksiSebagian;
+            $transaksiSebagian->batas_bayar = $waktuTransaksiSebagian->copy()->addHours(2);
+            $transaksiSebagian->save();
+            Pembayaran::create([
+                'id_transaksi' => $transaksiSebagian->getIdTransaksi(),
+                'metode' => MetodeBayar::TUNAI->value,
+                'nominal' => (string) floor((float) $transaksiSebagian->getTotalTagihan() / 2),
+                'waktu_bayar' => $waktuTransaksiSebagian->copy()->addMinute(),
+                'id_kasir' => $kasir->getIdPengguna(),
+            ]);
+            $transaksiSebagian->perbaruiStatusBayar();
+
+            $sesiLunas = $this->tutupSesiTerjualDemo($lotSiap[2], $operator, $pembeli, 9003, 3);
+            $transaksiLunas = TransaksiPenjualan::dariSesi(
+                $sesiLunas->fresh('lot'), $sesiLunas->tertinggi(), $tarif,
+                (float) Konfigurasi::nilai('biaya_layanan', 2000),
+            );
+            $waktuTransaksiLunas = $sesiLunas->waktu_selesai_aktual;
+            $transaksiLunas->waktu_transaksi = $waktuTransaksiLunas;
+            $transaksiLunas->batas_bayar = $waktuTransaksiLunas->copy()->addHours(2);
+            $transaksiLunas->save();
+            Pembayaran::create([
+                'id_transaksi' => $transaksiLunas->getIdTransaksi(),
+                'metode' => MetodeBayar::TUNAI->value,
+                'nominal' => $transaksiLunas->getTotalTagihan(),
+                'waktu_bayar' => $waktuTransaksiLunas->copy()->addMinute(),
+                'id_kasir' => $kasir->getIdPengguna(),
+            ]);
+            $transaksiLunas->perbaruiStatusBayar();
+            $lotSiap[2]->pindahStatus(StatusLot::SELESAI);
+
+            $sesiTidakTerjual = $this->bukaSesiDemo($lotSiap[3], $operator, 120);
+            $this->tutupSesiDemo($sesiTidakTerjual);
+            $lotSiap[3]->pindahStatus(StatusLot::TIDAK_TERJUAL);
+            $this->buatPantauanDemo($pembeli, $lotSiap[3], 9004);
+        });
+    }
+
+    private function bukaSesiDemo(LotLelang $lot, Pengguna $operator, int $durasi): SesiLelang
+    {
+        $kenaikan = (new LelangService)->usulanKenaikan($lot);
+        $sesi = SesiLelang::buka($lot, $operator, $durasi, ModeLelang::NAIK, $kenaikan, null, null, null, null, 5, 15);
+        $lot->pindahStatus(StatusLot::DILELANG);
+
+        return $sesi;
+    }
+
+    private function tutupSesiTerjualDemo(LotLelang $lot, Pengguna $operator, Pengguna $pembeli, int $urutan, int $menit): SesiLelang
+    {
+        $sesi = $this->bukaSesiDemo($lot, $operator, 120);
+        $harga = (float) $lot->getHargaPembukaan() + (new LelangService)->usulanKenaikan($lot);
+        $waktu = now()->subMinutes($menit);
+        if (! $waktu->isToday()) {
+            $waktu = now();
+        }
+        $this->buatPantauanDemo($pembeli, $lot, $urutan);
+        $penawaran = Penawaran::create([
+            'id_sesi' => $sesi->getIdSesi(),
+            'id_pembeli' => $pembeli->getIdPengguna(),
+            'harga_per_kg' => (string) $harga,
+            'nominal' => (string) round($harga * (float) $lot->getBeratAktual()),
+            'waktu_penawaran' => $waktu,
+            'status' => StatusPenawaran::TERTINGGI->value,
+            'kanal' => 'JARAK_JAUH',
+            'kunci_idempotensi' => (string) \Illuminate\Support\Str::uuid(),
+            'alamat_terminal' => null,
+        ]);
+
+        $sesi->harga_berjalan = (string) $harga;
+        $sesi->id_penawaran_pemenang = $penawaran->getIdPenawaran();
+        $sesi->status = StatusSesi::DITUTUP->value;
+        $sesi->waktu_mulai = $waktu->copy()->subMinutes(2);
+        $sesi->waktu_selesai_rencana = $waktu;
+        $sesi->waktu_selesai_aktual = $waktu;
+        $sesi->save();
+        $lot->pindahStatus(StatusLot::TERJUAL);
+
+        return $sesi;
+    }
+
+    private function tutupSesiDemo(SesiLelang $sesi): void
+    {
+        $waktu = now()->subMinutes(1);
+        $sesi->status = StatusSesi::DITUTUP->value;
+        $sesi->waktu_mulai = $waktu->copy()->subMinutes(2);
+        $sesi->waktu_selesai_rencana = $waktu;
+        $sesi->waktu_selesai_aktual = $waktu;
+        $sesi->save();
+    }
+
+    private function buatPantauanDemo(Pengguna $pembeli, LotLelang $lot, int $urutan): void
+    {
+        DaftarPantauan::firstOrCreate(
+            ['id_pembeli' => $pembeli->getIdPengguna(), 'id_lot' => $lot->getIdLot()],
+            ['kode_pemesanan' => 'PSN-' . today()->format('ymd') . '-' . str_pad((string) $urutan, 4, '0', STR_PAD_LEFT)],
+        );
     }
 
     // ------------------------------------------------------------------

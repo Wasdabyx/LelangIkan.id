@@ -9,7 +9,7 @@ import AktivasiScreen from './src/screens/AktivasiScreen';
 import KasirScreen from './src/screens/kasir/KasirScreen';
 import KedatanganScreen from './src/screens/kedatangan/KedatanganScreen';
 import OperatorScreen from './src/screens/operator/OperatorScreen';
-import PersetujuanSaldo from './src/screens/pimpinan/PersetujuanSaldo';
+import PimpinanScreen from './src/screens/pimpinan/PimpinanScreen';
 import PembeliScreen from './src/screens/pembeli/PembeliScreen';
 import PenimbanganScreen from './src/screens/penimbangan/PenimbanganScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -18,7 +18,7 @@ import { ambilSesi, hapusSesi, simpanSesi } from './src/sesi';
 import { warna } from './src/tema';
 
 // id_peran sesuai seeder: 1 = Petugas Pendataan (A1), 2 = Petugas Timbang (A2),
-// 3 = Operator Lelang (A3), 4 = Pembeli (A4), 5 = Kasir TPI (A5)
+// 3 = Operator Lelang (A3), 4 = Pembeli (A4), 5 = Kasir TPI (A5), 6 = Pimpinan
 const PERAN_PENDATAAN = 1;
 const PERAN_TIMBANG = 2;
 const PERAN_OPERATOR = 3; // Fitur Lelang
@@ -147,7 +147,7 @@ export default function App() {
   } else if (pengguna.id_peran === PERAN_KASIR) {
     layar = <KasirScreen pengguna={pengguna} onKeluar={saatKeluar} />;
   } else if (pengguna.id_peran === PERAN_PIMPINAN) {
-    layar = <PersetujuanSaldo pengguna={pengguna} onKeluar={saatKeluar} />;
+    layar = <PimpinanScreen pengguna={pengguna} onKeluar={saatKeluar} />;
   } else {
     layar = (
       <BerandaSementara

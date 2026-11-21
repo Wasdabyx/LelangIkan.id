@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\KedatanganController;
 use App\Http\Controllers\Api\LelangPembeliController;
 use App\Http\Controllers\Api\OperatorLelangController;
 use App\Http\Controllers\Api\PembeliController;
+use App\Http\Controllers\Api\PimpinanController;
 use App\Http\Controllers\Api\PenimbanganController;
 use Illuminate\Support\Facades\Route;
 
@@ -82,6 +83,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware('peran:6')->prefix('pimpinan')->group(function () {
+        Route::get('/ringkasan', [PimpinanController::class, 'ringkasan']);
         Route::get('/saldo/penyesuaian', [DepositController::class, 'menungguPersetujuan']);
         Route::post('/saldo/penyesuaian/{id}/keputusan', [DepositController::class, 'putuskan'])->whereNumber('id');
     });

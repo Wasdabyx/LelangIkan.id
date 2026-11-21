@@ -5,7 +5,7 @@ import { formatRupiah } from '../../format';
 import { warna } from '../../tema';
 import { BilahAtas } from '../../components/Dasar';
 
-export default function PersetujuanSaldo({ pengguna, onKeluar }) {
+export default function PersetujuanSaldo({ pengguna, onKeluar, tampilkanBilah = true }) {
   const [daftar, setDaftar] = useState([]);
   const [catatan, setCatatan] = useState({});
   const [memuat, setMemuat] = useState(true);
@@ -46,7 +46,7 @@ export default function PersetujuanSaldo({ pengguna, onKeluar }) {
 
   return (
     <View style={s.layar}>
-      <BilahAtas pengguna={pengguna} onKeluar={onKeluar} />
+      {tampilkanBilah ? <BilahAtas pengguna={pengguna} onKeluar={onKeluar} /> : null}
       <ScrollView contentContainerStyle={s.isi} refreshControl={<RefreshControl refreshing={memuat} onRefresh={muat} />}>
         <Text style={s.judul}>Persetujuan Penyesuaian Saldo</Text>
         {pesan ? <Text style={s.sukses}>{pesan}</Text> : null}

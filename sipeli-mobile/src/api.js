@@ -159,6 +159,7 @@ export const kasir = {
 };
 
 export const pimpinan = {
+  ringkasan: (tanggal) => permintaan('GET', `/pimpinan/ringkasan?tanggal=${encodeURIComponent(tanggal)}`),
   penyesuaianSaldo: () => permintaan('GET', '/pimpinan/saldo/penyesuaian'),
   putuskanPenyesuaianSaldo: (id, keputusan, catatan) =>
     permintaan('POST', `/pimpinan/saldo/penyesuaian/${id}/keputusan`, { keputusan, catatan }),
