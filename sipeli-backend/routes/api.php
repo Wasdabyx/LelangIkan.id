@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuditController;
 use App\Http\Controllers\Api\AutentikasiController;
 use App\Http\Controllers\Api\DepositController;
 use App\Http\Controllers\Api\KasirController;
@@ -90,4 +91,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // FR-31: periksa keaslian nota (Kasir, Pimpinan, Operator)
     Route::get('/nota/verifikasi', [KasirController::class, 'verifikasiNota'])->middleware('peran:3,5,6');
+
+    // FR-32: pembatalan transaksi hanya oleh supervisor (Pimpinan), alasan wajib
+    Route::post('/supervisor/tagihan/{id}/batal', [KasirController::class, 'batalkan'])
+        ->whereNumber('id')->middleware('peran:6');
+
+    // UC-12 Audit dan Penelusuran Aktivitas (Administrator, Pimpinan boleh membaca)
+    Route::middleware('peran:6,7')->group(function () {
+        Route::get('/audit', [AuditController::class, 'index']);
+        Route::match(['put', 'patch', 'delete'], '/audit/{id?}', [AuditController::class, 'tolakUbah'])->whereNumber('id');
+    });
 });

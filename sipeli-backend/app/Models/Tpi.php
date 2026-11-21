@@ -15,7 +15,7 @@ class Tpi extends Model
     protected $primaryKey = 'id_tpi';
     public $timestamps = false;
 
-    protected $fillable = ['nama_tpi', 'alamat', 'kabupaten', 'kapasitas_ton', 'jam_operasi'];
+    protected $fillable = ['nama_tpi', 'kode_tpi', 'alamat', 'kabupaten', 'kapasitas_ton', 'jam_operasi'];
 
     protected function casts(): array
     {
@@ -32,6 +32,16 @@ class Tpi extends Model
     public function getNamaTpi(): string
     {
         return $this->nama_tpi;
+    }
+
+    public function getKodeTpi(): ?string
+    {
+        return $this->kode_tpi;
+    }
+
+    public function setKodeTpi(?string $kode): void
+    {
+        $this->kode_tpi = $kode;
     }
 
     public function setNamaTpi(string $nama): void

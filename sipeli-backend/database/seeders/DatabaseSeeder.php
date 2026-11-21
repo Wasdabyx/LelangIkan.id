@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
         $tpi = Tpi::firstOrCreate(
             ['nama_tpi' => 'TPI Palabuhanratu'],
             [
+                'kode_tpi'      => 'PLR',
                 'alamat'        => 'Jl. Kidang Kencana, Palabuhanratu',
                 'kabupaten'     => 'Sukabumi',
                 'kapasitas_ton' => 50,

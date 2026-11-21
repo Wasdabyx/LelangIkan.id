@@ -15,9 +15,12 @@ class LotService
      * FR-08: nomor lot untuk hari ini memakai kode TPI dari konfigurasi.
      * Aturan penomoran ada di LotLelang::buatKodeLot(). WAJIB dipanggil di dalam DB::transaction.
      */
-    public function buatKodeLot(): string
+    public function buatKodeLot(?\App\Models\Tpi $tpi = null): string
     {
-        return LotLelang::buatKodeLot((string) Konfigurasi::nilai('kode_tpi', 'TPI'), now());
+        // FR-08: format [kode TPI]-[tanggal]-[urut]; kode TPI diambil dari data TPI kedatangan.
+        $kode = $tpi?->getKodeTpi() ?: (string) Konfigurasi::nilai('kode_tpi', 'TPI');
+
+        return LotLelang::buatKodeLot($kode, now());
     }
 
     /**

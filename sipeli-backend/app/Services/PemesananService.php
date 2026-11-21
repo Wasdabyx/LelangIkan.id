@@ -31,7 +31,7 @@ class PemesananService
     {
         $milikSaya = DaftarPantauan::where('id_pembeli', $pembeli->getIdPengguna())->pluck('kode_pemesanan', 'id_lot');
 
-        return LotLelang::cariSiapLelang($this->idTpi($pembeli))
+        return LotLelang::cariBolehDiikuti($this->idTpi($pembeli))
             ->map(fn (LotLelang $lot) => $this->ringkasLot($lot) + [
                 'kode_pemesanan' => $milikSaya[$lot->getIdLot()] ?? null,
             ])
@@ -119,7 +119,11 @@ class PemesananService
         ];
     }
 
-    /** Lot harus ada di TPI pembeli, siap dilelang, dan belum pernah dipesan pembeli ini. */
+    /**
+     * Lot harus ada di TPI pembeli, belum pernah dipesan pembeli ini, dan sesinya masih terbuka:
+     * MENUNGGU_LELANG (sebelum operator membuka) atau DILELANG/DIPERPANJANG (sesi sedang aktif).
+     * Sejak revisi ini pembeli boleh bergabung di tengah sesi yang masih berjalan.
+     */
     private function lotBolehDipesan(Pengguna $pembeli, int $idLot): LotLelang
     {
         $lot = LotLelang::with('tangkapan.kedatangan')->find($idLot);
@@ -127,8 +131,8 @@ class PemesananService
         if (! $lot || $lot->tangkapan->kedatangan->getIdTpi() !== $this->idTpi($pembeli)) {
             throw new HttpResponseException(response()->json(['message' => 'Lot tidak ditemukan.'], 404));
         }
-        if (! $lot->isSiapDilelang()) {
-            $this->tolak("Lot {$lot->getKodeLot()} tidak lagi menunggu lelang sehingga tidak dapat dipesan.");
+        if (! $lot->bolehDiikutiLelang()) {
+            $this->tolak("Lot {$lot->getKodeLot()} berstatus {$lot->getStatus()->value} sehingga tidak dapat diikuti lagi.");
         }
         $ada = DaftarPantauan::cari($pembeli->getIdPengguna(), $lot->getIdLot());
         if ($ada) {

@@ -62,6 +62,25 @@ class KasirController extends Controller
         ], 201);
     }
 
+    /** POST /api/supervisor/tagihan/{id}/batal  { alasan }  (FR-32: hanya supervisor) */
+    public function batalkan(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'alasan' => 'required|string|min:10|max:255',
+        ], [
+            'alasan.required' => 'Alasan pembatalan wajib diisi.',
+            'alasan.min'      => 'Alasan pembatalan minimal 10 karakter agar dapat diaudit.',
+            'alasan.max'      => 'Alasan pembatalan maksimal 255 karakter.',
+        ]);
+
+        $trx = $this->layanan->batalkan($request->user(), $id, trim($data['alasan']));
+
+        return response()->json([
+            'pesan' => "Transaksi {$trx->getKodeTransaksi()} dibatalkan. Lot dikembalikan sebagai tidak terjual.",
+            'data'  => $this->layanan->rincian($trx),
+        ]);
+    }
+
     /** GET /api/nota/verifikasi?kode=...  (FR-31: periksa keaslian nota dari QR) */
     public function verifikasiNota(Request $request)
     {

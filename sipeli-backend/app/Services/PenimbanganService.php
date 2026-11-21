@@ -88,7 +88,7 @@ class PenimbanganService
 
             // 3. Lot baru (DRAFT_HARGA) dengan data identitas yang tidak berubah lagi
             $lot = new LotLelang([
-                'kode_lot'           => $this->lotService->buatKodeLot(),
+                'kode_lot'           => $this->lotService->buatKodeLot($kedatangan->tpi),
                 'id_tangkapan'       => $t->getIdTangkapan(),
                 'id_petugas_timbang' => $petugas->getIdPengguna(),
                 'waktu_timbang'      => now(),
@@ -108,6 +108,13 @@ class PenimbanganService
             // 5. Tangkapan DITIMBANG; bila semua baris sudah, kedatangan DITIMBANG
             $t->tandaiDitimbang();
             $kedatangan->perbaruiStatusTimbang();
+
+            app(\App\Services\AuditService::class)->catat(
+                $petugas, 'BUAT_LOT', 'lot_lelang', $lot->getIdLot(), null,
+                ['kode_lot' => $lot->getKodeLot(), 'berat_aktual' => $lot->getBeratAktual(),
+                 'harga_pembukaan' => $lot->getHargaPembukaan(), 'status' => $lot->getStatus()->value,
+                 'timbang_manual' => $lot->isTimbangManual()],
+            );
 
             return $lot->fresh();
         }, 3); // 3 percobaan: bila dua petugas menimbang bersamaan dan terjadi deadlock, diulang otomatis
