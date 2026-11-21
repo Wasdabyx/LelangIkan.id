@@ -83,7 +83,7 @@ export default function DaftarLelangPembeli({ tab, idTpi, onMasukRuang, onBukaTa
             </Text>
             <Text style={s.keterangan}>
               {belumLunas.length > 0
-                ? `${belumLunas.length} tagihan belum lunas. Bayar ke Kasir TPI dengan menyebutkan nomor transaksi.`
+                ? `${belumLunas.length} tagihan belum lunas. Bayar dari saldo aplikasi atau ke Kasir TPI.`
                 : 'Tagihan dari lot yang Anda menangkan.'}
             </Text>
           </View>

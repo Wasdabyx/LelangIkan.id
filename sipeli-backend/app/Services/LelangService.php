@@ -162,9 +162,6 @@ class LelangService
                     $this->tolak('harga_per_kg', 'Tawaran lebih dari 10 kali harga pembukaan. Periksa kembali angka yang Anda ketik.');
                 }
                 $nilaiTawaran = $hargaPerKg * (float) $sesi->lot->getBeratAktual();
-                if (! app(DepositService::class)->periksaDayaBeli($pembeli->getIdPengguna(), $nilaiTawaran)) {
-                    $this->tolak('harga_per_kg', 'Daya beli tidak mencukupi untuk tawaran ini. Silakan hubungi kasir untuk menambah saldo atau limit.');
-                }
 
                 // Langkah 7-8: simpan sebagai TERTINGGI, yang lama menjadi TERTINGGAL
                 if ($tertinggi) {
@@ -219,9 +216,6 @@ class LelangService
                 }
                 $harga = $sesi->hargaTurunSaatIni();
                 $nominal = $harga * (float) $sesi->lot->getBeratAktual();
-                if (! app(DepositService::class)->periksaDayaBeli($pembeli->getIdPengguna(), $nominal)) {
-                    $this->tolak('ambil', 'Daya beli tidak mencukupi pada harga saat ini.');
-                }
                 $p = Penawaran::create([
                     'id_sesi' => $sesi->getIdSesi(), 'id_pembeli' => $pembeli->getIdPengguna(),
                     'harga_per_kg' => (string) $harga, 'nominal' => (string) round($nominal),
@@ -420,6 +414,7 @@ class LelangService
                 'id_transaksi'       => ($sebagaiOperator || $trx->getIdPembeli() === $idSaya) ? $trx->getIdTransaksi() : null,
                 'kode_transaksi'     => ($sebagaiOperator || $trx->getIdPembeli() === $idSaya) ? $trx->getKodeTransaksi() : null,
                 'total_tagihan'      => ($sebagaiOperator || $trx->getIdPembeli() === $idSaya) ? $trx->getTotalTagihan() : null,
+                'batas_bayar'        => ($sebagaiOperator || $trx->getIdPembeli() === $idSaya) ? $trx->batas_bayar?->format('Y-m-d H:i:s') : null,
             ] : ['terjual' => false, 'menang' => false];
         }
 
