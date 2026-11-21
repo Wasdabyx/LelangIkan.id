@@ -265,8 +265,10 @@ Tegaskan pada uraian UC-13:
 
 1. Seluruh 13 use case dan 67 FR tetap ada; tidak ada penurunan prioritas.
 2. NFR-01 … NFR-15 tidak berubah.
-3. Semua diagram (18 di SKPL, 27 di DPPL) dipertahankan apa adanya; hanya judul yang menyebut
-   jumlah tabel yang berubah (Gambar III.15 dan Gambar 2.2) — gambarnya sendiri tidak digambar ulang.
+3. Semua activity diagram dan sequence diagram (18 di SKPL, 27 di DPPL) dipertahankan apa adanya.
+   **Pengecualian (revisi lanjutan):** tiga diagram analisis diganti dengan versi terbaru dari berkas
+   `LelangIkan.id/diagrams/*.drawio` — Gambar III.14 (use case), Gambar III.15 / Gambar 2.2 (ERD), dan
+   Gambar III.17 / Gambar 3.27 (diagram kelas). Rinciannya pada butir G.
 4. Struktur bab, penomoran tabel, dan gaya sitasi IEEE 830 tetap.
 
 ---
@@ -290,3 +292,35 @@ Tegaskan pada uraian UC-13:
 | `/home/user/uji/uji_fitur.py` | UC-09, UC-10, UC-11, FR-64 | 43/43 lulus |
 | `/home/user/uji/uji_ws.py`, `uji_ws2.py`, `uji_ws3.py` | sembilan peristiwa Tabel IV.7 lewat WebSocket Reverb | 9/9 diterima klien |
 | `/home/user/uji/uji_rute_resmi.py` | rute resmi Tabel IV.6 persis seperti tertulis di dokumen | 19/19 lulus |
+
+---
+
+## G. Diagram yang diganti (revisi lanjutan, kedua dokumen)
+
+Gambar v1.0 berasal dari sketsa awal dan tidak lagi sama dengan berkas diagram di repositori. Ketiga
+diagram diganti dengan hasil render `LelangIkan.id/diagrams/*.drawio`:
+
+| Gambar SKPL | Gambar DPPL | Berkas sumber | Isi |
+|---|---|---|---|
+| Gambar III.14 | — | `usecase-lelangikan.drawio` | 8 aktor, 13 use case, batas sistem "LelangIkan.id", relasi «include» dan «extend» |
+| Gambar III.15 | Gambar 2.2 | `erd-lelangikan.drawio` | ERD bentuk tabel baku draw.io, **27 entitas** |
+| Gambar III.17 | Gambar 3.27 | `class-diagram-lelangikan.drawio` | **37 kelas**, 3 interface, 20 kelas enumerasi |
+
+Catatan penyelarasan:
+
+1. **ERD 27 entitas.** Berkas ERD dari repositori baru memuat 26 tabel; `pencairan_nelayan` ditambahkan
+   pada berkas `.drawio` (posisi 1200,905; kolom mengikuti migrasi
+   `2026_11_21_000004_create_pembayaran_nelayan_table.php`) sehingga jumlahnya cocok dengan basis data
+   terpasang dan dengan Tabel III.16 / Tabel 2.4. Perubahan ini ikut dikomit ke repositori.
+2. **Diagram kelas 37 kelas.** Versi baru memuat tiga kelas kendali hasil revisi (LelangNaik, LelangTurun,
+   PencairanTunai/TransferBank/KartuNelayan beserta antarmuka `MetodePencairan`) sehingga narasi
+   "Diagram memuat 35 kelas" pada SKPL hal. 48 dan DPPL hal. 63 diperbarui menjadi 37 kelas; judul gambar
+   pada daftar gambar ikut berubah.
+3. **Enumerasi pada diagram kelas.** Diagram memuat 20 kelas enumerasi (19 pada v1.0 ditambah
+   `TujuanOtp`). Judul gambar tetap menyebut 19 enumerasi agar sama dengan Tabel 3.92; Tabel 3.92 dan
+   `TujuanOtp` sudah ditambahkan pada revisi C3 sehingga keduanya perlu diselaraskan pada revisi berikut.
+4. Ukuran gambar dihitung dari rasio asli lalu dibatasi lebar area teks dan tinggi kotak gambar aslinya,
+   sehingga pemenggalan halaman tidak berubah: SKPL tetap 56 halaman, DPPL tetap 87 halaman.
+5. Cara render ulang: `dokumen/skrip/render_diagram.sh` (drawio-desktop + xvfb + rsvg-convert); gambar
+   disisipkan oleh `dokumen/skrip/ganti_gambar.py` yang dipanggil dari `sunting_skpl.py` dan
+   `sunting_dppl.py`.
