@@ -56,6 +56,7 @@ class DatabaseSeeder extends Seeder
             ['Eka Kasir',      'kasir',    5],
             ['Fajar Pimpinan', 'pimpinan', 6],
             ['Gita Admin',     'admin',    7],
+            ['H. Sukarna',     'nelayan',  8],
         ];
         foreach ($akun as [$nama, $username, $idPeran]) {
             Pengguna::firstOrCreate(
@@ -119,6 +120,14 @@ class DatabaseSeeder extends Seeder
                 ['nik' => $nik],
                 ['nama' => $nama, 'no_telepon' => $telp, 'alamat' => $alamat, 'no_rekening' => $rek, 'nama_bank' => $bank],
             );
+        }
+
+        // 7b. UC-13: akun peran Nelayan ditautkan ke pemilik kapal pertama agar dapat membuka portal
+        // dan menerima peristiwa SETTLEMENT_DIBAYAR pada kanal privat nelayan.{id_pemilik}.
+        $akunNelayan = Pengguna::where('nama_pengguna', 'nelayan')->whereNull('id_pemilik')->first();
+        if ($akunNelayan && $pemilik !== []) {
+            $akunNelayan->id_pemilik = $pemilik[0]->getIdPemilik();
+            $akunNelayan->save();
         }
 
         // 8. Kapal (urutan ini dipakai DemoSeeder)

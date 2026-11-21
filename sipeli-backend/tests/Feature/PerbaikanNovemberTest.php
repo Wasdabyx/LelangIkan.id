@@ -114,6 +114,61 @@ class PerbaikanNovemberTest extends TestCase
         );
     }
 
+    public function test_papan_lelang_menyamarkan_identitas_penawar(): void
+    {
+        $this->assertSame('DB', \App\Services\PapanLelangService::inisial('Dedi Bakul'));
+        $this->assertSame('HS', \App\Services\PapanLelangService::inisial('H. Sukarna'));
+        $this->assertSame('**', \App\Services\PapanLelangService::inisial(''));
+
+        $layanan = app(\App\Services\PapanLelangService::class);
+        $keadaan = $layanan->keadaan(1);
+        $this->assertArrayHasKey('ringkasan', $keadaan);
+        $this->assertArrayHasKey('retribusi', $keadaan['ringkasan']);   // FR-42
+    }
+
+    public function test_laporan_menghitung_netto_dan_retribusi_sesuai_alg05(): void
+    {
+        $layanan = app(\App\Services\LaporanService::class);
+        $laporan = $layanan->semua(1, now()->subDays(60)->toDateString(), now()->toDateString());
+
+        $this->assertArrayHasKey('harga_dan_volume', $laporan);
+        $this->assertArrayHasKey('tren_harga', $laporan);
+        $this->assertArrayHasKey('retribusi', $laporan);
+        $this->assertArrayHasKey('kinerja_lelang', $laporan);
+
+        foreach ($laporan['harga_dan_volume']['baris'] as $baris) {
+            // harga rata-rata harus berada di antara harga terendah dan tertinggi
+            // (toleransi 0,5 rupiah untuk pembulatan dua desimal pada AVG)
+            $this->assertGreaterThanOrEqual($baris['harga_terendah'] - 0.5, $baris['harga_rata_rata']);
+            $this->assertLessThanOrEqual($baris['harga_tertinggi'] + 0.5, $baris['harga_rata_rata']);
+        }
+        [$kepala, $baris] = $layanan->sebagaiCsv('harga', $laporan);
+        $this->assertSame('nama_jenis', $kepala[0]);
+        $this->assertCount(count($laporan['harga_dan_volume']['baris']), $baris);
+    }
+
+    public function test_settlement_menolak_kedatangan_tanpa_transaksi_lunas(): void
+    {
+        $kasir = \App\Models\Pengguna::where('nama_pengguna', 'kasir')->firstOrFail();
+        // Pastikan kedatangan uji memang tidak punya transaksi lunas
+        \App\Models\PembayaranNelayan::query()->delete();
+        $lain = \App\Models\KedatanganKapal::whereDoesntHave('tangkapan.lot')->first()
+            ?? \App\Models\KedatanganKapal::orderByDesc('id_kedatangan')->firstOrFail();
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        app(\App\Services\SettlementService::class)->hitung($kasir, $lain->getIdKedatangan());
+    }
+
+    public function test_pantauan_menolak_lot_yang_sudah_selesai(): void
+    {
+        $lot = LotLelang::where('status', \App\Enums\StatusLot::SELESAI->value)->firstOrFail();
+        $token = $this->postJson('/api/masuk', ['nama_pengguna' => 'pembeli', 'kata_sandi' => 'sipeli12345'])->json('token');
+
+        $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson('/api/pantauan', ['id_lot' => $lot->getIdLot()])
+            ->assertStatus(422);
+    }
+
     public function test_pembeli_boleh_bergabung_saat_sesi_sudah_aktif(): void
     {
         $lot = LotLelang::where('status', 'MENUNGGU_LELANG')->firstOrFail();

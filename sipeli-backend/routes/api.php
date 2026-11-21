@@ -10,6 +10,13 @@ use App\Http\Controllers\Api\OperatorLelangController;
 use App\Http\Controllers\Api\PembeliController;
 use App\Http\Controllers\Api\PimpinanController;
 use App\Http\Controllers\Api\PenimbanganController;
+use App\Http\Controllers\Api\PortalNelayanController;
+use App\Http\Controllers\Api\SettlementController;
+use App\Http\Controllers\Api\KartuNelayanController;
+use App\Http\Controllers\Api\LaporanController;
+use App\Http\Controllers\Api\MasterController;
+use App\Http\Controllers\Api\PantauanController;
+use App\Http\Controllers\Api\PapanLelangController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,6 +32,10 @@ Route::post('/aktivasi', [AutentikasiController::class, 'aktivasi']);           
 Route::post('/aktivasi/kirim-ulang', [AutentikasiController::class, 'kirimUlangAktivasi']); // Tugas 2
 Route::get('/foto-lot/{nama}', [PenimbanganController::class, 'tampilFoto'])
     ->where('nama', '[0-9a-f-]{36}\.(jpg|png|webp)');                                         // foto lot (opsional)
+
+// UC-13: portal nelayan baca-saja memakai token khusus + verifikasi 4 digit (FR-59), bukan token Sanctum
+Route::get('/nelayan/rekap', [PortalNelayanController::class, 'rekap']);
+Route::get('/nelayan/bukti/{id}.pdf', [PortalNelayanController::class, 'buktiPdf'])->whereNumber('id');
 
 // Wajib token (header: Authorization: Bearer <token>)
 Route::middleware('auth:sanctum')->group(function () {
@@ -62,6 +73,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/tagihan/{id}', [LelangPembeliController::class, 'detailTagihan'])->whereNumber('id');
         Route::post('/tagihan/{id}/bayar-saldo', [LelangPembeliController::class, 'bayarSaldo'])->whereNumber('id');
         Route::post('/tagihan/{id}/pengambilan', [LelangPembeliController::class, 'jadwalkanPengambilan'])->whereNumber('id');
+
+    });
+
+    // FR-64: daftar pantauan pembeli (jalur utama sesuai SKPL Tabel IV.6)
+    Route::middleware('peran:4')->group(function () {
+        Route::get('/pantauan', [PantauanController::class, 'index']);
+        Route::post('/pantauan', [PantauanController::class, 'simpan']);
+        Route::delete('/pantauan/{id}', [PantauanController::class, 'hapus'])->whereNumber('id');
     });
 
     // UC-03 dan UC-05: Operator Lelang (A3)
@@ -81,6 +100,23 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/saldo/pembeli', [DepositController::class, 'cariPembeli']);
         Route::get('/saldo/pembeli/{id}', [DepositController::class, 'rincian'])->whereNumber('id');
         Route::post('/saldo/pembeli/{id}/mutasi', [DepositController::class, 'mutasi'])->whereNumber('id');
+
+        // UC-08: perhitungan retribusi dan pembayaran kepada nelayan
+        Route::get('/settlement', [SettlementController::class, 'daftar']);
+        Route::post('/settlement/{idKedatangan}', [SettlementController::class, 'hitung'])->whereNumber('idKedatangan');
+        Route::get('/settlement/rincian/{id}', [SettlementController::class, 'rincian'])->whereNumber('id');
+        Route::post('/pembayaran-nelayan/{id}/cairkan', [SettlementController::class, 'cairkan'])->whereNumber('id');
+        Route::get('/pembayaran-nelayan/{id}/bukti.pdf', [SettlementController::class, 'buktiPdf'])->whereNumber('id');
+
+        // UC-13: penerbitan tautan akses portal nelayan (FR-59)
+        Route::post('/nelayan/tautan', [PortalNelayanController::class, 'terbitkanTautan']);
+
+        // UC-11 FR-66: penerbitan dan pemblokiran kartu nelayan
+        Route::get('/kartu-nelayan', [KartuNelayanController::class, 'daftar']);
+        Route::post('/kartu-nelayan', [KartuNelayanController::class, 'terbitkan']);
+        Route::post('/kartu-nelayan/{id}/blokir', [KartuNelayanController::class, 'blokir'])->whereNumber('id');
+        Route::post('/kartu-nelayan/{id}/aktifkan', [KartuNelayanController::class, 'aktifkan'])->whereNumber('id');
+        Route::get('/kartu-nelayan/pindai', [KartuNelayanController::class, 'pindai']);
     });
 
     Route::middleware('peran:6')->prefix('pimpinan')->group(function () {
@@ -95,6 +131,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // FR-32: pembatalan transaksi hanya oleh supervisor (Pimpinan), alasan wajib
     Route::post('/supervisor/tagihan/{id}/batal', [KasirController::class, 'batalkan'])
         ->whereNumber('id')->middleware('peran:6');
+
+    // UC-09: papan lelang (FR-41, FR-42, FR-43) - cadangan polling selain kanal WebSocket
+    Route::get('/papan-lelang', [PapanLelangController::class, 'index'])->middleware('peran:3,6,7,5,1,2');
+
+    // UC-10: laporan dan analitik harga ikan (Pimpinan/Admin Dinas)
+    Route::middleware('peran:6,7')->prefix('laporan')->group(function () {
+        Route::get('/{jenis?}', [LaporanController::class, 'index']);
+    });
+
+    // UC-11: pengelolaan data master dan pengguna (Administrator Sistem)
+    Route::middleware('peran:7')->prefix('master')->group(function () {
+        Route::get('/{entitas}', [MasterController::class, 'index']);
+        Route::post('/{entitas}', [MasterController::class, 'simpan']);
+        Route::put('/{entitas}/{id}', [MasterController::class, 'perbarui'])->whereNumber('id');
+        Route::patch('/{entitas}/{id}', [MasterController::class, 'perbarui'])->whereNumber('id');
+        Route::post('/pengguna/{id}/nonaktifkan', [MasterController::class, 'nonaktifkan'])->whereNumber('id');
+        Route::post('/pengguna/{id}/aktifkan', [MasterController::class, 'aktifkan'])->whereNumber('id');
+    });
 
     // UC-12 Audit dan Penelusuran Aktivitas (Administrator, Pimpinan boleh membaca)
     Route::middleware('peran:6,7')->group(function () {

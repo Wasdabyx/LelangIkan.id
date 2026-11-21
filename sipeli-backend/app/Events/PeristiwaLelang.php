@@ -27,20 +27,24 @@ class PeristiwaLelang implements ShouldBroadcastNow
     public const DIPERPANJANG = 'SESI_DIPERPANJANG';
     public const HASIL = 'HASIL_LELANG';
     public const DITUTUP = 'SESI_DITUTUP';
+    public const SETTLEMENT_DIBAYAR = 'SETTLEMENT_DIBAYAR';
+    public const LOT_DIPANTAU_DIBUKA = 'LOT_DIPANTAU_DIBUKA';
 
     /**
      * @param  array<string, mixed>  $muatan
+     * @param  string|null  $kanal  nama kanal tanpa awalan "private-", mis. "nelayan.7" atau "pembeli.4"
      */
     public function __construct(
         public readonly int $idTpi,
         public readonly string $nama,
         public readonly array $muatan,
+        public readonly ?string $kanal = null,
     ) {
     }
 
     public function broadcastOn(): array
     {
-        return [new PrivateChannel('tpi.' . $this->idTpi)];
+        return [new PrivateChannel($this->kanal ?? ('tpi.' . $this->idTpi))];
     }
 
     public function broadcastAs(): string

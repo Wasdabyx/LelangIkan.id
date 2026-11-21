@@ -36,15 +36,32 @@ class LelangService
     public const DURASI_MAKS = 600;
 
     /** Penyiaran peristiwa real-time; kegagalan WebSocket tidak boleh membatalkan transaksi. */
-    private function siarkan(?int $idTpi, string $nama, array $muatan): void
+    private function siarkan(?int $idTpi, string $nama, array $muatan, ?string $kanal = null): void
     {
-        if (! $idTpi) {
-            return;
-        }
         try {
-            event(new \App\Events\PeristiwaLelang($idTpi, $nama, $muatan));
+            event(new \App\Events\PeristiwaLelang((int) $idTpi, $nama, $muatan, $kanal));
         } catch (\Throwable $e) {
             Log::warning('Gagal menyiarkan peristiwa ' . $nama . '.', ['muatan' => $muatan, 'galat' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Tabel IV.7 LOT_DIPANTAU_DIBUKA: beri tahu pembeli yang memantau lot ini bahwa lelang dimulai.
+     * Pengiriman per pembeli pada kanal privat pembeli.{id} agar tidak membocorkan daftar pemantau.
+     */
+    private function siarkanKePemantau(SesiLelang $sesi): void
+    {
+        $pemantau = \App\Models\DaftarPantauan::where('id_lot', $sesi->getIdLot())->pluck('id_pembeli')->unique();
+        $muatan = [
+            'id_lot'   => $sesi->getIdLot(),
+            'kode_lot' => $sesi->lot?->getKodeLot(),
+            'id_sesi'  => $sesi->getIdSesi(),
+            'mode'     => $sesi->getMode()->value,
+            'batas_harga_dilewati' => false,
+        ];
+
+        foreach ($pemantau as $idPembeli) {
+            $this->siarkan(null, \App\Events\PeristiwaLelang::LOT_DIPANTAU_DIBUKA, $muatan, 'pembeli.' . $idPembeli);
         }
     }
 
@@ -139,6 +156,8 @@ class LelangService
             'waktu_mulai'           => $sesi->getWaktuMulai()->format('Y-m-d H:i:s'),
             'waktu_selesai'         => $sesi->getWaktuSelesaiRencana()->format('Y-m-d H:i:s'),
         ]);
+
+        $this->siarkanKePemantau($sesi);
 
         return $sesi;
     }
