@@ -319,8 +319,13 @@ Catatan penyelarasan:
 3. **Enumerasi pada diagram kelas.** Diagram memuat 20 kelas enumerasi (19 pada v1.0 ditambah
    `TujuanOtp`). Judul gambar tetap menyebut 19 enumerasi agar sama dengan Tabel 3.92; Tabel 3.92 dan
    `TujuanOtp` sudah ditambahkan pada revisi C3 sehingga keduanya perlu diselaraskan pada revisi berikut.
-4. Ukuran gambar dihitung dari rasio asli lalu dibatasi lebar area teks dan tinggi kotak gambar aslinya,
-   sehingga pemenggalan halaman tidak berubah: SKPL tetap 56 halaman, DPPL tetap 87 halaman.
-5. Cara render ulang: `dokumen/skrip/render_diagram.sh` (drawio-desktop + xvfb + rsvg-convert); gambar
-   disisipkan oleh `dokumen/skrip/ganti_gambar.py` yang dipanggil dari `sunting_skpl.py` dan
-   `sunting_dppl.py`.
+4. Ukuran gambar dihitung dari rasio asli lalu dibatasi lebar area teks, sehingga pemenggalan halaman
+   tidak berubah: SKPL tetap 56 halaman, DPPL tetap 87 halaman. Kanvas kosong pada ekspor drawio dipangkas
+   lebih dahulu agar diagram tampil sebesar mungkin (ERD 24,4 cm; diagram kelas 17,2 cm pada halaman
+   landscape; use case 14,4 cm pada halaman portrait).
+5. **Diagram di PDF berupa vektor, bukan gambar raster.** DOCX memuat PNG (aman untuk Word), tetapi PDF
+   final memakai hasil ekspor PDF drawio sehingga teks dan garis tetap tajam pada perbesaran berapa pun
+   dan teks diagram dapat dicari. Rantainya:
+   `render_diagram.sh` (drawio-desktop + xvfb → PDF vektor) → `pangkas_diagram.py` (pangkas kanvas, buat
+   PNG untuk DOCX) → `sunting_skpl.py` / `sunting_dppl.py` (+ `ganti_gambar.py`) → LibreOffice →
+   `sisip_vektor.py` (ganti gambar raster pada kotak yang sama dengan vektor).
