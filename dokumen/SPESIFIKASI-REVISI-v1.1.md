@@ -349,3 +349,28 @@ Tiga kalimat ditambahkan setelah audit isi dokumen terhadap kode (lihat `review/
 3. **C-3 — FR-07 (SKPL Tabel III.2):** ditambahkan catatan miring bahwa pada versi 1.1 pembacaan berat berasal
    dari **timbangan simulasi** di dalam aplikasi, dan adaptor perangkat nyata (Tabel IV.4) masuk rencana versi
    berikutnya.
+
+---
+
+## I. Antarmuka web (putaran E, 21 November 2026)
+
+Butir 4 ruang lingkup SKPL Bab I.B berbunyi *"Antarmuka web untuk operator lelang, kasir, pimpinan/dinas,
+dan administrator sistem"*. Pernyataan itu **kini benar**: antarmuka web dibangun pada backend Laravel
+(`routes/web.php`, `app/Http/Controllers/Web/`, `resources/views/web/`) dan diuji oleh `uji_web.py` **42/42**
+serta `tests/Feature/AntarmukaWebTest` (PHPUnit **25 lulus / 86 asersi**).
+
+**Kaidah perubahan dokumen:** tidak ada kalimat SKPL/DPPL yang perlu diubah untuk butir ini, karena
+pernyataan ruang lingkup, aktor (A3, A5, A6, A7), dan Tabel IV.6 sudah sesuai. Yang bertambah hanya
+**bukti**. Bila PDF v1.1 dibangun ulang, tidak ada suntingan baru yang diperlukan.
+
+**Batas yang tetap berlaku dan dinyatakan pada dokumen:**
+
+1. Petugas pendataan (A1), petugas timbang (A2), dan pembeli (A4) tetap memakai aplikasi mobile;
+   nelayan (A8) memakai portal baca-saja. Halaman masuk web menolak keempat peran itu dengan pesan
+   yang mengarahkan ke aplikasi mobile (diuji 4 pemeriksaan).
+2. Pembukaan sesi **lelang turun** dari web belum disediakan; parameter harga awal, harga batas bawah,
+   penurunan per langkah, dan interval masih lewat aplikasi mobile atau `POST /api/operator/sesi`.
+   Antrean web menampilkan hanya mode naik dan mencantumkan keterangan tersebut pada halaman.
+
+**Bukti halaman:** `dokumen/tangkapan-web/` (10 tangkapan 1440x900). **Bukti uji:** bagian 8
+`review/LAPORAN-UJI-LelangIkan.md`; ringkasan teknis pada `sipeli-backend/WEB-ANTARMUKA.md`.
