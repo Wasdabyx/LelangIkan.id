@@ -1,6 +1,7 @@
 /.phpunit.cache
 /node_modules
-/public/build
+# public/build disimpan agar antarmuka web langsung tampil setelah clone;
+# bangun ulang dengan `npm run build` bila aset berubah.
 /public/hot
 /public/storage
 /storage/*.key

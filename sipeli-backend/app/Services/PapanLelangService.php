@@ -56,7 +56,8 @@ class PapanLelangService
         $lot = $sesi->lot;
         $tangkapan = $lot?->tangkapan;
         $tertinggi = Penawaran::where('id_sesi', $sesi->getIdSesi())->orderByDesc('harga_per_kg')->first();
-        $sisaDetik = max(0, now()->diffInSeconds($sesi->getWaktuSelesaiRencana(), false));
+        // diffInSeconds() pada Carbon 3 mengembalikan pecahan; papan menampilkan detik bulat.
+        $sisaDetik = (int) max(0, ceil($sesi->getWaktuSelesaiRencana()->getTimestamp() - now()->getTimestamp()));
 
         return [
             'id_sesi'         => $sesi->getIdSesi(),
