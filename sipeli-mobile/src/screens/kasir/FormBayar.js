@@ -49,6 +49,9 @@ export default function FormBayar({ awal, onKembali }) {
       g.nomor_referensi = 'Nomor referensi 6-40 karakter: huruf, angka, atau tanda strip.';
     }
     if (metode === 'TUNAI' && diterima && Number(diterima) < n) g.diterima = 'Uang diterima kurang dari nominal yang dibayar.';
+    if (metode === 'SALDO' && Number(t.saldo_tersedia) < n) {
+      g.metode = `Saldo pembeli ${formatRupiah(t.saldo_tersedia)} tidak cukup untuk pembayaran ${formatRupiah(n)}.`;
+    }
     setGalat(g);
     if (Object.keys(g).length === 0) setTanya(true);
   }
@@ -65,8 +68,13 @@ export default function FormBayar({ awal, onKembali }) {
       setReferensi('');
       setDiterima('');
     } catch (e) {
-      if (e.status === 422 && Object.keys(e.galatKolom).length) setGalat(e.galatKolom);
-      else setPesan({ jenis: 'galat', teks: e.message });
+      if (e.status === 422 && Object.keys(e.galatKolom).length) {
+        setGalat(e.galatKolom);
+        const pesan = e.galatKolom.metode || e.galatKolom.pembayaran || e.galatKolom.id_pembeli;
+        if (pesan) setPesan({ jenis: 'galat', teks: pesan });
+      } else {
+        setPesan({ jenis: 'galat', teks: e.message });
+      }
     } finally {
       setMemuat(false);
     }
@@ -103,19 +111,28 @@ export default function FormBayar({ awal, onKembali }) {
               onGanti={(k) => {
                 setMetode(k);
                 setGalat({});
+                setPesan(null);
               }}
               pilihan={METODE.map((m) => ({ kunci: m.kode, judul: m.judul, nonaktif: m.mati }))}
             />
             <Text style={s.ketMetode}>
               {METODE.find((m) => m.kode === metode).ket}.
             </Text>
+            {metode === 'SALDO' ? (
+              <KotakPesan
+                jenis={galat.metode ? 'galat' : 'info'}
+                teks={galat.metode || `Saldo pembeli ${formatRupiah(t.saldo_tersedia)}; pembayaran ${formatRupiah(n)}.`}
+                gaya={{ marginBottom: 12 }}
+              />
+            ) : null}
 
             <KolomTeks
               label="Nominal dibayar (Rp)"
               value={nominal}
               onChangeText={(x) => {
                 setNominal(hanyaAngka(x).slice(0, 11));
-                setGalat({ ...galat, nominal: null });
+                setGalat({ ...galat, nominal: null, metode: null });
+                setPesan(null);
               }}
               keyboardType="number-pad"
               galat={galat.nominal}
