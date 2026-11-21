@@ -97,7 +97,14 @@ class RegistrasiKedatanganService
             $kedatangan->simpan();
 
             // 2-4. Baris tangkapan, total, dan status
-            return $this->isiBarisDanStatus($kedatangan, $data);
+            $hasil = $this->isiBarisDanStatus($kedatangan, $data);
+
+            app(AuditService::class)->catat($petugas, 'SIMPAN_KEDATANGAN', 'kedatangan_kapal', $hasil->getIdKedatangan(), null, [
+                'nomor_kedatangan' => $hasil->getNomorKedatangan(), 'status' => $hasil->getStatus()->value,
+                'jumlah_baris' => $hasil->tangkapan()->count(),
+            ]);
+
+            return $hasil;
         });
     }
 
@@ -120,11 +127,17 @@ class RegistrasiKedatanganService
                 ]);
             }
 
+            $statusLama = $kedatangan->getStatus()->value;
             $this->isiKepala($kedatangan, $data);
             $kedatangan->simpan();
             $kedatangan->hapusSemuaBarisTangkapan();
+            $hasil = $this->isiBarisDanStatus($kedatangan, $data);
 
-            return $this->isiBarisDanStatus($kedatangan, $data);
+            app(AuditService::class)->catat($petugas, 'PERBARUI_KEDATANGAN', 'kedatangan_kapal', $hasil->getIdKedatangan(),
+                ['status' => $statusLama],
+                ['status' => $hasil->getStatus()->value, 'jumlah_baris' => $hasil->tangkapan()->count()]);
+
+            return $hasil;
         });
     }
 

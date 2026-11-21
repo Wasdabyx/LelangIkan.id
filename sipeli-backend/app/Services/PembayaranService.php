@@ -25,7 +25,7 @@ use Illuminate\Validation\ValidationException;
  */
 class PembayaranService
 {
-    public function __construct(private DepositService $deposit)
+    public function __construct(private DepositService $deposit, private AuditService $audit)
     {
     }
 
@@ -119,6 +119,11 @@ class PembayaranService
                 'nomor_referensi' => $referensi,
             ]);
             $trx->perbaruiStatusBayar();
+
+            $this->audit->catat($kasir, 'BAYAR_TRANSAKSI', 'transaksi_penjualan', $trx->getIdTransaksi(), null, [
+                'metode' => $metode->value, 'nominal' => $nominal, 'status' => $trx->status,
+                'nomor_referensi' => $referensi,
+            ]);
 
             return $trx->fresh();
         });
@@ -262,6 +267,44 @@ class PembayaranService
         }
 
         return $data;
+    }
+
+    /**
+     * FR-32: pembatalan transaksi oleh supervisor (Pimpinan/Kasir senior) dengan alasan wajib.
+     * Lot dikembalikan ke TIDAK_TERJUAL, pembayaran yang sudah masuk tetap tercatat sebagai riwayat.
+     */
+    public function batalkan(Pengguna $supervisor, int $idTransaksi, string $alasan): TransaksiPenjualan
+    {
+        $this->batalkanKedaluwarsa($idTransaksi);
+
+        return DB::transaction(function () use ($supervisor, $idTransaksi, $alasan) {
+            $trx = $this->kueriTpi($supervisor)->whereKey($idTransaksi)->lockForUpdate()->first();
+            if (! $trx) {
+                throw new HttpResponseException(response()->json(['message' => 'Transaksi tidak ditemukan.'], 404));
+            }
+            if ($trx->getStatus() === StatusTransaksi::DIBATALKAN) {
+                $this->tolak('alasan', "Transaksi {$trx->getKodeTransaksi()} sudah dibatalkan.");
+            }
+
+            $trx->status = StatusTransaksi::DIBATALKAN->value;
+            $trx->id_pembatal = $supervisor->getIdPengguna();
+            $trx->alasan_batal = trim($alasan);
+            $trx->waktu_batal = now();
+            $trx->save();
+
+            $lot = LotLelang::whereKey($trx->getIdLot())->lockForUpdate()->first();
+            if ($lot && in_array($lot->getStatus()->value, [StatusLot::TERJUAL->value], true)) {
+                $lot->pindahStatus(StatusLot::TIDAK_TERJUAL);
+            }
+
+            $this->audit->catat(
+                $supervisor, 'BATAL_TRANSAKSI', 'transaksi_penjualan', $trx->getIdTransaksi(),
+                ['status' => StatusTransaksi::LUNAS->value, 'total_tagihan' => $trx->getTotalTagihan()],
+                ['status' => $trx->status, 'alasan' => $trx->alasan_batal],
+            );
+
+            return $trx->fresh();
+        });
     }
 
     private function pembayaranLewatBatas(TransaksiPenjualan $trx): bool

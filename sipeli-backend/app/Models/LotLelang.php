@@ -285,6 +285,29 @@ class LotLelang extends Model
         return static::where('kode_lot', strtoupper(trim($kode)))->first();
     }
 
+    /** Status lot yang masih boleh diikuti pembeli (sebelum dan selama sesi lelang berjalan). */
+    public function bolehDiikutiLelang(): bool
+    {
+        return in_array($this->getStatus()->value, [
+            StatusLot::MENUNGGU_LELANG->value,
+            StatusLot::DILELANG->value,
+            StatusLot::DIPERPANJANG->value,
+        ], true);
+    }
+
+    /** @return Collection<int, LotLelang> lot yang masih boleh diikuti pembeli di satu TPI */
+    public static function cariBolehDiikuti(int $idTpi): Collection
+    {
+        return static::whereIn('status', [
+                StatusLot::MENUNGGU_LELANG->value,
+                StatusLot::DILELANG->value,
+                StatusLot::DIPERPANJANG->value,
+            ])
+            ->whereHas('tangkapan.kedatangan', fn ($q) => $q->where('id_tpi', $idTpi))
+            ->orderBy('kode_lot')
+            ->get();
+    }
+
     /** @return Collection<int, LotLelang> lot MENUNGGU_LELANG berharga di satu TPI, urut nomor lot */
     public static function cariSiapLelang(int $idTpi): Collection
     {

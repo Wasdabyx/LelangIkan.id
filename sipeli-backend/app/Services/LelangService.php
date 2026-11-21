@@ -11,6 +11,7 @@ use App\Models\Konfigurasi;
 use App\Models\LotLelang;
 use App\Models\Penawaran;
 use App\Models\Pengguna;
+use App\Models\SaldoPembeli;
 use App\Models\SesiLelang;
 use App\Models\TarifRetribusi;
 use App\Models\TransaksiPenjualan;
@@ -24,13 +25,52 @@ use Illuminate\Validation\ValidationException;
  * Kelas kendali LelangService (BiddingEngine + PenutupanLelangService pada DPPL).
  * UC-03 buka sesi, UC-04 penawaran (ALG-01, ALG-02, ALG-03), UC-05 penutupan (ALG-04, ALG-05).
  *
- * Real-time memakai polling: aplikasi meminta status sesi setiap 1 detik. Sesi yang waktunya habis
- * ditutup saat itu juga (penutupan "malas"), sehingga tidak memerlukan penjadwal / server WebSocket.
+ * Real-time: setiap perubahan penting disiarkan lewat kanal WebSocket (Laravel Reverb) sesuai SKPL
+ * Tabel IV.7, sedangkan aplikasi tetap memakai polling 1 detik sebagai cadangan (NFR-10).
+ * Sesi yang waktunya habis juga ditutup saat statusnya diminta (penutupan "malas") dan oleh
+ * perintah penjadwal lelang:tutup-otomatis, sehingga tetap benar meski penjadwal mati.
  */
 class LelangService
 {
     public const DURASI_MIN = 30;
     public const DURASI_MAKS = 600;
+
+    /** Penyiaran peristiwa real-time; kegagalan WebSocket tidak boleh membatalkan transaksi. */
+    private function siarkan(?int $idTpi, string $nama, array $muatan, ?string $kanal = null): void
+    {
+        try {
+            event(new \App\Events\PeristiwaLelang((int) $idTpi, $nama, $muatan, $kanal));
+        } catch (\Throwable $e) {
+            Log::warning('Gagal menyiarkan peristiwa ' . $nama . '.', ['muatan' => $muatan, 'galat' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Tabel IV.7 LOT_DIPANTAU_DIBUKA: beri tahu pembeli yang memantau lot ini bahwa lelang dimulai.
+     * Pengiriman per pembeli pada kanal privat pembeli.{id} agar tidak membocorkan daftar pemantau.
+     */
+    private function siarkanKePemantau(SesiLelang $sesi): void
+    {
+        $pemantau = \App\Models\DaftarPantauan::where('id_lot', $sesi->getIdLot())->pluck('id_pembeli')->unique();
+        $muatan = [
+            'id_lot'   => $sesi->getIdLot(),
+            'kode_lot' => $sesi->lot?->getKodeLot(),
+            'id_sesi'  => $sesi->getIdSesi(),
+            'mode'     => $sesi->getMode()->value,
+            'batas_harga_dilewati' => false,
+        ];
+
+        foreach ($pemantau as $idPembeli) {
+            $this->siarkan(null, \App\Events\PeristiwaLelang::LOT_DIPANTAU_DIBUKA, $muatan, 'pembeli.' . $idPembeli);
+        }
+    }
+
+    private function idTpiLot(LotLelang $lot): ?int
+    {
+        $lot->loadMissing('tangkapan.kedatangan');
+
+        return $lot->tangkapan?->kedatangan?->getIdTpi();
+    }
 
     // ================= UC-03 =================
 
@@ -96,19 +136,28 @@ class LelangService
             return $sesi;
         });
 
-        // Dijalankan setelah DB::transaction commit agar klien tidak menerima sesi yang gagal tersimpan.
-        try {
-            event(new SesiLelangDimulai(
-                (int) $operator->getIdTpi(),
-                $sesi->getIdSesi(),
-                $sesi->getIdLot(),
-                $sesi->getMode()->value,
-                $sesi->getWaktuMulai()->format('Y-m-d H:i:s'),
-            ));
-        } catch (\Throwable $e) {
-            // Kegagalan WebSocket tidak boleh membatalkan atau menyamarkan sesi yang sudah tersimpan.
-            Log::warning('Gagal menyiarkan peristiwa SESI_DIMULAI.', ['id_sesi' => $sesi->getIdSesi()]);
-        }
+        app(AuditService::class)->catat($operator, 'BUKA_SESI', 'sesi_lelang', $sesi->getIdSesi(), null, [
+            'id_lot' => $sesi->getIdLot(), 'mode' => $sesi->getMode()->value,
+            'durasi_detik' => $sesi->getDurasiDetik(), 'kenaikan_minimum' => $sesi->getKenaikanMinimum(),
+        ]);
+
+        // Disiarkan setelah commit agar klien tidak menerima sesi yang gagal tersimpan.
+        $this->siarkan((int) $operator->getIdTpi(), \App\Events\PeristiwaLelang::DIMULAI, [
+            'id_sesi'               => $sesi->getIdSesi(),
+            'kode_lot'              => $sesi->lot->getKodeLot(),
+            'id_lot'                => $sesi->getIdLot(),
+            'mode'                  => $sesi->getMode()->value,
+            'harga_pembukaan'       => $sesi->lot->getHargaPembukaan(),
+            'kenaikan_minimum'      => $sesi->getKenaikanMinimum(),
+            'harga_awal'            => $sesi->getHargaAwal(),
+            'harga_batas_bawah'     => $sesi->getHargaBatasBawah(),
+            'penurunan_per_langkah' => $sesi->getPenurunanPerLangkah(),
+            'interval_detik'        => $sesi->getIntervalDetik(),
+            'waktu_mulai'           => $sesi->getWaktuMulai()->format('Y-m-d H:i:s'),
+            'waktu_selesai'         => $sesi->getWaktuSelesaiRencana()->format('Y-m-d H:i:s'),
+        ]);
+
+        $this->siarkanKePemantau($sesi);
 
         return $sesi;
     }
@@ -143,8 +192,13 @@ class LelangService
                     $this->tolak('harga_per_kg', 'Sesi lelang sudah berakhir. Tawaran tidak dapat diterima.');
                 }
 
-                // Pembeli yang sudah tertinggi tidak perlu menaikkan tawarannya sendiri
-                $tertinggi = $sesi->tertinggi();
+                // Pembeli yang sudah tertinggi tidak perlu menaikkan tawarannya sendiri.
+                // Hanya kolom yang dipakai yang diambil (bukan SELECT *) — lebih ringan di dalam kunci.
+                $tertinggi = Penawaran::where('id_sesi', $sesi->getIdSesi())
+                    ->where('status', StatusPenawaran::TERTINGGI->value)
+                    ->orderByDesc('harga_per_kg')
+                    ->orderBy('id_penawaran')
+                    ->first(['id_penawaran', 'id_pembeli']);
                 if ($tertinggi && $tertinggi->getIdPembeli() === $pembeli->getIdPengguna()) {
                     $this->tolak('harga_per_kg', 'Anda sudah menjadi penawar tertinggi.');
                 }
@@ -152,16 +206,30 @@ class LelangService
                 // Langkah 5-6: harga minimum (FR-18) dan batas kewajaran
                 $minimum = $sesi->hargaMinimumBerikut();
                 if ($hargaPerKg < $minimum) {
-                    $this->tolak('harga_per_kg', $sesi->getHargaBerjalan() === null
-                        ? 'Tawaran minimal sama dengan harga pembukaan, yaitu ' . $this->rp($minimum) . '/kg.'
-                        : 'Tawaran minimal ' . $this->rp($minimum) . '/kg (harga tertinggi '
-                          . $this->rp((float) $sesi->getHargaBerjalan()) . ' + kenaikan ' . $this->rp((float) $sesi->getKenaikanMinimum()) . ').');
+                    if ($sesi->getMode() === \App\Enums\ModeLelang::TURUN) {
+                        $pesan = 'Tawaran minimal ' . $this->rp($minimum) . '/kg (harga berjalan lelang turun).';
+                    } elseif ($sesi->getHargaBerjalan() === null) {
+                        $pesan = 'Tawaran minimal sama dengan harga pembukaan, yaitu ' . $this->rp($minimum) . '/kg.';
+                    } else {
+                        $pesan = 'Tawaran minimal ' . $this->rp($minimum) . '/kg (harga tertinggi '
+                            . $this->rp((float) $sesi->getHargaBerjalan()) . ' + kenaikan '
+                            . $this->rp((float) $sesi->getKenaikanMinimum()) . ').';
+                    }
+                    $this->tolak('harga_per_kg', $pesan);
                 }
                 $batasAtas = 10 * (float) $sesi->lot->getHargaPembukaan();
                 if ($hargaPerKg > $batasAtas) {
                     $this->tolak('harga_per_kg', 'Tawaran lebih dari 10 kali harga pembukaan. Periksa kembali angka yang Anda ketik.');
                 }
                 $nilaiTawaran = $hargaPerKg * (float) $sesi->lot->getBeratAktual();
+
+                // FR-21 + QRY-03: daya beli = saldo + limit kredit pembeli harus mencukupi nilai tawaran
+                $dayaBeli = SaldoPembeli::dayaBeli($pembeli->getIdPengguna());
+                if ($dayaBeli < $nilaiTawaran) {
+                    $this->tolak('harga_per_kg', 'Daya beli tidak cukup. Nilai tawaran ' . $this->rp($nilaiTawaran)
+                        . ' melebihi saldo + limit kredit Anda (' . $this->rp($dayaBeli)
+                        . '). Lakukan top up melalui Kasir TPI.');
+                }
 
                 // Langkah 7-8: simpan sebagai TERTINGGI, yang lama menjadi TERTINGGAL
                 if ($tertinggi) {
@@ -178,12 +246,23 @@ class LelangService
                     'kunci_idempotensi' => $kunci,
                     'alamat_terminal'   => $ip,
                 ]);
-                $sesi->harga_berjalan = (string) $hargaPerKg;
-                $sesi->save();
+                // Langkah 9 (ALG-03) dihitung lebih dulu supaya harga berjalan dan perpanjangan
+                // bisa ditulis dalam SATU pernyataan. Di dalam lockForUpdate setiap round-trip
+                // tambahan memperpanjang antrean tawaran berikutnya (NFR-01: p95 <= 500 ms).
+                $tambahan = (int) Konfigurasi::nilai('tambahan_perpanjangan_detik', 30);
+                $sisa = $sesi->sisaDetik();
+                $perluPerpanjang = $sisa <= (int) $sesi->ambang_perpanjangan_detik
+                    && $sesi->getJumlahPerpanjangan() < $sesi->getMaksPerpanjangan();
+                $kolom = ['harga_berjalan' => (string) $hargaPerKg];
+                if ($perluPerpanjang) {
+                    $kolom['waktu_selesai_rencana'] = now()->addSeconds($tambahan);
+                    $kolom['jumlah_perpanjangan'] = $sesi->getJumlahPerpanjangan() + 1;
+                }
+                // Tanpa kejadian model: tidak perlu model event, dan menghindari save() kedua.
+                SesiLelang::whereKey($sesi->getIdSesi())->update($kolom);
+                $sesi->forceFill($kolom)->syncOriginal();
 
-                // Langkah 9: ALG-03 perpanjangan otomatis
-                if ($sesi->perpanjangBilaPerlu((int) Konfigurasi::nilai('tambahan_perpanjangan_detik', 30))
-                    && $sesi->lot->getStatus() === StatusLot::DILELANG) {
+                if ($perluPerpanjang && $sesi->lot->getStatus() === StatusLot::DILELANG) {
                     $sesi->lot->pindahStatus(StatusLot::DIPERPANJANG);
                 }
 
@@ -197,7 +276,65 @@ class LelangService
             throw $e;
         }
 
+        $this->siarkanPerubahanTawaran($hasil);
+
         return [$hasil, false];
+    }
+
+    /**
+     * Siarkan PENAWARAN_BARU, OUTBID, dan SESI_DIPERPANJANG untuk satu penawaran yang sudah tersimpan.
+     * Dipanggil setelah commit agar klien tidak menerima harga yang gagal tersimpan.
+     */
+    private function siarkanPerubahanTawaran(Penawaran $penawaran): void
+    {
+        $sesi = SesiLelang::with('lot.tangkapan.kedatangan')->find($penawaran->getIdSesi());
+        if (! $sesi) {
+            return;
+        }
+        $idTpi = $sesi->lot->tangkapan->kedatangan->getIdTpi();
+        $harga = (float) $penawaran->getHargaPerKg();
+        $berat = (float) $sesi->lot->getBeratAktual();
+        $akhir = $penawaran->getWaktuPenawaran()->format('Y-m-d H:i:s');
+
+        $this->siarkan($idTpi, \App\Events\PeristiwaLelang::PENAWARAN_BARU, [
+            'id_sesi'            => $sesi->getIdSesi(),
+            'id_penawaran'       => $penawaran->getIdPenawaran(),
+            'harga_tertinggi'    => $harga,
+            'nilai'              => round($harga * $berat),
+            'waktu_penawaran'    => $akhir,
+            'inisial_penawar'    => $this->inisial($penawaran),
+            'jumlah_penawaran'   => $sesi->daftarPenawaran()->count(),
+        ]);
+
+        // OUTBID ditujukan ke klien penawar sebelumnya; aplikasi menyaringnya berdasarkan id_pembeli.
+        $sebelumnya = Penawaran::where('id_sesi', $sesi->getIdSesi())
+            ->where('id_pembeli', '!=', $penawaran->getIdPembeli())
+            ->where('status', StatusPenawaran::TERTINGGAL->value)
+            ->orderByDesc('id_penawaran')
+            ->first();
+        $this->siarkan($idTpi, \App\Events\PeristiwaLelang::OUTBID, [
+            'id_sesi'         => $sesi->getIdSesi(),
+            'harga_tertinggi' => $harga,
+            'id_pembeli'      => $sebelumnya?->getIdPembeli(),
+            'pesan'           => 'Tawaran Anda tertinggal. Harga tertinggi sekarang ' . $this->rp($harga) . '/kg.',
+        ]);
+
+        if ((int) $sesi->getJumlahPerpanjangan() > 0) {
+            $this->siarkan($idTpi, \App\Events\PeristiwaLelang::DIPERPANJANG, [
+                'id_sesi'              => $sesi->getIdSesi(),
+                'waktu_selesai_baru'   => $sesi->getWaktuSelesaiRencana()->format('Y-m-d H:i:s'),
+                'jumlah_perpanjangan'  => (int) $sesi->getJumlahPerpanjangan(),
+            ]);
+        }
+    }
+
+    /** Inisial nama pembeli untuk papan lelang umum (FR-43: identitas disamarkan). */
+    private function inisial(Penawaran $p): string
+    {
+        $nama = trim((string) ($p->pembeli?->getNamaLengkap() ?? 'Pembeli'));
+        $bagian = preg_split('/\s+/', $nama) ?: [];
+
+        return strtoupper(implode('', array_map(fn ($b) => mb_substr($b, 0, 1), array_slice($bagian, 0, 2))));
     }
 
     /** Pembeli pertama yang mengambil harga berjalan memenangkan lelang turun secara atomik. */
@@ -216,6 +353,12 @@ class LelangService
                 }
                 $harga = $sesi->hargaTurunSaatIni();
                 $nominal = $harga * (float) $sesi->lot->getBeratAktual();
+                // FR-21: aturan daya beli sama untuk lelang turun (ALG-10 langkah 4)
+                $dayaBeli = SaldoPembeli::dayaBeli($pembeli->getIdPengguna());
+                if ($dayaBeli < $nominal) {
+                    $this->tolak('ambil', 'Daya beli tidak cukup untuk mengambil harga ' . $this->rp($harga)
+                        . '/kg (nilai ' . $this->rp($nominal) . ', daya beli ' . $this->rp($dayaBeli) . ').');
+                }
                 $p = Penawaran::create([
                     'id_sesi' => $sesi->getIdSesi(), 'id_pembeli' => $pembeli->getIdPengguna(),
                     'harga_per_kg' => (string) $harga, 'nominal' => (string) round($nominal),
@@ -231,6 +374,8 @@ class LelangService
             if ($lama = Penawaran::cariKunci($kunci)) return [$lama, true];
             throw $e;
         }
+        $this->siarkanPerubahanTawaran($penawaran);
+
         return [$penawaran, false];
     }
 
@@ -240,7 +385,20 @@ class LelangService
     public function tutupBilaWaktuHabis(SesiLelang $sesi): SesiLelang
     {
         if ($sesi->getMode() === \App\Enums\ModeLelang::TURUN) {
+            $hargaLama = (float) $sesi->getHargaBerjalan();
             $sesi->perbaruiHargaTurun();
+            if ($sesi->getStatus() === StatusSesi::AKTIF && (float) $sesi->getHargaBerjalan() !== $hargaLama) {
+                $this->siarkan($this->idTpiLot($sesi->lot), \App\Events\PeristiwaLelang::HARGA_TURUN, [
+                    'id_sesi'                => $sesi->getIdSesi(),
+                    'harga_saat_ini'         => (float) $sesi->getHargaBerjalan(),
+                    'langkah_ke'             => $sesi->getIntervalDetik() > 0
+                        ? (int) floor(max(0, $sesi->getWaktuMulai()->diffInSeconds(now(), false)) / $sesi->getIntervalDetik())
+                        : 0,
+                    'waktu_langkah_berikut'  => $sesi->getIntervalDetik()
+                        ? now()->addSeconds($sesi->getIntervalDetik())->format('Y-m-d H:i:s')
+                        : null,
+                ]);
+            }
             if ($sesi->tertinggi() || $sesi->hargaBatasBawahLewatSatuInterval()) {
                 return $this->tutup($sesi->getIdSesi(), null);
             }
@@ -278,11 +436,40 @@ class LelangService
             $this->tolak('alasan', 'Sesi lelang ini sudah ditutup.');
         }
 
-        return $this->tutup($idSesi, $alasan);
+        return $this->tutup($idSesi, $alasan, $operator);
     }
 
     /** ALG-04: seluruh langkah dalam satu transaksi basis data. */
-    private function tutup(int $idSesi, ?string $alasan): SesiLelang
+    private function tutup(int $idSesi, ?string $alasan, ?Pengguna $oleh = null): SesiLelang
+    {
+        $sebelum = SesiLelang::find($idSesi);
+        $sesi = $this->tutupDalamTransaksi($idSesi, $alasan);
+
+        app(AuditService::class)->catat($oleh, 'TUTUP_SESI', 'sesi_lelang', $sesi->getIdSesi(),
+            ['status' => $sebelum?->status],
+            ['status' => $sesi->status, 'alasan' => $alasan, 'id_penawaran_pemenang' => $sesi->id_penawaran_pemenang,
+             'status_lot' => $sesi->lot->getStatus()->value]);
+
+        // Setelah commit: siarkan hasil dan penutupan (Tabel IV.7).
+        $idTpi = $this->idTpiLot($sesi->lot);
+        $pemenang = $sesi->tertinggi();
+        $hargaAkhir = $pemenang ? (float) $pemenang->getHargaPerKg() : null;
+        $this->siarkan($idTpi, \App\Events\PeristiwaLelang::HASIL, [
+            'id_sesi'      => $sesi->getIdSesi(),
+            'kode_lot'     => $sesi->lot->getKodeLot(),
+            'pemenang'     => $pemenang ? $this->inisial($pemenang) : null,   // disamarkan (FR-43)
+            'harga_akhir'  => $hargaAkhir,
+            'status_lot'   => $sesi->lot->getStatus()->value,
+        ]);
+        $this->siarkan($idTpi, \App\Events\PeristiwaLelang::DITUTUP, [
+            'id_sesi'          => $sesi->getIdSesi(),
+            'alasan_penutupan' => $alasan,
+        ]);
+
+        return $sesi;
+    }
+
+    private function tutupDalamTransaksi(int $idSesi, ?string $alasan): SesiLelang
     {
         for ($coba = 1; ; $coba++) {
             try {
@@ -421,17 +608,42 @@ class LelangService
         return $data;
     }
 
-    /** Daftar sesi untuk operator: semua yang AKTIF + yang ditutup hari ini. */
-    public function daftarSesiOperator(Pengguna $operator): array
+    /** Batas jumlah baris per halaman daftar sesi operator (NFR-11). */
+    public const SESI_PER_HALAMAN = 50;
+
+    /** Batas jumlah halaman yang boleh diminta (50 x 20 = 1.000 sesi). */
+    public const SESI_MAKS_HALAMAN = 20;
+
+    /**
+     * Daftar sesi untuk operator: yang AKTIF + yang ditutup hari ini, TERPAGINASI.
+     *
+     * Sebelumnya seluruh baris diambil tanpa batas; pada basis data setahun
+     * (100.003 sesi) responsnya 1,4-1,6 detik dan tumbuh terus (NFR-11).
+     * Kini dibatasi 50 baris per halaman dengan `?halaman=` (bawaan 1).
+     */
+    public function daftarSesiOperator(Pengguna $operator, int $halaman = 1): array
     {
         $idTpi = $this->idTpi($operator);
-        $sesi = SesiLelang::with('lot.tangkapan.kedatangan')
+        $halaman = max(1, min($halaman, self::SESI_MAKS_HALAMAN));
+
+        $kueri = SesiLelang::with('lot.tangkapan.kedatangan')
             ->whereHas('lot.tangkapan.kedatangan', fn ($q) => $q->where('id_tpi', $idTpi))
             ->where(fn ($q) => $q->where('status', StatusSesi::AKTIF->value)->orWhereDate('waktu_mulai', today()))
-            ->orderByDesc('id_sesi')
-            ->get();
+            ->orderByDesc('id_sesi');
 
-        return $sesi->map(fn (SesiLelang $s) => $this->ringkasSesi($this->tutupBilaWaktuHabis($s)))->values()->all();
+        $total = (clone $kueri)->count();
+        $sesi = $kueri->forPage($halaman, self::SESI_PER_HALAMAN)->get();
+
+        return [
+            'data'     => $sesi->map(fn (SesiLelang $s) => $this->ringkasSesi($this->tutupBilaWaktuHabis($s)))->values()->all(),
+            'meta'     => [
+                'halaman'      => $halaman,
+                'per_halaman'  => self::SESI_PER_HALAMAN,
+                'total'        => $total,
+                'total_halaman' => (int) ceil($total / self::SESI_PER_HALAMAN),
+                'maks_halaman' => self::SESI_MAKS_HALAMAN,
+            ],
+        ];
     }
 
     /** Daftar sesi pada lot-lot yang dipesan pembeli (aktif dulu, lalu yang sudah selesai). */

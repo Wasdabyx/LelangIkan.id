@@ -30,7 +30,7 @@ class Pengguna extends Authenticatable
 
     protected $fillable = [
         'nama_lengkap', 'nama_pengguna', 'surel', 'nik', 'no_hp', 'kata_sandi',
-        'id_peran', 'id_tpi', 'status_aktif', 'surel_terverifikasi_pada',
+        'id_peran', 'id_tpi', 'id_pemilik', 'status_aktif', 'surel_terverifikasi_pada', 'preferensi',
     ];
 
     protected $hidden = ['kata_sandi'];
@@ -42,6 +42,7 @@ class Pengguna extends Authenticatable
             'status_aktif' => 'boolean',
             'waktu_dibuat' => 'datetime',
             'surel_terverifikasi_pada' => 'datetime',
+            'preferensi' => 'array',       // preferensi tampilan, mis. parameter laporan terakhir (UC-10)
         ];
     }
 
@@ -116,6 +117,17 @@ class Pengguna extends Authenticatable
     public function setIdPeran(int $idPeran): void
     {
         $this->id_peran = $idPeran;
+    }
+
+    /** UC-13: akun peran Nelayan ditautkan ke pemilik kapal untuk portal dan kanal real-time. */
+    public function getIdPemilik(): ?int
+    {
+        return $this->id_pemilik === null ? null : (int) $this->id_pemilik;
+    }
+
+    public function pemilik()
+    {
+        return $this->belongsTo(PemilikKapal::class, 'id_pemilik', 'id_pemilik');
     }
 
     public function getIdTpi(): ?int

@@ -20,17 +20,22 @@ use Illuminate\Validation\ValidationException;
  */
 class AutentikasiService
 {
-    // DPPL 2.1.4: maksimal 5 percobaan masuk per menit per akun
+    // DPPL 2.1.4 + SKPL NFR-06: maksimal 5 percobaan masuk per menit per akun DAN per alamat IP
     private const BATAS_PERCOBAAN = 5;
     private const DURASI_BLOKIR_DETIK = 60;
+
+    /** Alamat IP permintaan yang sedang diproses (diisi oleh masuk()), untuk kunci pembatas. */
+    private ?string $alamatIp = null;
 
     public function __construct(private OtpService $otp)
     {
     }
 
-    public function masuk(string $namaPengguna, string $kataSandi, string $perangkat): array
+    public function masuk(string $namaPengguna, string $kataSandi, string $perangkat, ?string $alamatIp = null): array
     {
-        // 1-2. Batas percobaan, cari pengguna, dan periksa kata sandi
+        $this->alamatIp = $alamatIp;
+
+        // 1-2. Batas percobaan (per akun dan per alamat IP), cari pengguna, cocokkan kata sandi
         $pengguna = $this->periksaKredensial($namaPengguna, $kataSandi);
 
         // 3. Akun nonaktif tidak boleh masuk
@@ -50,8 +55,11 @@ class AutentikasiService
             ])->status(403);
         }
 
-        // 4. Berhasil: hapus hitungan gagal dan terbitkan token
+        // 4. Berhasil: hapus hitungan gagal (akun dan IP) dan terbitkan token
         RateLimiter::clear('masuk:' . Str::lower($namaPengguna));
+        if ($this->alamatIp) {
+            RateLimiter::clear($this->kunciIp());
+        }
 
         return $this->terbitkanToken($pengguna, $perangkat);
     }
@@ -95,8 +103,9 @@ class AutentikasiService
     }
 
     /** Tugas 2: aktivasi akun dengan kode 6 digit dari surel. Berhasil = akun aktif dan langsung masuk. */
-    public function aktivasi(string $namaPengguna, string $kataSandi, string $kode, string $perangkat): array
+    public function aktivasi(string $namaPengguna, string $kataSandi, string $kode, string $perangkat, ?string $alamatIp = null): array
     {
+        $this->alamatIp = $alamatIp;
         $pengguna = $this->penggunaBelumAktivasi($namaPengguna, $kataSandi);
 
         $this->otp->verifikasi($pengguna, TujuanOtp::AKTIVASI, $kode);
@@ -108,8 +117,9 @@ class AutentikasiService
     }
 
     /** Tugas 2: kirim ulang kode aktivasi (jeda minimal 60 detik). */
-    public function kirimUlangAktivasi(string $namaPengguna, string $kataSandi): array
+    public function kirimUlangAktivasi(string $namaPengguna, string $kataSandi, ?string $alamatIp = null): array
     {
+        $this->alamatIp = $alamatIp;
         $pengguna = $this->penggunaBelumAktivasi($namaPengguna, $kataSandi);
 
         return $this->otp->kirim($pengguna, TujuanOtp::AKTIVASI);
@@ -130,24 +140,44 @@ class AutentikasiService
     private function periksaKredensial(string $namaPengguna, string $kataSandi): Pengguna
     {
         $kunci = 'masuk:' . Str::lower($namaPengguna);
+        $kunciIp = $this->alamatIp ? $this->kunciIp() : null;
 
-        if (RateLimiter::tooManyAttempts($kunci, self::BATAS_PERCOBAAN)) {
-            $detik = RateLimiter::availableIn($kunci);
-            throw ValidationException::withMessages([
-                'nama_pengguna' => "Terlalu banyak percobaan masuk. Coba lagi dalam {$detik} detik.",
-            ])->status(429);
+        // NFR-06: batas per akun dan per alamat IP. Kunci IP menahan percobaan yang menyebar
+        // ke banyak nama pengguna (password spraying) dari satu terminal.
+        foreach ([$kunci, $kunciIp] as $k) {
+            if ($k && RateLimiter::tooManyAttempts($k, self::BATAS_PERCOBAAN)) {
+                $detik = RateLimiter::availableIn($k);
+                $pesan = $k === $kunciIp
+                    ? "Terlalu banyak percobaan masuk dari alamat ini. Coba lagi dalam {$detik} detik."
+                    : "Terlalu banyak percobaan masuk. Coba lagi dalam {$detik} detik.";
+
+                app(AuditService::class)->catat(null, 'MASUK_DIBATASI', 'pengguna', $namaPengguna,
+                    null, ['kunci' => $k === $kunciIp ? 'ip' : 'akun', 'sisa_detik' => $detik],
+                    $this->alamatIp);
+
+                throw ValidationException::withMessages(['nama_pengguna' => $pesan])->status(429);
+            }
         }
 
         $pengguna = Pengguna::cariNamaPengguna($namaPengguna);
 
         if (! $pengguna || ! $pengguna->autentikasi($kataSandi)) {
             $this->catatPercobaanGagal($kunci);
+            if ($kunciIp) {
+                $this->catatPercobaanGagal($kunciIp);
+            }
             throw ValidationException::withMessages([
                 'kata_sandi' => 'Nama pengguna atau kata sandi salah.',
             ]);
         }
 
         return $pengguna;
+    }
+
+    /** Kunci pembatas per alamat IP (NFR-06). */
+    private function kunciIp(): string
+    {
+        return 'masuk-ip:' . $this->alamatIp;
     }
 
     private function penggunaBelumAktivasi(string $namaPengguna, string $kataSandi): Pengguna

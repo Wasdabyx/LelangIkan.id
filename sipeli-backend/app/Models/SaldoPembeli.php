@@ -25,4 +25,12 @@ class SaldoPembeli extends Model
     {
         return $this->hasMany(MutasiSaldo::class, 'id_saldo', 'id_saldo')->orderByDesc('waktu');
     }
+
+    /** QRY-03: daya beli = saldo + limit kredit (0 bila pembeli belum punya baris saldo). */
+    public static function dayaBeli(int $idPembeli): float
+    {
+        $saldo = static::where('id_pembeli', $idPembeli)->first();
+
+        return $saldo ? (float) $saldo->saldo + (float) $saldo->limit_kredit : 0.0;
+    }
 }
