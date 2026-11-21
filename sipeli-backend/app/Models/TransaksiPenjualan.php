@@ -14,7 +14,7 @@ class TransaksiPenjualan extends Model
 
     protected $fillable = [
         'id_lot', 'id_sesi', 'id_pembeli', 'id_tarif', 'berat_final', 'harga_akhir_per_kg', 'subtotal',
-        'nilai_retribusi', 'biaya_layanan', 'total_tagihan', 'status', 'waktu_transaksi',
+        'nilai_retribusi', 'biaya_layanan', 'total_tagihan', 'status', 'waktu_transaksi', 'batas_bayar', 'tanggal_pengambilan',
     ];
 
     protected $casts = [
@@ -25,6 +25,8 @@ class TransaksiPenjualan extends Model
         'biaya_layanan'      => 'decimal:2',
         'total_tagihan'      => 'decimal:2',
         'waktu_transaksi'    => 'datetime',
+        'batas_bayar'        => 'datetime',
+        'tanggal_pengambilan' => 'date',
     ];
 
     public function getIdTransaksi(): int { return $this->id_transaksi; }
@@ -111,6 +113,7 @@ class TransaksiPenjualan extends Model
             'total_tagihan'      => (string) ($subtotal + $biayaLayanan),   // ALG-05 langkah 4
             'status'             => StatusTransaksi::BELUM_DIBAYAR->value,
             'waktu_transaksi'    => now(),
+            'batas_bayar'        => now()->addHours(2),
         ]);
     }
 

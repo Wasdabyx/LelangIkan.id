@@ -29,7 +29,8 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
   const [galatHarga, setGalatHarga] = useState(null);
   const [pesan, setPesan] = useState(null);
   const [mengirim, setMengirim] = useState(false);
-  const [tanyaBesar, setTanyaBesar] = useState(false);
+  const [tanyaTawaran, setTanyaTawaran] = useState(false);
+  const [tanyaAmbil, setTanyaAmbil] = useState(false);
   const posisiLalu = useRef(null);
   const percobaan = useRef(null); // { harga, kunci } tawaran terakhir yang gagal karena koneksi
   const diubahPengguna = useRef(false);
@@ -68,11 +69,11 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
     if (n < data.harga_minimum_berikut) {
       return setGalatHarga(`Tawaran minimal ${formatRupiah(data.harga_minimum_berikut)} per kg.`);
     }
-    if (n >= 2 * data.harga_minimum_berikut) return setTanyaBesar(true);
-    kirim();
+    setTanyaTawaran(true);
   }
 
   async function ambil() {
+    setTanyaAmbil(false);
     setMengirim(true); setPesan(null);
     try { const r = await lelang.ambil(idSesi, buatKunci()); setData(r.data); setPesan({ jenis: 'sukses', teks: r.pesan }); }
     catch (e) { setPesan({ jenis: 'galat', teks: e.message }); muat(); }
@@ -80,7 +81,7 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
   }
 
   async function kirim() {
-    setTanyaBesar(false);
+    setTanyaTawaran(false);
     const n = Number(harga);
     const kunci = percobaan.current && percobaan.current.harga === n ? percobaan.current.kunci : buatKunci();
     setMengirim(true);
@@ -174,7 +175,9 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
                 <>
                   <Info label="Nomor transaksi" nilai={hasil.kode_transaksi} tebal />
                   <Info label="Total tagihan" nilai={formatRupiah(hasil.total_tagihan)} besar garis />
-                  <Text style={s.catatan}>Bayar di Kasir TPI dengan nomor transaksi di atas.</Text>
+                  <Text style={s.catatan}>
+                    Lunasi sebelum {hasil.batas_bayar?.slice(0, 16).replace('T', ' ')} melalui saldo aplikasi atau kasir TPI.
+                  </Text>
                 </>
               ) : hasil.terjual ? (
                 <Text style={s.catatan}>Lot dimenangkan peserta lain. Terima kasih telah ikut lelang.</Text>
@@ -190,7 +193,7 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
           (data.mode === 'TURUN' ? <Bagian judul="Ambil harga berjalan">
             <KotakPesan jenis={pesan?.jenis === 'sukses' ? 'sukses' : 'galat'} teks={pesan?.teks} gaya={{ marginBottom: 12 }} />
             <Text style={s.minimal}>Harga saat ini {formatRupiah(data.harga_tertinggi)}/kg</Text>
-            <Tombol judul="Ambil Sekarang" onPress={ambil} memuat={mengirim} gaya={{ marginTop: 12 }} />
+            <Tombol judul="Ambil Sekarang" onPress={() => setTanyaAmbil(true)} memuat={mengirim} gaya={{ marginTop: 12 }} />
             <Text style={s.catatan}>Pembeli pertama yang menekan tombol akan memenangkan lot pada harga yang tampil.</Text>
           </Bagian> : <Bagian judul="Ajukan tawaran">
             <KotakPesan jenis={pesan?.jenis === 'sukses' ? 'sukses' : 'galat'} teks={pesan?.teks} gaya={{ marginBottom: 12 }} />
@@ -260,12 +263,20 @@ export default function RuangLelang({ idSesi, onKembali, onLihatTagihan }) {
       </FormGulir>
 
       <DialogKonfirmasi
-        tampil={tanyaBesar}
-        judul="Tawaran jauh di atas minimum"
-        pesan={`Anda akan menawar ${formatRupiah(Number(harga))}/kg (perkiraan total ${formatRupiah(Math.round(total))}). Tawaran yang diterima tidak dapat dibatalkan. Lanjutkan?`}
+        tampil={tanyaTawaran}
+        judul="Konfirmasi tawaran"
+        pesan={`Tawaran Anda ${formatRupiah(Number(harga))}/kg, perkiraan nilai lot ${formatRupiah(Math.round(total))}. Jika menang, Anda wajib melunasi tagihan. Tawaran yang sudah diterima tidak dapat dibatalkan. Lanjutkan?`}
         teksYa="Ya, Tawar"
         onYa={kirim}
-        onTidak={() => setTanyaBesar(false)}
+        onTidak={() => setTanyaTawaran(false)}
+      />
+      <DialogKonfirmasi
+        tampil={tanyaAmbil}
+        judul="Konfirmasi ambil harga"
+        pesan={`Anda akan mengambil harga berjalan ${formatRupiah(data.harga_tertinggi)}/kg, dengan perkiraan nilai lot ${formatRupiah(Math.round(Number(data.harga_tertinggi) * lot.berat_aktual))}. Jika berhasil, Anda wajib melunasi tagihan. Lanjutkan?`}
+        teksYa="Ya, Ambil"
+        onYa={ambil}
+        onTidak={() => setTanyaAmbil(false)}
       />
     </View>
   );
