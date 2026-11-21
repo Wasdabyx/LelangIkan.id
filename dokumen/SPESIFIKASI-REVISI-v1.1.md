@@ -64,27 +64,49 @@ Sisipkan setelah uraian ALG-01:
 
 ### B5. Jumlah entitas data (Bab III.D, hal. 40 dan 44)
 
-**Lama**: "Model data relasional terdiri atas dua puluh lima entitas." dan judul Gambar III.15 "… (26 tabel)".
-**Baru**: "Model data relasional terdiri atas **tiga puluh dua** entitas." dan judul gambar menjadi "… (**32 tabel**)".
+**Lama**: "Model data konseptual terdiri atas dua puluh lima entitas." dan judul Gambar III.15 "(25 entitas)".
+**Baru**: "Model data konseptual terdiri atas **dua puluh tujuh entitas**." dan judul gambar menjadi "(27 entitas)".
 
-Tabel yang ditambahkan pada v1.1 (7 tabel): `audit_log`, `pembayaran_nelayan`, `pencairan_nelayan`,
-`kartu_nelayan`, `tautan_akses_nelayan`, `notifikasi`, serta kolom baru `tpi.kode_tpi`,
-`transaksi_penjualan.id_pembatal/alasan_batal/waktu_batal`, `pengguna.id_pemilik/preferensi`.
+Angka 27 adalah jumlah tabel nyata pada basis data terpasang (`SHOW TABLES`, tanpa tabel infrastruktur
+`migrations`, `sessions`, `cache`, `jobs`, `personal_access_tokens`):
 
-### B6. Tabel IV.6 — rute REST diselaraskan dengan aplikasi (hal. 52–53)
+```
+audit_log, daftar_pantauan, foto_lot, grade_mutu, jenis_ikan, kapal, kartu_nelayan,
+kedatangan_kapal, kode_otp, konfigurasi, lot_lelang, mutasi_saldo, notifikasi, pembayaran,
+pembayaran_nelayan, pemilik_kapal, penawaran, pencairan_nelayan, pengguna, peran, saldo_pembeli,
+sesi_lelang, tangkapan, tarif_retribusi, tautan_akses_nelayan, tpi, transaksi_penjualan
+```
 
-Tambahkan tiga baris pada Tabel IV.6:
+Tujuh entitas yang ditambahkan setelah v1.0: `audit_log`, `pembayaran_nelayan`, `pencairan_nelayan`,
+`kartu_nelayan`, `tautan_akses_nelayan`, `notifikasi`, `kode_otp`; ditambah kolom baru
+`tpi.kode_tpi`, `transaksi_penjualan.id_pembatal/alasan_batal/waktu_batal/tanggal_pengambilan`,
+`pengguna.preferensi`, dan `lot_lelang` status `DIPERPANJANG`.
+
+### B6. Tabel IV.6 — rute REST (hal. 52–54)
+
+Tabel IV.6 pada DOCX ternyata **sudah memakai penamaan rute resmi** (`/api/sesi`, `/api/sesi/{id}/penawaran`,
+`/api/pembayaran`, `/api/saldo/mutasi`, `/api/master/{entitas}`, `/api/settlement/{idKedatangan}`), sedangkan
+aplikasi sebelumnya hanya menyediakan rute per peran. Penyelesaiannya dipilih dari dua arah sekaligus:
+
+1. **Aplikasi menyesuaikan dokumen** — rute resmi diaktifkan melalui `RuteResmiController`
+   (`app/Http/Controllers/Api/RuteResmiController.php`) yang meneruskan ke pengendali per peran, sehingga
+   validasi dan aturan bisnis tetap satu sumber. Rute per peran tetap ada untuk klien mobile.
+2. **Dokumen dilengkapi** — tiga baris baru dan empat keterangan yang diperjelas.
 
 | Metode | Titik Akhir | Aktor | Fungsi | Token |
 |---|---|---|---|---|
-| GET | /api/laporan/{jenis} | A6 | Laporan harga, retribusi, tren, atau kinerja (format=csv/pdf) | Ya |
+| GET | /api/laporan/{jenis} | A6 | Laporan harga, retribusi, tren, atau kinerja; ?format=csv\|pdf | Ya |
 | GET | /api/kasir/settlement | A5 | Daftar kedatangan yang siap diselesaikan | Ya |
-| GET | /api/papan-lelang | A3, A5, A6 | Keadaan papan lelang (cadangan polling) | Ya |
+| GET | /api/audit?format=csv | A7 | Ekspor jejak audit untuk pemeriksaan | Ya |
 
 Perjelas baris yang sudah ada:
 - `POST /api/master/{entitas}` → tambahkan "entitas: jenis-ikan, grade-mutu, tarif-retribusi, kapal, pemilik-kapal, tpi, peran, pengguna, konfigurasi".
-- `POST /api/settlement/{idKedatangan}` → "Perhitungan settlement; pencairan melalui `POST /api/pembayaran-nelayan/{id}/cairkan`".
+- `POST /api/settlement/{idKedatangan}` → "Perhitungan settlement nelayan; pencairan melalui `POST /api/pembayaran-nelayan/{id}/cairkan`".
+- `POST /api/sesi/{id}/penawaran` → "Pengajuan penawaran (mode naik, muatan nominal) atau Ambil (mode turun), dengan kanal di tempat atau jarak jauh".
 - `GET /api/nelayan/rekap?token=` → "memerlukan token + kode verifikasi 4 digit".
+
+Bukti: `uji_rute_resmi.py` **19/19 lulus** (membuka sesi, menawar, menutup, membayar lewat `kode_tagihan`,
+mutasi saldo, settlement, pencairan, kartu, tautan, master, serta batas wewenang per peran).
 
 ### B7. Ruang lingkup versi 1.1 (Bab I.B, hal. 6)
 
@@ -97,9 +119,9 @@ Tambahkan butir:
 
 ### C1. Jumlah tabel basis data (Bab 2, hal. 17 dan 625)
 
-**Lama**: "Basis data terdiri atas dua puluh enam tabel dengan lima kelompok fungsional."
-**Baru**: "Basis data terdiri atas **tiga puluh tiga tabel** dengan lima kelompok fungsional."
-Gambar 2.2 dan judulnya menjadi "… (**33 tabel**)".
+**Lama**: "Basis data terdiri atas dua puluh lima tabel dengan lima kelompok fungsional."
+**Baru**: "Basis data terdiri atas **dua puluh tujuh tabel** dengan lima kelompok fungsional."
+Gambar 2.2 dan judulnya menjadi "… (**27 tabel**)".
 
 ### C2. Kamus data — tabel baru (Bab 2)
 
@@ -254,7 +276,7 @@ Tegaskan pada uraian UC-13:
 | Versi | Tanggal | Penyusun | Ringkasan perubahan |
 |---|---|---|---|
 | 1.0 | 2026 | Tim Pengembang | Terbitan awal: 13 use case, 67 FR, 15 NFR |
-| 1.1 | 21 November 2026 | Tim Pengembang | Penyelarasan dengan aplikasi hasil pengujian: (a) FR-21 ditegaskan (daya beli = saldo + limit kredit, berlaku untuk lelang naik dan turun); (b) FR-64 diperjelas (pembeli boleh bergabung selama sesi berjalan); (c) Tabel IV.7 diperluas dari 7 menjadi 9 peristiwa (SETTLEMENT_DIBAYAR, LOT_DIPANTAU_DIBUKA); (d) Tabel IV.6 diselaraskan dengan 60+ rute REST terpasang; (e) kamus data bertambah 7 tabel (audit_log, pembayaran_nelayan, pencairan_nelayan, kartu_nelayan, tautan_akses_nelayan, notifikasi) dan 6 kolom baru; (f) lima kelas kendali baru didokumentasikan; (g) catatan ALG-01 tentang tawaran pertama pada harga pembukaan |
+| 1.1 | 21 November 2026 | Tim Pengembang | Penyelarasan dengan aplikasi hasil pengujian: (a) FR-21 ditegaskan (daya beli = saldo + limit kredit, berlaku untuk lelang naik dan turun); (b) FR-64 diperjelas (pembeli boleh bergabung selama sesi berjalan); (c) Tabel IV.7 diperluas dari 7 menjadi 9 peristiwa (SETTLEMENT_DIBAYAR, LOT_DIPANTAU_DIBUKA); (d) rute resmi Tabel IV.6 diaktifkan pada aplikasi dan dilengkapi tiga titik akhir; (e) kamus data bertambah tujuh entitas (audit_log, pembayaran_nelayan, pencairan_nelayan, kartu_nelayan, tautan_akses_nelayan, notifikasi, kode_otp) dan enam kolom baru; (f) lima kelas kendali baru didokumentasikan; (g) catatan ALG-01 tentang tawaran pertama pada harga pembukaan |
 
 ---
 
@@ -267,3 +289,4 @@ Tegaskan pada uraian UC-13:
 | `/home/user/uji/uji_settlement.py` | UC-08, UC-13, FR-66 | 29/29 lulus |
 | `/home/user/uji/uji_fitur.py` | UC-09, UC-10, UC-11, FR-64 | 43/43 lulus |
 | `/home/user/uji/uji_ws.py`, `uji_ws2.py`, `uji_ws3.py` | sembilan peristiwa Tabel IV.7 lewat WebSocket Reverb | 9/9 diterima klien |
+| `/home/user/uji/uji_rute_resmi.py` | rute resmi Tabel IV.6 persis seperti tertulis di dokumen | 19/19 lulus |

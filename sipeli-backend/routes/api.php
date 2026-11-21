@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\LaporanController;
 use App\Http\Controllers\Api\MasterController;
 use App\Http\Controllers\Api\PantauanController;
 use App\Http\Controllers\Api\PapanLelangController;
+use App\Http\Controllers\Api\RuteResmiController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -53,7 +54,22 @@ Route::middleware('auth:sanctum')->group(function () {
     // UC-02 Penimbangan dan Pembuatan Lot Lelang (A2); lihat lot juga untuk A1 & A3
     Route::get('/penimbangan/{kode}', [PenimbanganController::class, 'kedatangan'])->middleware('peran:2');
     Route::post('/lot', [PenimbanganController::class, 'simpan'])->middleware('peran:2');
+    Route::get('/lot/siap-lelang', [OperatorLelangController::class, 'antrean'])->middleware('peran:3');
     Route::get('/lot/{kode}', [PenimbanganController::class, 'lihatLot'])->middleware('peran:1,2,3');
+
+    // ---- Rute resmi SKPL Tabel IV.6 (jembatan ke pengendali per peran) ----
+    Route::get('/sesi', [RuteResmiController::class, 'daftarSesi'])->middleware('peran:3');
+    Route::post('/sesi', [RuteResmiController::class, 'bukaSesi'])->middleware('peran:3');
+    Route::get('/sesi/{id}', [RuteResmiController::class, 'statusSesi'])->whereNumber('id')->middleware('peran:3,4');
+    Route::post('/sesi/{id}/penawaran', [RuteResmiController::class, 'penawaran'])->whereNumber('id')->middleware('peran:4');
+    Route::post('/sesi/{id}/tutup', [RuteResmiController::class, 'tutupSesi'])->whereNumber('id')->middleware('peran:3');
+    Route::post('/pembayaran', [RuteResmiController::class, 'pembayaran'])->middleware('peran:5');
+    Route::post('/saldo/mutasi', [RuteResmiController::class, 'mutasiSaldo'])->middleware('peran:5');
+    Route::post('/settlement/{idKedatangan}', [SettlementController::class, 'hitung'])->whereNumber('idKedatangan')->middleware('peran:5');
+    Route::post('/master/{entitas}', [MasterController::class, 'simpan'])->whereIn('entitas', ['jenis-ikan','grade-mutu','tarif-retribusi','kapal','pemilik-kapal','tpi','peran','pengguna','konfigurasi'])->middleware('peran:7');
+    Route::post('/kartu-nelayan', [KartuNelayanController::class, 'terbitkan'])->middleware('peran:5,7');
+    Route::post('/pembayaran-nelayan/{id}/cairkan', [SettlementController::class, 'cairkan'])->whereNumber('id')->middleware('peran:5');
+    Route::post('/nelayan/tautan', [PortalNelayanController::class, 'terbitkanTautan'])->middleware('peran:5');
     Route::post('/lot/{id}/cetak', [PenimbanganController::class, 'catatCetak'])->whereNumber('id')->middleware('peran:2');
     Route::post('/lot/{id}/foto', [PenimbanganController::class, 'unggahFoto'])->whereNumber('id')->middleware('peran:2');
 
