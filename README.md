@@ -25,6 +25,25 @@ Tahap pertama mencakup tiga tampilan pada aplikasi mobile. Setelah login, penggu
 
 Catatan: timbangan digital pada tahap ini masih berupa simulasi di aplikasi, dan tersedia juga input berat manual (wajib disertai alasan).
 
+## Antarmuka web (operator, kasir, pimpinan, administrator)
+
+Selain aplikasi mobile, sistem memiliki **antarmuka web** pada backend Laravel. Pembagian platform
+mengikuti SKPL v1.1 Bagian I.B: petugas pendataan, petugas timbang, dan pembeli memakai aplikasi
+mobile; operator lelang, kasir, pimpinan/dinas, dan administrator sistem memakai web; nelayan
+memakai portal baca-saja; ruang pelelangan memakai papan lelang layar besar.
+
+| Halaman | Use case | Pengguna |
+|---|---|---|
+| Antrean lot, buka sesi, pemantauan sesi 1 detik, tutup sesi | UC-03, UC-05 | Operator Lelang |
+| Tagihan pembeli & pelunasan, settlement nelayan & pencairan, saldo pembeli | UC-06, UC-07, UC-08 | Kasir TPI |
+| Ringkasan harian, laporan & analitik (+CSV), persetujuan penyesuaian saldo | UC-10, UC-12 | Pimpinan |
+| Data master, pengguna & peran, konfigurasi, jejak audit | UC-11 | Administrator |
+| Papan lelang baca-saja (tanpa masuk) | FR-41, FR-43 | Ruang pelelangan |
+
+Rincian halaman, rancangan teknis, dan hasil ujinya ada di
+[`sipeli-backend/WEB-ANTARMUKA.md`](sipeli-backend/WEB-ANTARMUKA.md);
+tangkapan layar di [`dokumen/tangkapan-web/`](dokumen/tangkapan-web/).
+
 ## Foto lot dan foto contoh jenis ikan
 
 Setiap lot dapat memiliki foto agar Operator Lelang dan Pembeli bisa melihat kondisi ikan.
@@ -70,13 +89,17 @@ LelangIkan.id/
 ├── sipeli-backend/                 API Laravel
 │   ├── app/Enums/                  status dan kode peran
 │   ├── app/Http/Controllers/Api/   AutentikasiController, KedatanganController, PenimbanganController
-│   ├── app/Http/Middleware/        CekPeran (hak akses per peran)
+│   ├── app/Http/Controllers/Web/   dasbor web: Operator, Kasir, Pimpinan, Admin, Papan, Autentikasi
+│   ├── app/Http/Middleware/        CekPeran (API), WebCekPeran (halaman web)
 │   ├── app/Http/Requests/          validasi isian
 │   ├── app/Models/                 entitas sesuai class diagram DPPL
-│   ├── app/Services/               logika use case (Autentikasi, RegistrasiKedatangan, Penimbangan, Lot)
+│   ├── app/Services/               logika use case (dipakai bersama API dan antarmuka web)
+│   ├── app/Support/                pemformatan rupiah, tanggal, dan lencana status
 │   ├── database/migrations/        struktur tabel sesuai ERD DPPL
 │   ├── database/seeders/           data awal dan data demo
-│   └── routes/api.php              daftar alamat API
+│   ├── resources/views/web/        halaman Blade antarmuka web (layout, operator, kasir, pimpinan, admin)
+│   ├── routes/api.php              daftar alamat API
+│   └── routes/web.php              antarmuka web: masuk, dasbor per peran, papan lelang
 └── sipeli-mobile/                  aplikasi Expo
     ├── App.js                      pemulihan sesi dan pemilihan layar sesuai peran
     └── src/
@@ -115,6 +138,21 @@ LelangIkan.id/
    Bila memakai Git Bash, ganti `copy` dengan `cp`. Sesuaikan `DB_USERNAME` dan `DB_PASSWORD` di `.env` bila berbeda dari bawaan XAMPP (`root` tanpa kata sandi). Seeder dapat dijalankan ulang dengan `php artisan db:seed` dan tidak menghapus data. Jangan gunakan `migrate:fresh` kecuali memang ingin menghapus seluruh isi database.
 
 3. Buka `http://127.0.0.1:8000/up` di browser. Halaman "Application up" menandakan server berjalan.
+
+### Antarmuka web
+
+Antarmuka web memakai aset Tailwind yang dibangun dengan Vite, sehingga perlu satu kali build:
+
+```
+cd sipeli-backend
+npm install
+npm run build
+```
+
+Setelah server backend berjalan, buka `http://127.0.0.1:8000`. Halaman masuk tersedia untuk peran
+operator lelang, kasir, pimpinan, dan administrator; papan lelang dapat dibuka tanpa masuk pada
+`http://127.0.0.1:8000/papan-lelang`. Petugas pendataan, petugas timbang, pembeli, dan nelayan
+tetap memakai aplikasi mobile.
 
 ### Menjalankan pengujian backend
 

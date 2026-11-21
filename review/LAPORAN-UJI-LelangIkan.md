@@ -178,3 +178,38 @@ Catatan teknis:
 2. Uji beban NFR-01/NFR-02 yang sesungguhnya **belum** dilakukan: `uji_akhir.py` hanya menunjukkan latensi
    ±13 ms per tawaran secara berurutan pada data bersih, dan penolakan 422 pada uji itu terjadi karena
    pembeli uji belum memiliki saldo — bukan karena kinerja.
+
+## 8. Antarmuka web: hasil uji 21 November 2026 (putaran E)
+
+SKPL v1.1 Bagian I.B menetapkan antarmuka web untuk **operator lelang, kasir, pimpinan/dinas, dan
+administrator sistem**. Putaran ini menguji implementasinya di `sipeli-backend`
+(`routes/web.php`, `app/Http/Controllers/Web/`, `resources/views/web/`), dijalankan dari basis data
+bersih dengan aset Vite dibangun (`npm run build`).
+
+| Uji | Perintah | Hasil |
+|---|---|---|
+| PHPUnit termasuk `AntarmukaWebTest` | `php artisan test` | **25 lulus / 86 asersi** |
+| Antarmuka web (peran, 12 halaman, 7 aksi tulis, audit) | `python3 uji_web.py` | **42/42** |
+| Rute resmi Tabel IV.6 (regresi) | `python3 uji_rute_resmi.py` | **19/19** |
+| End-to-end 13 use case (regresi) | `python3 e2e2.py` | **81/81** |
+| Fitur UC-09..UC-12 + FR-64 (regresi) | `python3 uji_fitur.py` | **43/43** |
+| UC-08, UC-13, FR-66/67 (regresi) | `python3 uji_settlement.py` | **29/29** |
+
+Cakupan `uji_web.py` (42 pemeriksaan):
+
+1. **Pembagian platform** — peran pendataan, timbang, pembeli, dan nelayan ditolak saat masuk web
+   dengan pesan yang mengarahkan ke aplikasi mobile; operator, kasir, pimpinan, dan administrator
+   masuk dan diarahkan ke halaman pertama sesuai perannya (4 + 4 pemeriksaan).
+2. **Halaman dasbor** — 12 halaman tampil (antrean, sesi, tagihan, settlement, saldo, ringkasan,
+   laporan, penyesuaian, master, pengguna, konfigurasi, audit).
+3. **Hak akses silang** — kasir→operator, operator→kasir, pimpinan→admin, admin→pimpinan ditolak
+   dengan halaman 403 (4 pemeriksaan).
+4. **Papan lelang** — dapat dibuka tanpa masuk dan endpoint keadaan mengembalikan JSON.
+5. **Aksi tulis** — ubah konfigurasi, tambah grade mutu, bayar tagihan, hitung settlement, cairkan
+   dana nelayan, setor saldo, ajukan penyesuaian, setujui penyesuaian, unduh CSV laporan.
+6. **Operator** — buka sesi dari antrean, layar pantau 1 detik, endpoint keadaan, tutup sesi lebih awal.
+7. **Jejak audit** memuat `MASUK_WEB`; setelah keluar dasbor tertutup kembali (302 ke `/masuk`).
+
+Yang **belum** ada di antarmuka web dan disengaja: pembukaan sesi **lelang turun** dari web
+(parameter harga awal/batas bawah/penurunan/interval masih lewat aplikasi mobile atau API),
+serta seluruh alur petugas pendataan, petugas timbang, dan pembeli yang tetap mobile.
