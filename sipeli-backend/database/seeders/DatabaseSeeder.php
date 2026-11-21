@@ -15,12 +15,15 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Data awal LelangIkan.id: data master + data demo (DemoSeeder).
-     * Jalankan (MENGHAPUS semua data lama): php artisan migrate:fresh --seed
+     * Data awal dan data pengembangan yang dapat digunakan ulang tanpa menghapus data lama.
+     * Untuk database baru: php artisan migrate --seed. Untuk mengulang seeder: php artisan db:seed.
      */
     public function run(): void
     {
-        // 1. Peran A1 - A8 (SKPL Tabel II.2) -> id_peran otomatis 1 s.d. 8 sesuai urutan
+        // 1. Peran A1 - A8 (SKPL Tabel II.2).
+        // id_peran diambil dari hasil firstOrCreate, BUKAN dianggap 1..8: pada basis data yang
+        // sudah pernah dipakai AUTO_INCREMENT peran bisa melompat (mis. 25 setelah uji volume),
+        // dan asumsi 1..8 membuat seeder gagal karena kunci asing menunjuk peran yang tidak ada.
         $daftarPeran = [
             1 => ['Petugas Pendataan',    'A1 - Mencatat kedatangan kapal dan tangkapan'],
             2 => ['Petugas Timbang',      'A2 - Menimbang, membuat lot, mencetak label'],
@@ -31,18 +34,31 @@ class DatabaseSeeder extends Seeder
             7 => ['Administrator Sistem', 'A7 - Mengelola pengguna, master data, konfigurasi'],
             8 => ['Nelayan',              'A8 - Nelayan/pemilik kapal, akses portal baca-saja'],
         ];
-        foreach ($daftarPeran as [$nama, $deskripsi]) {
-            Peran::create(['nama_peran' => $nama, 'deskripsi' => $deskripsi]);
+        // id_peran DIPAKSA 1..8 karena enum KodePeran memakai angka itu untuk hak akses.
+        // Bila basis data pernah dipakai uji lain, AUTO_INCREMENT bisa melompat (id 17..25)
+        // sehingga firstOrCreate menghasilkan id yang salah dan pemeriksaan peran gagal.
+        // Karena itu: buang dulu baris bernama sama dengan id berbeda, baru tulis id eksplisit.
+        $idPeran = [];
+        foreach ($daftarPeran as $kode => [$nama, $deskripsi]) {
+            Peran::where('nama_peran', $nama)->where('id_peran', '!=', $kode)->delete();
+            Peran::updateOrCreate(
+                ['id_peran' => $kode],
+                ['nama_peran' => $nama, 'deskripsi' => $deskripsi],
+            );
+            $idPeran[$kode] = $kode;
         }
 
         // 2. Unit TPI
-        $tpi = Tpi::create([
-            'nama_tpi'      => 'TPI Palabuhanratu',
-            'alamat'        => 'Jl. Kidang Kencana, Palabuhanratu',
-            'kabupaten'     => 'Sukabumi',
-            'kapasitas_ton' => 50,
-            'jam_operasi'   => '04.00 - 12.00 WIB',
-        ]);
+        $tpi = Tpi::firstOrCreate(
+            ['nama_tpi' => 'TPI Palabuhanratu'],
+            [
+                'kode_tpi'      => 'PLR',
+                'alamat'        => 'Jl. Kidang Kencana, Palabuhanratu',
+                'kabupaten'     => 'Sukabumi',
+                'kapasitas_ton' => 50,
+                'jam_operasi'   => '04.00 - 12.00 WIB',
+            ],
+        );
 
         // 3. Akun contoh (kata sandi semua akun: sipeli12345)
         $akun = [
@@ -53,18 +69,23 @@ class DatabaseSeeder extends Seeder
             ['Eka Kasir',      'kasir',    5],
             ['Fajar Pimpinan', 'pimpinan', 6],
             ['Gita Admin',     'admin',    7],
+            ['H. Sukarna',     'nelayan',  8],
         ];
-        foreach ($akun as [$nama, $username, $idPeran]) {
-            Pengguna::create([
-                'nama_lengkap'  => $nama,
-                'nama_pengguna' => $username,
-                'surel'         => $username . '@sipeli.test',
-                'kata_sandi'    => 'sipeli12345',   // di-hash otomatis oleh model
-                'id_peran'      => $idPeran,
-                'id_tpi'        => $idPeran === 7 ? null : $tpi->id_tpi,
-                'status_aktif'  => true,
-                'surel_terverifikasi_pada' => now(),   // Tugas 2: akun contoh dianggap sudah aktivasi
-            ]);
+        $idAdmin = $idPeran[7];
+        foreach ($akun as [$nama, $username, $kodePeran]) {
+            $peranAkun = $idPeran[$kodePeran];
+            Pengguna::firstOrCreate(
+                ['nama_pengguna' => $username],
+                [
+                    'nama_lengkap'  => $nama,
+                    'surel'         => $username . '@sipeli.test',
+                    'kata_sandi'    => 'sipeli12345',
+                    'id_peran'      => $peranAkun,
+                    'id_tpi'        => $kodePeran === 7 ? null : $tpi->id_tpi,
+                    'status_aktif'  => true,
+                    'surel_terverifikasi_pada' => now(),
+                ],
+            );
         }
 
         // 4. Konfigurasi sistem
@@ -75,7 +96,7 @@ class DatabaseSeeder extends Seeder
             ['durasi_lelang_bawaan',  '120', 'Durasi sesi lelang bawaan dalam detik (UC-03)'],
         ];
         foreach ($konfigurasi as [$kunci, $nilai, $deskripsi]) {
-            Konfigurasi::create(['kunci' => $kunci, 'nilai' => $nilai, 'deskripsi' => $deskripsi]);
+            Konfigurasi::firstOrCreate(['kunci' => $kunci], ['nilai' => $nilai, 'deskripsi' => $deskripsi]);
         }
 
         // 5. Jenis ikan
@@ -90,16 +111,16 @@ class DatabaseSeeder extends Seeder
             ['Cumi-cumi',         'Loligo sp.',             'MOLUSKA'],
         ];
         foreach ($ikan as [$nama, $ilmiah, $kategori]) {
-            JenisIkan::create([
-                'nama_jenis' => $nama, 'nama_ilmiah' => $ilmiah,
-                'kategori' => $kategori, 'satuan' => 'KG', 'status' => true,
-            ]);
+            JenisIkan::firstOrCreate(
+                ['nama_jenis' => $nama],
+                ['nama_ilmiah' => $ilmiah, 'kategori' => $kategori, 'satuan' => 'KG', 'status' => true],
+            );
         }
 
         // 6. Grade mutu
-        GradeMutu::create(['kode_grade' => 'A', 'deskripsi' => 'Sangat segar, utuh, mata jernih', 'faktor_harga' => 1.0000]);
-        GradeMutu::create(['kode_grade' => 'B', 'deskripsi' => 'Segar, sedikit cacat fisik',      'faktor_harga' => 0.8500]);
-        GradeMutu::create(['kode_grade' => 'C', 'deskripsi' => 'Kurang segar / rusak sebagian',    'faktor_harga' => 0.6500]);
+        GradeMutu::firstOrCreate(['kode_grade' => 'A'], ['deskripsi' => 'Sangat segar, utuh, mata jernih', 'faktor_harga' => 1.0000]);
+        GradeMutu::firstOrCreate(['kode_grade' => 'B'], ['deskripsi' => 'Segar, sedikit cacat fisik',      'faktor_harga' => 0.8500]);
+        GradeMutu::firstOrCreate(['kode_grade' => 'C'], ['deskripsi' => 'Kurang segar / rusak sebagian',    'faktor_harga' => 0.6500]);
 
         // 7. Pemilik kapal
         $pemilik = [];
@@ -110,10 +131,18 @@ class DatabaseSeeder extends Seeder
             ['Hj. Euis Komariah', '3202010404780004', '081234560004', 'Gado Bangkong, Palabuhanratu', '5566778899', 'BRI'],
             ['Rahmat Hidayat',    '3202010505850005', '081234560005', 'Loji, Simpenan',             '2233445566', 'Mandiri'],
         ] as [$nama, $nik, $telp, $alamat, $rek, $bank]) {
-            $pemilik[] = PemilikKapal::create([
-                'nama' => $nama, 'nik' => $nik, 'no_telepon' => $telp,
-                'alamat' => $alamat, 'no_rekening' => $rek, 'nama_bank' => $bank,
-            ]);
+            $pemilik[] = PemilikKapal::firstOrCreate(
+                ['nik' => $nik],
+                ['nama' => $nama, 'no_telepon' => $telp, 'alamat' => $alamat, 'no_rekening' => $rek, 'nama_bank' => $bank],
+            );
+        }
+
+        // 7b. UC-13: akun peran Nelayan ditautkan ke pemilik kapal pertama agar dapat membuka portal
+        // dan menerima peristiwa SETTLEMENT_DIBAYAR pada kanal privat nelayan.{id_pemilik}.
+        $akunNelayan = Pengguna::where('nama_pengguna', 'nelayan')->whereNull('id_pemilik')->first();
+        if ($akunNelayan && $pemilik !== []) {
+            $akunNelayan->id_pemilik = $pemilik[0]->getIdPemilik();
+            $akunNelayan->save();
         }
 
         // 8. Kapal (urutan ini dipakai DemoSeeder)
@@ -127,10 +156,10 @@ class DatabaseSeeder extends Seeder
             ['KM Putra Pelabuhan', 'GT.09-PLR-007', 9,  4],
             ['KM Harapan Baru',    'GT.05-PLR-008', 5,  4],
         ] as [$nama, $registrasi, $gt, $iPemilik]) {
-            Kapal::create([
-                'nama_kapal' => $nama, 'nomor_registrasi' => $registrasi,
-                'gt' => $gt, 'id_pemilik' => $pemilik[$iPemilik]->id_pemilik,
-            ]);
+            Kapal::firstOrCreate(
+                ['nomor_registrasi' => $registrasi],
+                ['nama_kapal' => $nama, 'gt' => $gt, 'id_pemilik' => $pemilik[$iPemilik]->id_pemilik],
+            );
         }
 
         // 9. Data demo: riwayat 30 hari + kedatangan hari ini
