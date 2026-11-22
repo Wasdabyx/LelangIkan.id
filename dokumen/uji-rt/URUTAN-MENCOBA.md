@@ -304,6 +304,13 @@ cd sipeli-backend
 php artisan tinker --execute="echo App\Models\Penawaran::orderByDesc('id_penawaran')->first()->kanal;"
 ```
 
+### Hasil yang seharusnya terlihat pada operator
+
+Di layar **Pemantauan Sesi Lelang**, tabel *Sepuluh penawaran terakhir* punya kolom
+**Kanal**. Tawaran dari aplikasi berlabel **Aplikasi** (abu-abu), tawaran yang Anda catat
+sendiri berlabel **Di tempat** (kuning). Bila labelnya tertukar, berarti pencatatan kanal
+salah dan perlu dilaporkan.
+
 ## 11. Coba: mematikan lelang jarak jauh (BT-03)
 
 **Yang diuji:** lelang jarak jauh bersifat opsional dan dapat dimatikan administrator **tanpa**
