@@ -54,13 +54,19 @@ function buatEcho(token) {
 }
 
 /**
- * Berlangganan satu kanal privat dan satu peristiwa; laporkan status sambungan.
- * Mengembalikan `tersambung`. Bila token/nama belum siap, status false (polling aktif).
+ * Berlangganan satu kanal privat untuk **satu atau beberapa peristiwa**; laporkan status
+ * sambungan. Mengembalikan `tersambung`. Bila token/nama belum siap, status false
+ * (polling aktif).
+ *
+ * `peristiwa` boleh berupa satu nama (`'PENAWARAN_BARU'`) atau larik
+ * (`['PENAWARAN_BARU', 'SESI_DIPERPANJANG', 'SESI_DITUTUP']`). `saatPeristiwa` menerima
+ * dua argumen: `(data, namaPeristiwa)` sehingga pemanggil dapat membedakan peristiwa.
  */
 export function useKanalRealtime(namaKanal, peristiwa, saatPeristiwa) {
   const callback = useRef(saatPeristiwa);
   callback.current = saatPeristiwa;
   const [tersambung, setTersambung] = useState(false);
+  const daftarPeristiwa = (Array.isArray(peristiwa) ? peristiwa : [peristiwa]).join(',');
   // Percobaan ke-berapa; dinaikkan oleh pewaktu sambung ulang di bawah.
   const [percobaan, setPercobaan] = useState(0);
 
@@ -99,7 +105,12 @@ export function useKanalRealtime(namaKanal, peristiwa, saatPeristiwa) {
       setTersambung(echo.connector.pusher.connection.state === 'connected');
     }
 
-    echo.private(namaKanal).listen(`.${peristiwa}`, (data) => callback.current?.(data));
+    // Terima satu nama peristiwa atau larik; didengar pada kanal yang sama.
+    const daftar = daftarPeristiwa.split(',').filter(Boolean);
+    const saluran = echo.private(namaKanal);
+    for (const nama of daftar) {
+      saluran.listen(`.${nama}`, (data) => callback.current?.(data, nama));
+    }
 
     return () => {
       if (pewaktuUlang) clearTimeout(pewaktuUlang);
@@ -114,9 +125,26 @@ export function useKanalRealtime(namaKanal, peristiwa, saatPeristiwa) {
       echo.disconnect();
       setTersambung(false);
     };
-  }, [namaKanal, peristiwa, percobaan]);
+    // `daftarPeristiwa` berupa teks supaya efek tidak dijalankan ulang hanya karena
+    // pemanggil membuat larik baru pada setiap render.
+  }, [namaKanal, daftarPeristiwa, percobaan]);
 
   return tersambung;
+}
+
+/** Nama peristiwa yang didengar Ruang Lelang pada kanal TPI. */
+export const PERISTIWA_RUANG_LELANG = ['PENAWARAN_BARU', 'SESI_DIPERPANJANG', 'HASIL_LELANG', 'SESI_DITUTUP'];
+
+/** Nama peristiwa yang didengar layar daftar lelang pembeli pada kanal TPI. */
+export const PERISTIWA_DAFTAR_LELANG = ['SESI_DIMULAI', 'SESI_DITUTUP', 'HASIL_LELANG'];
+
+/**
+ * Kanal TPI untuk layar daftar lelang pembeli: sesi dimulai, ditutup, dan hasil lelang
+ * (pemenang) — supaya daftar dan status tagihan berubah tanpa menunggu polling.
+ * Mengembalikan `tersambung`; `saatPeristiwa(data, namaPeristiwa)`.
+ */
+export function useKanalTpiDaftar(idTpi, saatPeristiwa) {
+  return useKanalRealtime(idTpi ? `tpi.${idTpi}` : null, PERISTIWA_DAFTAR_LELANG, saatPeristiwa);
 }
 
 /** Kompatibilitas: notifikasi sesi baru pada kanal TPI (dipakai layar daftar lelang). */

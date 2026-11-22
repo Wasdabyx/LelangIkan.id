@@ -1,0 +1,4 @@
+
+# Berkas pengujian tidak dipublikasikan; dijalankan manual di komputer pengembang.
+/sipeli-backend/tests
+/sipeli-backend/phpunit.xml

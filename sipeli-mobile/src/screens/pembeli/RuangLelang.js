@@ -8,7 +8,7 @@ import { PanelLelang } from '../../components/Lelang';
 import { Bagian, Info, Tabel } from '../../components/Tata';
 import { formatKg, formatRupiah } from '../../format';
 import { usePolling } from '../../polling';
-import { JEDA_PENGGANTI, useKanalRealtime } from '../../realtime';
+import { JEDA_PENGGANTI, useKanalRealtime, PERISTIWA_RUANG_LELANG } from '../../realtime';
 import { ukuran, warna } from '../../tema';
 import { hanyaAngka } from '../../validasi';
 
@@ -67,7 +67,9 @@ export default function RuangLelang({ idSesi, idTpi, onKembali, onLihatTagihan }
   }, [idSesi, terima]);
   const aktif = !data || data.status === 'AKTIF';
   const kanalId = aktif ? (idTpi ? `tpi.${idTpi}` : null) : null;
-  const tersambung = useKanalRealtime(kanalId, 'PENAWARAN_BARU', () => muat());
+  // Tabel IV.7: selain tawaran baru, layar mengikuti perpanjangan waktu, hasil lelang,
+  // dan penutupan sesi sehingga sisa waktu dan status pemenang berubah seketika.
+  const tersambung = useKanalRealtime(kanalId, PERISTIWA_RUANG_LELANG, () => muat());
   // Kanal sehat -> tidak ada pengambilan berkala; kanal putus -> polling 2 detik (NFR-10).
   usePolling(muat, JEDA_PENGGANTI, aktif && !tersambung);
 

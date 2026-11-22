@@ -7,7 +7,7 @@ import FotoIkan from '../../components/FotoIkan';
 import { formatSisa, WARNA_TRANSAKSI } from '../../components/Lelang';
 import { formatKg, formatRupiah, waktuPendek } from '../../format';
 import { usePolling } from '../../polling';
-import { useSesiDimulai, JEDA_PENGGANTI } from '../../realtime';
+import { useKanalTpiDaftar, useKanalRealtime, JEDA_PENGGANTI } from '../../realtime';
 import { warna } from '../../tema';
 
 /**
@@ -20,7 +20,7 @@ function tanggalPendek(tanggal) {
   return new Date(tahun, bulan - 1, hari).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-export default function DaftarLelangPembeli({ tab, idTpi, onMasukRuang, onBukaTagihan }) {
+export default function DaftarLelangPembeli({ tab, idTpi, idPengguna, onMasukRuang, onBukaTagihan }) {
   const [sesi, setSesi] = useState(null);
   const [tagihan, setTagihan] = useState(null);
   const [galat, setGalat] = useState(null);
@@ -38,9 +38,15 @@ export default function DaftarLelangPembeli({ tab, idTpi, onMasukRuang, onBukaTa
       setSegar(false);
     }
   }, []);
-  // NFR-10: selama kanal real-time sehat tidak ada pengambilan berkala; bila kanal
-  // terputus, aplikasi berpindah ke polling 2 detik sampai kanal pulih.
-  const tersambung = useSesiDimulai(idTpi, () => muat());
+  // NFR-10 + Tabel IV.7: daftar mengikuti kanal TPI (sesi dimulai, ditutup, hasil lelang)
+  // dan kanal pribadi pembeli (lot yang dipantau dibuka). Selama salah satu kanal sehat
+  // tidak ada pengambilan berkala; bila keduanya putus, polling 2 detik berjalan sampai
+  // kanal pulih.
+  const tersambungTpi = useKanalTpiDaftar(idTpi, () => muat());
+  const tersambungPembeli = useKanalRealtime(
+    idPengguna ? `pembeli.${idPengguna}` : null, 'LOT_DIPANTAU_DIBUKA', () => muat(),
+  );
+  const tersambung = tersambungTpi || tersambungPembeli;
   usePolling(muat, JEDA_PENGGANTI, !tersambung);
 
   if (!sesi || !tagihan) {

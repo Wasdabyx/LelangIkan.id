@@ -100,7 +100,7 @@ LelangIkan.id/
 │   ├── app/Services/               logika use case (dipakai bersama API dan antarmuka web)
 │   ├── app/Support/                pemformatan rupiah, tanggal, dan lencana status
 │   ├── database/migrations/        struktur tabel sesuai ERD DPPL
-│   ├── database/seeders/           data awal dan data demo
+│   ├── database/seeders/           satu seeder: data awal + data demo
 │   ├── resources/views/web/        halaman Blade antarmuka web (layout, operator, kasir, pimpinan, admin)
 │   ├── routes/api.php              daftar alamat API
 │   └── routes/web.php              antarmuka web: masuk, dasbor per peran, papan lelang
@@ -170,10 +170,12 @@ Setelah dependensi backend terpasang (`composer install`), jalankan seluruh tes 
 php artisan test
 ```
 
-Saat ini **40 tes dengan 311 asersi** mencakup aturan lelang (kenaikan minimum bertingkat,
-pembulatan, status dan harga lot), daya beli, perpanjangan otomatis, paginasi daftar sesi,
-penyandian kata sandi, antarmuka web, dan cakupan endpoint. Tes memerlukan MariaDB/MySQL yang
-sudah dimigrasi dan di-seed (`php artisan migrate:fresh --seed`).
+Berkas pengujian (`tests/`, `phpunit.xml`) **tidak disertakan di repositori ini**; tes
+dijalankan manual pada salinan pengembang. Isinya 45 tes dengan 326 asersi: aturan lelang
+(kenaikan minimum bertingkat, pembulatan, status dan harga lot), daya beli, perpanjangan
+otomatis, paginasi daftar sesi, penyandian kata sandi, antarmuka web, cakupan endpoint, dan
+kontrak peristiwa real-time (nama peristiwa serta nama kanal yang didengar aplikasi mobile).
+Tes memerlukan MariaDB/MySQL yang sudah dimigrasi dan di-seed (`php artisan migrate:fresh --seed`).
 
 ### 2. Aplikasi mobile
 
@@ -207,7 +209,20 @@ Yang **tidak** berubah: rute API tetap lengkap sesuai **SKPL Tabel IV.6**, terma
 `/api/kasir`, dan `/api/pimpinan`. Penolakan hanya pada lapisan tampilan aplikasi mobile, sehingga
 pengujian wewenang per peran (`uji_rute_resmi.py`) dan integrasi lain tetap berjalan.
 
-`php artisan migrate --seed` mengisi riwayat lot 30 hari, enam kedatangan hari ini, serta skenario lelang hari ini: satu sesi aktif, dua sesi terjual (satu tagihan lunas dan satu dibayar sebagian), dan satu sesi tidak terjual. Menjalankan `php artisan db:seed` lagi tidak menggandakan data demo.
+`php artisan migrate --seed` menjalankan **satu seeder** (`DatabaseSeeder`) yang mengisi data
+awal (peran A1–A8, TPI, delapan akun contoh, konfigurasi, tarif retribusi, jenis ikan, grade
+mutu, pemilik kapal, kapal) sekaligus data demo: riwayat lot 30 hari, enam kedatangan hari
+ini, dan skenario lelang hari ini — satu sesi aktif (600 detik), dua sesi terjual (satu tagihan
+lunas dan satu dibayar sebagian), serta satu sesi tidak terjual.
+
+Untuk mengulang dari nol sebelum pengujian manual:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+`php artisan db:seed` (tanpa `fresh`) juga aman: seeder bersifat idempoten dan tidak
+menggandakan data.
 
 | Nomor | Status | Kegunaan saat demo |
 |---|---|---|
