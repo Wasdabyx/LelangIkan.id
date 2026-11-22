@@ -345,6 +345,47 @@ php artisan tinker --execute="echo App\Models\LotLelang::orderByDesc('id_lot')->
 Harapan: `Timbangan Simulasi` (atau `Timbangan Bluetooth` / `Timbangan kabel (USB/Serial)`
 bila memakai perangkat keras).
 
+## 13. Coba: lelang turun (harga menurun)
+
+**Yang diuji:** operator membuka sesi dengan harga **turun**, dan pembeli pertama yang
+menekan Ambil memenangkan lot.
+
+1. Di laptop (akun `operator`), buka **Antrean Lelang**. Pada baris lot yang tersedia,
+   ubah mode menjadi **Turun**. Empat kolom tambahan muncul: harga awal, batas bawah,
+   turun/langkah, interval.
+2. Isi: harga awal `40000`, batas bawah `20000`, turun/langkah `1000`, interval `5`.
+   Tekan **Buka**.
+3. Di ponsel, masuk sebagai `pembeli` → tab **Lelang**. Sesi baru muncul paling atas.
+   Ketuk **Masuk Ruang Lelang**.
+4. **Harapan:** label harga tertulis **"Harga berjalan (turun)"** dan angkanya **turun**
+   setiap 5 detik (mis. Rp33.000 → Rp32.000 → Rp31.000).
+5. Tekan **Ambil Sekarang** → **Ya, Ambil**.
+
+| Hasil | Arti |
+|---|---|
+| Muncul pesan pengambilan dan sesi hilang dari daftar berjalan | ✅ pemenang ditetapkan pada harga saat itu |
+| Harga tidak turun | Periksa interval dan penurunan per langkah |
+| Tombol Ambil tidak ada | Mode sesi bukan TURUN |
+
+> **Catatan uji saya:** alur ini lulus 8/8 langkah otomatis, termasuk harga yang benar-benar
+> turun (Rp32.000 → Rp30.000) dan pemenang yang tercatat.
+
+## 14. Coba: peringatan "tersalip" saat ada penawar lain
+
+**Yang diuji:** pembeli yang tawarannya dilewati langsung diberi tahu (tanpa menyentuh layar).
+
+Butuh **dua perangkat** dengan dua akun pembeli berbeda. Bila hanya satu akun, lewati.
+
+1. Perangkat A: akun `pembeli` di Ruang Lelang, ajukan tawaran.
+2. Perangkat B: akun pembeli lain di Ruang Lelang yang sama, ajukan tawaran lebih tinggi.
+3. **Perangkat A harus** dalam ±1 detik menampilkan *"Tawaran Anda telah dilampaui peserta
+   lain"* dan bergetar; posisi berubah menjadi **Anda tertinggal** dan kolom harga otomatis
+   terisi harga minimum baru.
+4. **Perangkat B tidak boleh** menerima pesan itu.
+
+Akun pembeli kedua bisa dibuat dari layar **Daftar sebagai Pembeli**, lalu Kasir menambah
+saldonya (langkah 2b) dan pembeli memesan lot yang sama.
+
 ## Ringkasan: apa yang membuktikan fitur ini berhasil
 
 | Langkah | Peristiwa | Wajib dicoba? |
@@ -358,6 +399,8 @@ bila memakai perangkat keras).
 | 10 | `DI_TEMPAT` → tawaran tercatat dari operator | Ya, bila menguji FR-63 |
 | 11 | Saklar jarak jauh → di tempat tetap jalan | Ya, bila menguji BT-03 |
 | 12 | Sumber timbangan jelas (BLE/kabel/simulasi) | Ya, bila menguji FR-07 |
+| 13 | Lelang turun: harga menurun, Ambil menang | Bila memakai mode turun |
+| 14 | Peringatan tersalip pada layar pembeli | Bila ada 2 perangkat |
 
 ## Bila ada yang tidak sesuai
 
@@ -374,10 +417,24 @@ Dua hal yang Anda laporkan pada percobaan pertama sudah diperbaiki dan diuji ula
 | "Please enter a valid value. The two nearest valid values are 4999901 and 5000001" saat mengisi saldo | Atribut `min="1"` dengan `step="100"` membuat peramban hanya menerima 1, 101, 201, … sehingga angka bulat seperti 5000000 ditolak sebelum sampai ke server | `min` disetel `0` (server tetap menolak Rp0) di Saldo Pembeli, Tagihan, dan dua formulir Settlement |
 | Sisa waktu lelang tidak bergerak | Angka `sisa_detik` hanya diperbarui saat data baru tiba (tiap 2 detik saat kanal putus, atau hanya saat ada peristiwa saat kanal sehat) | Jam kini berdetak sendiri tiap detik dari angka terakhir + waktu terima, dan dicocokkan ulang tiap detik. Saat kanal sehat, peristiwa tetap terasa seketika |
 
-## Yang belum bisa dicoba lewat cara ini
+### Yang saya temukan dan perbaiki sendiri saat menulis panduan ini
 
-- **Notifikasi "tersalip" (`OUTBID`) secara real-time.** Server mengirimnya, tetapi aplikasi
-  belum mendengarkannya. Saat ini tanda "Anda tertinggal" tetap muncul — tetapi berasal dari
-  data status, bukan dari peristiwa. Ini kandidat pengembangan berikutnya.
-- **`SETTLEMENT_DIBAYAR`**: menyasar kanal nelayan, dan aplikasi mobile belum punya layar
-  nelayan.
+| Temuan | Sebab | Perbaikan |
+|---|---|---|
+| Kolom "harga awal dst." untuk mode turun tidak ada di layar operator; layar hanya menyuruh "pakai aplikasi mobile", padahal aplikasi mobile juga tidak punya | Formulir buka sesi hanya mengirim mode + durasi + kenaikan | Formulir di **Antrean Lelang** kini punya kolom harga awal, batas bawah, turun/langkah, dan interval, dengan nilai awal terisi dari harga pembukaan lot |
+| Tombol **Buka** tidak bereaksi ketika kolom baru diisi (tanpa pesan apa pun) | `min="1" step="100"` pada penurunan per langkah menolak angka bulat seperti 1.000 | `min` disamakan dengan `step` (`100`); saya juga menambahkan pemeriksa otomatis untuk **semua** kolom angka di 8 halaman web — hasil: 0 bermasalah |
+| Kotak lot baru terbuka tetapi pembeli tidak melihat kartu apa pun | Pembeli hanya melihat lot yang ia pesan; lot 0006 belum dipesan | Pesan lot lebih dulu, atau minta operator memilih lot yang sudah dipesan pembeli |
+| Sesi lelang yang sudah selesai tidak dapat diketuk sehingga pembeli tidak bisa melihat hasil/pemenangnya | Kartu "Selesai hari ini" tidak diberi aksi tekan | Kartu dapat diketuk dan diberi tulisan **Lihat hasil** |
+
+## Yang belum bisa dibuktikan tanpa perangkat atau manusia
+
+| Hal | Kenapa belum | Yang dibutuhkan |
+|---|---|---|
+| Bacaan dari timbangan fisik | Kode adaptor BLE/Serial sudah terpasang, tetapi tidak ada perangkat di sini | Timbangan BLE atau kabel USB di TPI + **Expo dev build** (BLE memakai modul native, tidak jalan di Expo Go) |
+| **NFR-03** uptime 99% | Butuh sistem berjalan di server TPI sebulan | `pantau_uptime.py` dijalankan selama 30 hari |
+| **NFR-07** waktu pelatihan < 20 detik | Butuh 5 peserta manusia | Lembar uji usabilitas (sudah disiapkan) |
+| Perilaku di ponsel sungguhan | Semua uji saya memakai Expo web | Ponsel Android/iOS dengan Expo Go |
+| Peristiwa `SETTLEMENT_DIBAYAR` | Disiarkan ke kanal nelayan, sedangkan aplikasi mobile belum punya layar nelayan | Akun dan layar nelayan (di luar lingkup Bagian I) |
+
+Semua hal lain di dokumen ini sudah saya jalankan sendiri di browser sungguhan, dan angka
+hasilnya tertulis pada tiap langkah.
