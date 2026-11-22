@@ -87,6 +87,45 @@ class LelangService
             ->all();
     }
 
+    /**
+     * Lot TIDAK_TERJUAL pada TPI operator. Lot seperti ini boleh dilelang ulang dengan
+     * harga pembukaan baru (diagram keadaan LotLelang: TIDAK_TERJUAL -> MENUNGGU_LELANG),
+     * tetapi tanpa daftar ini operator tidak punya jalan untuk melakukannya.
+     */
+    public function lotTidakTerjual(int $idTpi): array
+    {
+        return LotLelang::whereHas('tangkapan.kedatangan', fn ($q) => $q->where('id_tpi', $idTpi))
+            ->where('status', StatusLot::TIDAK_TERJUAL->value)
+            ->orderByDesc('id_lot')
+            ->limit(20)
+            ->get()
+            ->map(fn (LotLelang $lot) => $this->ringkasLot($lot) + [
+                'jumlah_peserta' => DaftarPantauan::where('id_lot', $lot->getIdLot())->count(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /** Lepaskan lot TIDAK_TERJUAL ke antrean lagi dengan harga pembukaan baru. */
+    public function lelangUlangLot(Pengguna $operator, int $idLot, float $hargaBaru, ?string $alasan = null): LotLelang
+    {
+        return DB::transaction(function () use ($operator, $idLot, $hargaBaru, $alasan) {
+            $lot = LotLelang::whereKey($idLot)->lockForUpdate()->firstOrFail();
+            $this->pastikanLotDiTpi($lot, $operator);
+
+            $hargaLama = $lot->getHargaPembukaan();
+            $lot->tetapkanHargaPembukaan($hargaBaru);   // TIDAK_TERJUAL -> MENUNGGU_LELANG
+
+            app(\App\Services\AuditService::class)->catat(
+                $operator, 'LELANG_ULANG_LOT', 'lot_lelang', $lot->getIdLot(), null,
+                ['kode_lot' => $lot->getKodeLot(), 'harga_lama' => $hargaLama,
+                 'harga_baru' => $hargaBaru, 'alasan' => $alasan],
+            );
+
+            return $lot->fresh();
+        });
+    }
+
     /** ALG-02: kenaikan minimum bertingkat menurut nilai lot (Rp per kg, dibulatkan ke atas kelipatan 100). */
     public function usulanKenaikan(LotLelang $lot): int
     {

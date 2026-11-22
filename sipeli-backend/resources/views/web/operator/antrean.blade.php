@@ -87,11 +87,76 @@
                     </tbody>
                 </table>
             </div>
-            <p class="border-t border-slate-500 px-5 py-3 text-xs text-slate-600">
+        @endif
+
+        @if (count($tidakTerjual ?? []) > 0)
+            <div class="mt-6 rounded-xl border border-slate-500 bg-white">
+                <div class="flex items-center justify-between border-b border-slate-500 px-5 py-3">
+                    <h2 class="text-sm font-semibold text-slate-900">Lot tidak terjual</h2>
+                    <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+                        {{ count($tidakTerjual) }} lot
+                    </span>
+                </div>
+                <p class="border-b border-slate-100 px-5 py-2 text-xs text-slate-600">
+                    Lot yang tidak ada penawarnya bisa dilelang ulang dengan harga pembukaan baru.
+                    Harga baru dicatat pada jejak audit.
+                </p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
+                            <tr>
+                                <th class="px-5 py-2">Kode lot</th>
+                                <th class="px-5 py-2">Jenis / grade</th>
+                                <th class="px-5 py-2">Kapal</th>
+                                <th class="px-5 py-2 text-right">Berat</th>
+                                <th class="px-5 py-2 text-right">Harga terakhir</th>
+                                <th class="px-5 py-2 text-right">Peserta</th>
+                                <th class="px-5 py-2">Lelang ulang</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            @foreach ($tidakTerjual as $lot)
+                                <tr>
+                                    <td class="px-5 py-3 font-medium text-slate-900">{{ $lot['kode_lot'] }}</td>
+                                    <td class="px-5 py-3 text-slate-700">
+                                        {{ $lot['nama_jenis'] }}
+                                        <span class="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600">Grade {{ $lot['kode_grade'] }}</span>
+                                    </td>
+                                    <td class="px-5 py-3 text-slate-600">{{ $lot['nama_kapal'] }}</td>
+                                    <td class="px-5 py-3 text-right">{{ Tampilan::kg($lot['berat_aktual']) }}</td>
+                                    <td class="px-5 py-3 text-right">{{ Tampilan::rupiah($lot['harga_pembukaan']) }}</td>
+                                    <td class="px-5 py-3 text-right">{{ $lot['jumlah_peserta'] }}</td>
+                                    <td class="px-5 py-3">
+                                        <form method="POST" action="{{ route('operator.lot.lelang-ulang', $lot['id_lot']) }}"
+                                              class="flex flex-wrap items-center gap-1.5">
+                                            @csrf
+                                            <input name="harga_pembukaan" type="number" min="100" step="100" required
+                                                   value="{{ (int) ($lot['harga_pembukaan'] * 0.9) }}"
+                                                   class="w-24 rounded-md border border-slate-500 px-1.5 py-1 text-xs"
+                                                   title="Harga pembukaan baru per kg"
+                                                   aria-label="Harga pembukaan baru untuk {{ $lot['kode_lot'] }}">
+                                            <input name="alasan" maxlength="200" placeholder="alasan (opsional)"
+                                                   class="w-40 rounded-md border border-slate-500 px-1.5 py-1 text-xs"
+                                                   aria-label="Alasan lelang ulang {{ $lot['kode_lot'] }}">
+                                            <button class="rounded-md bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-amber-700">
+                                                Lelang ulang
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+
+        <div class="mt-6 rounded-xl border border-slate-500 bg-white px-5 py-3">
+            <p class="text-xs text-slate-600">
                 Mode <strong>Turun</strong> memakai kolom tambahan pada baris lot: harga awal, harga batas bawah,
                 penurunan per langkah, dan interval. Harga awal harus lebih tinggi dari batas bawah; bila tidak,
                 sistem menolak dengan pesan yang jelas.
             </p>
-        @endif
+        </div>
     </div>
 @endsection

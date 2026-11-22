@@ -393,6 +393,41 @@ Butuh **dua perangkat** dengan dua akun pembeli berbeda. Bila hanya satu akun, l
 Akun pembeli kedua bisa dibuat dari layar **Daftar sebagai Pembeli**, lalu Kasir menambah
 saldonya (langkah 2b) dan pembeli memesan lot yang sama.
 
+## 15. Coba: lot tidak terjual dilelang ulang
+
+**Yang diuji:** lot yang tidak ada penawarnya tidak hilang dari sistem; operator dapat
+melelangnya lagi dengan harga pembukaan baru.
+
+1. Sebagai `operator`, buka sesi pada satu lot lalu **tutup** tanpa ada yang menawar
+   (atau tunggu waktunya habis).
+2. Buka lagi **Antrean Lelang**. Di bawah tabel utama kini ada kotak **Lot tidak terjual**.
+3. Isi harga pembukaan baru (bawaannya 90% dari harga terakhir) dan alasan bila perlu.
+   Tekan **Lelang ulang**.
+
+| Hasil | Arti |
+|---|---|
+| Lot pindah ke tabel **Lot siap lelang** dengan harga baru | ✅ boleh dilelang lagi |
+| Muncul pesan "… kembali ke antrean dengan harga pembukaan Rp…/kg" | ✅ tersimpan |
+| Lot tetap di kotak "tidak terjual" | Harga belum memenuhi syarat (Rp100–Rp99.999.999) |
+
+Harga baru dan alasannya tercatat pada **jejak audit** (aksi `LELANG_ULANG_LOT`), jadi
+perubahan harga tetap dapat ditelusuri pimpinan.
+
+## 16. Coba: pembeli yang kalah
+
+**Yang diuji:** pembeli yang tidak memenangkan lot tidak mendapat tagihan apa pun.
+
+1. Dengan dua akun pembeli pada lot yang sama, menawarlah bergantian; biarkan akun B
+   menang.
+2. Di akun A (yang kalah), buka tab **Lelang** → bagian **Selesai hari ini**.
+
+| Hasil | Arti |
+|---|---|
+| Kartu lot bertanda **Selesai** dengan harga akhir, **bukan** "Anda menang" | ✅ A tidak menang |
+| Kartu dapat diketuk (**Lihat hasil**) dan menampilkan pemenang | ✅ dapat diperiksa |
+| Tab **Tagihan** A tidak memuat lot tersebut | ✅ tidak ada tagihan untuk yang kalah |
+| Tab **Tagihan** B memuat tepat satu tagihan lot itu | ✅ pemenang ditagih |
+
 ## Ringkasan: apa yang membuktikan fitur ini berhasil
 
 | Langkah | Peristiwa | Wajib dicoba? |
@@ -408,6 +443,8 @@ saldonya (langkah 2b) dan pembeli memesan lot yang sama.
 | 12 | Sumber timbangan jelas (BLE/kabel/simulasi) | Ya, bila menguji FR-07 |
 | 13 | Lelang turun: harga menurun, Ambil menang | Bila memakai mode turun |
 | 14 | Peringatan tersalip pada layar pembeli | Bila ada 2 perangkat |
+| 15 | Lot tidak terjual dilelang ulang | Ya, bila ada lot tanpa penawar |
+| 16 | Pembeli yang kalah tidak ditagih | Bila ada 2 akun pembeli |
 
 ## Bila ada yang tidak sesuai
 

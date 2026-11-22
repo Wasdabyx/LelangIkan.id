@@ -38,6 +38,7 @@ Route::middleware(['auth', 'web.peran:OPERATOR_LELANG'])->prefix('dasbor/operato
     Route::get('/antrean', [OperatorController::class, 'antrean'])->name('operator.antrean');
     Route::get('/sesi', [OperatorController::class, 'sesi'])->name('operator.sesi');
     Route::post('/sesi', [OperatorController::class, 'buka'])->name('operator.sesi.buka');
+    Route::post('/lot/{id}/lelang-ulang', [OperatorController::class, 'lelangUlang'])->name('operator.lot.lelang-ulang');
     Route::get('/sesi/{id}', [OperatorController::class, 'pantau'])->name('operator.sesi.pantau');
     Route::get('/sesi/{id}/keadaan', [OperatorController::class, 'keadaan'])->name('operator.sesi.keadaan');
     Route::post('/sesi/{id}/tawaran', [OperatorController::class, 'tawaranDiTempat'])->name('operator.sesi.tawaran');

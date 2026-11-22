@@ -25,6 +25,7 @@ class OperatorController extends Controller
 
         return view('web.operator.antrean', [
             'antrean' => $this->lelang->antrean($idTpi),
+            'tidakTerjual' => $this->lelang->lotTidakTerjual($idTpi),
             'durasiBawaan' => (int) Konfigurasi::nilai('durasi_lelang_bawaan', 120),
         ]);
     }
@@ -35,6 +36,29 @@ class OperatorController extends Controller
         return view('web.operator.sesi', [
             'sesi' => $this->lelang->daftarSesiOperator($request->user(), (int) $request->query('halaman', 1)),
         ]);
+    }
+
+    /** POST /dasbor/operator/lot/{id}/lelang-ulang */
+    public function lelangUlang(Request $request, int $id)
+    {
+        $data = $request->validate([
+            'harga_pembukaan' => ['required', 'integer', 'between:100,99999999'],
+            'alasan'          => ['nullable', 'string', 'max:200'],
+        ], [
+            'harga_pembukaan.required' => 'Harga pembukaan baru wajib diisi.',
+            'harga_pembukaan.integer'  => 'Harga pembukaan harus angka rupiah tanpa titik atau koma.',
+            'harga_pembukaan.between'  => 'Harga pembukaan Rp100 sampai Rp99.999.999 per kg.',
+        ]);
+
+        $lot = $this->lelang->lelangUlangLot(
+            $request->user(), $id, (float) $data['harga_pembukaan'], $data['alasan'] ?? null,
+        );
+
+        return redirect()->route('operator.antrean')->with(
+            'sukses',
+            "Lot {$lot->getKodeLot()} kembali ke antrean dengan harga pembukaan "
+            . \App\Support\Tampilan::rupiah((float) $lot->getHargaPembukaan()) . '/kg.',
+        );
     }
 
     /** POST /dasbor/operator/sesi */
