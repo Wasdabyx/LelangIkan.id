@@ -74,6 +74,7 @@ export default function PembeliScreen({ pengguna, onKeluar }) {
     isi = (
       <RuangLelang
         idTpi={pengguna?.id_tpi}
+        idPembeli={pengguna?.id_pengguna}
         idSesi={idSesi}
         onKembali={() => kembaliKeDaftar('lelang')}
         onLihatTagihan={(id) => {

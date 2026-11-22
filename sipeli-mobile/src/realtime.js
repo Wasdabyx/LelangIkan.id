@@ -143,7 +143,7 @@ export function useKanalRealtime(namaKanal, peristiwa, saatPeristiwa) {
 }
 
 /** Nama peristiwa yang didengar Ruang Lelang pada kanal TPI. */
-export const PERISTIWA_RUANG_LELANG = ['PENAWARAN_BARU', 'SESI_DIPERPANJANG', 'HASIL_LELANG', 'SESI_DITUTUP'];
+export const PERISTIWA_RUANG_LELANG = ['PENAWARAN_BARU', 'OUTBID', 'SESI_DIPERPANJANG', 'HASIL_LELANG', 'SESI_DITUTUP'];
 
 /** Nama peristiwa yang didengar layar daftar lelang pembeli pada kanal TPI. */
 export const PERISTIWA_DAFTAR_LELANG = ['SESI_DIMULAI', 'SESI_DITUTUP', 'HASIL_LELANG'];

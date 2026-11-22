@@ -28,7 +28,7 @@ const POSISI = {
  * Getar + pesan saat posisi berubah menjadi tertinggal (FR-22).
  * Kunci idempotensi dibuat per tawaran; bila koneksi putus, kirim ulang memakai kunci yang sama (FR-20).
  */
-export default function RuangLelang({ idSesi, idTpi, onKembali, onLihatTagihan }) {
+export default function RuangLelang({ idSesi, idTpi, idPembeli, onKembali, onLihatTagihan }) {
   const [data, setData] = useState(null);
   const [galat, setGalat] = useState(null);
   const [harga, setHarga] = useState('');
@@ -73,7 +73,22 @@ export default function RuangLelang({ idSesi, idTpi, onKembali, onLihatTagihan }
   const kanalId = aktif ? (idTpi ? `tpi.${idTpi}` : null) : null;
   // Tabel IV.7: selain tawaran baru, layar mengikuti perpanjangan waktu, hasil lelang,
   // dan penutupan sesi sehingga sisa waktu dan status pemenang berubah seketika.
-  const tersambung = useKanalRealtime(kanalId, PERISTIWA_RUANG_LELANG, () => muat());
+  const tersambung = useKanalRealtime(kanalId, PERISTIWA_RUANG_LELANG, (muatan, nama) => {
+    // FR-22: OUTBID dikirim ke kanal TPI dengan id_pembeli penerima. Hanya pembeli yang
+    // disebut yang diberi tahu, dan hanya bila ia benar-benar bukan penawar tertinggi.
+    if (nama === 'OUTBID') {
+      const saya = muatan?.id_pembeli;
+      if (saya && saya === idPembeli) {
+        Vibration.vibrate([0, 200, 100, 200]);
+        setPesan({
+          jenis: 'galat',
+          teks: muatan?.pesan || 'Tawaran Anda tertinggal. Ajukan tawaran baru.',
+        });
+      }
+      return;
+    }
+    muat();
+  });
   // Kanal sehat -> tidak ada pengambilan berkala; kanal putus -> polling 2 detik (NFR-10).
   usePolling(muat, JEDA_PENGGANTI, aktif && !tersambung);
   // Jam berdetak dari angka terakhir; penyegaran ringan ini menjaga angkanya tidak melenceng
