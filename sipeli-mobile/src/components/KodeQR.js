@@ -1,4 +1,4 @@
-import QRCode from 'qrcode';
+import QRCode from 'qrcode/lib/browser';   // entry main memakai fs/Buffer (tidak ada di Android)
 import Svg, { Path, Rect } from 'react-native-svg';
 
 /**

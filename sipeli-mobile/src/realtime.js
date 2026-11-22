@@ -1,8 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
 import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
+import * as ModulPusher from 'pusher-js';
 import { ambilToken } from './api';
 import { API_URL } from './config';
+
+/**
+ * Di Android, Metro memakai bidang "react-native" pada pusher-js, yang mengekspor
+ * module.exports.Pusher (objek), bukan fungsi seperti versi web. Tanpa pemilihan ini,
+ * new Echo({ Pusher }) melempar "Object cannot be used as a constructor" dan layar
+ * Ruang Lelang gagal dibuka.
+ */
+const Pusher = (() => {
+  const kandidat = [
+    ModulPusher.default?.default?.Pusher,
+    ModulPusher.default?.Pusher,
+    ModulPusher.default?.default,
+    ModulPusher.default,
+    ModulPusher.Pusher,
+    ModulPusher,
+  ];
+  return kandidat.find((k) => typeof k === 'function');
+})();
 
 /**
  * NFR-10: kanal real-time dengan **status yang dilaporkan ke layar**.
