@@ -188,19 +188,29 @@ Perpanjangan **hanya** terpicu bila tawaran masuk saat sisa waktu **di bawah 15 
 (`ambang_perpanjangan_detik`). Sesi `PLR-261122-0001` dibuka dengan **600 detik**, jadi Anda
 memang perlu menunggu beberapa menit. Ini bawaan aturan ALG-03, bukan pengaturan uji.
 
-Ada dua cara:
+Ada tiga cara:
 
 | Cara | Langkah | Cocok untuk |
 |---|---|---|
-| **Cepat** (disarankan) | Sesi `PLR-261122-0006` yang Anda buka di langkah 4 dengan durasi **30 detik** (durasi terpendek yang diizinkan) | Ingin cepat selesai |
-| **Lambat** | Pakai sesi `PLR-261122-0001` (600 detik) dan tunggu sampai sisa ≤ 15 detik | Ingin melihat alur asli |
+| **Paling cepat** (disarankan) | Buka sesi `PLR-261122-0006` dengan durasi **30 detik** (durasi terpendek yang diizinkan) pada langkah 4 | Selesai di bawah 1 menit |
+| **Cepat, tanpa buka sesi baru** | Pakai sesi `0001`, tetapi majukan jamnya dulu dari terminal (lihat perintah di bawah) | Sudah terlanjur memakai `0001` |
+| **Lambat** | Pakai sesi `0001` apa adanya: 600 detik, tunggu sampai sisa ≤ 15 detik | Ingin melihat alur asli tanpa menyentuh data |
+
+**Memajukan jam sesi dari terminal** (hanya mengubah jam tutup, bukan aturan):
+
+```bash
+cd sipeli-backend
+php artisan tinker --execute="$s=App\Models\SesiLelang::find(1); $s->waktu_selesai_rencana=now()->addSeconds(10); $s->save();"
+```
+
+Setelah itu sisa waktu di layar langsung melorot ke `00:10` — jadi Anda tidak perlu menunggu.
 
 ### Langkah mencoba
 
 1. Di laptop, pilih sesi yang sesuai lalu **tekan "Buka"** (untuk `0006`, isi durasi `30`).
    Ini saat mulai berdetak — jangan menunggu sesi sudah hampir habis.
 2. Di ponsel, segera masuk **Ruang Lelang** sesi tersebut. Sisa waktu berdetak di layar dan
-   turun sampai **≤ 15 detik**.
+   turun sampai **≤ 15 detik** (atau langsung `00:10` bila Anda memakai perintah `tinker` di atas).
 3. Ketik harga tawarannya **selagi menunggu** — jangan mengisi formulir setelah waktunya habis
    (sesi sudah tertutup dan tawaran akan ditolak). Angka yang dipakai:
    - sesi `PLR-261122-0001` → **Rp28.500/kg** (harga pembukaan, belum ada penawar);
@@ -290,6 +300,15 @@ Ini bukan bagian fitur real-time, tetapi cepat dicek dan sering ditanya penguji:
 Kirimkan ke saya: langkah ke berapa, yang terlihat di layar, dan **isi Terminal B**
 (Reverb). Bila Reverb mencetak baris pengiriman peristiwa, berarti masalahnya di klien;
 bila tidak mencetak apa pun, masalahnya di server atau konfigurasi.
+
+## Perbaikan sesudah percobaan pertama Anda
+
+Dua hal yang Anda laporkan pada percobaan pertama sudah diperbaiki dan diuji ulang:
+
+| Laporan | Sebab | Perbaikan |
+|---|---|---|
+| "Please enter a valid value. The two nearest valid values are 4999901 and 5000001" saat mengisi saldo | Atribut `min="1"` dengan `step="100"` membuat peramban hanya menerima 1, 101, 201, … sehingga angka bulat seperti 5000000 ditolak sebelum sampai ke server | `min` disetel `0` (server tetap menolak Rp0) di Saldo Pembeli, Tagihan, dan dua formulir Settlement |
+| Sisa waktu lelang tidak bergerak | Angka `sisa_detik` hanya diperbarui saat data baru tiba (tiap 2 detik saat kanal putus, atau hanya saat ada peristiwa saat kanal sehat) | Jam kini berdetak sendiri tiap detik dari angka terakhir + waktu terima, dan dicocokkan ulang tiap detik. Saat kanal sehat, peristiwa tetap terasa seketika |
 
 ## Yang belum bisa dicoba lewat cara ini
 

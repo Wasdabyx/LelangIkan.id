@@ -1,13 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { lelang } from '../../api';
 import { KotakPesan, Lencana, Tombol } from '../../components/Dasar';
 import { Bagian, BarisDaftar, Tabel, TitikStatus } from '../../components/Tata';
 import FotoIkan from '../../components/FotoIkan';
-import { formatSisa, WARNA_TRANSAKSI } from '../../components/Lelang';
+import { formatSisaSekarang, useDetak, WARNA_TRANSAKSI } from '../../components/Lelang';
 import { formatKg, formatRupiah, waktuPendek } from '../../format';
 import { usePolling } from '../../polling';
-import { useKanalTpiDaftar, useKanalRealtime, JEDA_PENGGANTI } from '../../realtime';
+import { useKanalTpiDaftar, useKanalRealtime, JEDA_PENGGANTI, AMAN_DIAM } from '../../realtime';
 import { warna } from '../../tema';
 
 /**
@@ -42,12 +42,17 @@ export default function DaftarLelangPembeli({ tab, idTpi, idPengguna, onMasukRua
   // dan kanal pribadi pembeli (lot yang dipantau dibuka). Selama salah satu kanal sehat
   // tidak ada pengambilan berkala; bila keduanya putus, polling 2 detik berjalan sampai
   // kanal pulih.
-  const tersambungTpi = useKanalTpiDaftar(idTpi, () => muat());
+  const diterimaPada = useRef(Date.now());
+  const muatDanCatat = useCallback(() => { diterimaPada.current = Date.now(); muat(); }, [muat]);
+  const tersambungTpi = useKanalTpiDaftar(idTpi, muatDanCatat);
   const tersambungPembeli = useKanalRealtime(
-    idPengguna ? `pembeli.${idPengguna}` : null, 'LOT_DIPANTAU_DIBUKA', () => muat(),
+    idPengguna ? `pembeli.${idPengguna}` : null, 'LOT_DIPANTAU_DIBUKA', muatDanCatat,
   );
   const tersambung = tersambungTpi || tersambungPembeli;
-  usePolling(muat, JEDA_PENGGANTI, !tersambung);
+  usePolling(muatDanCatat, JEDA_PENGGANTI, !tersambung);
+  // Saat kanal sehat tidak ada polling, sehingga angka sisa waktu bisa basi. Muat ulang
+  // tiap AMAN_DIAM milidetik agar jam tiap sesi berdetak dari angka yang masih segar.
+  usePolling(muatDanCatat, AMAN_DIAM, tersambung);
 
   if (!sesi || !tagihan) {
     return (
@@ -79,7 +84,7 @@ export default function DaftarLelangPembeli({ tab, idTpi, idPengguna, onMasukRua
             <Text style={s.teksKosong}>Belum ada sesi lelang untuk lot yang Anda pesan.</Text>
           ) : null}
           {berjalan.map((x) => (
-            <SesiBerjalan key={x.id_sesi} sesi={x} onPress={() => onMasukRuang(x.id_sesi)} />
+            <SesiBerjalan key={x.id_sesi} sesi={x} onPress={() => onMasukRuang(x.id_sesi)} diterimaPada={diterimaPada.current} />
           ))}
           {selesai.length > 0 ? (
             <>
@@ -151,13 +156,17 @@ export default function DaftarLelangPembeli({ tab, idTpi, idPengguna, onMasukRua
   );
 }
 
-function SesiBerjalan({ sesi, onPress }) {
+function SesiBerjalan({ sesi, onPress, diterimaPada }) {
   const posisi = {
     TERTINGGI: ['Anda tertinggi', warna.sukses],
     TERTINGGAL: ['Anda tertinggal', warna.galat],
     BELUM_MENAWAR: ['Belum menawar', warna.teksRedup],
   }[sesi.posisi] || ['', warna.teksRedup];
-  const genting = sesi.sisa_detik <= 15;
+  useDetak(sesi.status === 'AKTIF');
+  const sisaKini = sesi.sisa_detik === null || sesi.sisa_detik === undefined
+    ? sesi.sisa_detik
+    : Math.max(0, Math.round(sesi.sisa_detik - (Date.now() - diterimaPada) / 1000));
+  const genting = sisaKini !== null && sisaKini !== undefined && sisaKini <= 15;
   return (
     <View style={s.berjalan}>
       <View style={s.barisAtas}>
@@ -169,7 +178,7 @@ function SesiBerjalan({ sesi, onPress }) {
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={[s.jam, genting && { color: warna.galat }]}>{formatSisa(sesi.sisa_detik)}</Text>
+          <Text style={[s.jam, genting && { color: warna.galat }]}>{formatSisaSekarang(sesi.sisa_detik, diterimaPada)}</Text>
           <Text style={s.selKecil}>Berjalan</Text>
         </View>
       </View>

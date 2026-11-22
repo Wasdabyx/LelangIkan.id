@@ -32,6 +32,16 @@ const host = process.env.EXPO_PUBLIC_REVERB_HOST || hostApi;
 /** Jeda pengganti saat kanal terputus (NFR-10: 2 detik). */
 export const JEDA_PENGGANTI = 2000;
 
+/**
+ * Batas umur data sebelum jam sisa waktu mulai berdetak sendiri (ms).
+ *
+ * SKPL NFR-10 hanya mewajibkan pembaruan tiap 2 detik saat kanal putus, sehingga
+ * angka `sisa_detik` bisa tertinggal sampai 2 detik. Supaya pengguna melihat waktu
+ * bergerak, layar menghitung mundur dari angka terakhir + waktu terima, lalu
+ * mencocokkannya lagi setiap kali data baru datang atau peristiwa kanal diterima.
+ */
+export const AMAN_DIAM = 1000;
+
 /** Jeda sebelum sambungan real-time dibangun ulang bila kanal tidak pulih sendiri. */
 export const JEDA_SAMBUNG_ULANG = 5000;
 

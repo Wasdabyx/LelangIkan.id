@@ -54,7 +54,7 @@
                                                 <option value="{{ $m }}">{{ $m }}</option>
                                             @endforeach
                                         </select>
-                                        <input name="nominal" type="number" min="1" step="100" value="{{ (int) $t['sisa_tagihan'] }}"
+                                        <input name="nominal" type="number" min="0" step="100" value="{{ (int) $t['sisa_tagihan'] }}"
                                                class="w-28 rounded-md border border-slate-500 px-1.5 py-1 text-xs" title="Nominal dibayar">
                                         <input name="nomor_referensi" placeholder="Ref." maxlength="40"
                                                class="w-20 rounded-md border border-slate-500 px-1.5 py-1 text-xs">

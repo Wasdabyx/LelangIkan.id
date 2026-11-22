@@ -114,7 +114,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-600" for="nominal">Nominal (kosongkan = sisa)</label>
-                            <input id="nominal" name="nominal" type="number" min="1" step="100" placeholder="{{ (int) $rincian['sisa'] }}"
+                            <input id="nominal" name="nominal" type="number" min="0" step="100" placeholder="{{ (int) $rincian['sisa'] }}"
                                    class="mt-1 w-full rounded-lg border border-slate-500 px-3 py-2 text-sm">
                         </div>
                         <div>

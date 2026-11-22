@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ukuran, warna } from '../tema';
 
@@ -6,6 +7,31 @@ import { ukuran, warna } from '../tema';
 /** 125 -> "02:05" */
 export const formatSisa = (detik) =>
   `${String(Math.floor(Math.max(0, detik) / 60)).padStart(2, '0')}:${String(Math.max(0, detik) % 60).padStart(2, '0')}`;
+
+/**
+ * Sisa detik yang **berdetak**: angka terakhir dari server dikurangi waktu yang sudah
+ * berjalan sejak data itu diterima. Tanpa ini jam hanya bergerak saat data baru tiba
+ * (tiap 2 detik saat kanal putus, atau hanya saat ada peristiwa saat kanal sehat),
+ * sehingga di layar waktu tampak diam / tersendat.
+ */
+export function formatSisaSekarang(sisa, diterimaPada) {
+  if (sisa === null || sisa === undefined) return formatSisa(0);
+  const berlalu = diterimaPada ? (Date.now() - diterimaPada) / 1000 : 0;
+  return formatSisa(Math.max(0, Math.round(sisa - berlalu)));
+}
+
+/**
+ * Jam berdetak untuk `<Text>`: memaksa render ulang tiap detik tanpa meminta data baru.
+ * `aktif=false` menghentikan detak (sesi selesai / layar tidak tampak).
+ */
+export function useDetak(aktif) {
+  const [, setDetik] = useState(0);
+  useEffect(() => {
+    if (!aktif) return undefined;
+    const id = setInterval(() => setDetik((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [aktif]);
+}
 
 /** Bilah tab di bawah bilah atas. daftar = [[kunci, judul], ...] */
 export function TabAtas({ daftar, aktif, onGanti }) {
@@ -29,16 +55,18 @@ export function TabAtas({ daftar, aktif, onGanti }) {
 }
 
 /** Jam hitung mundur besar. Merah saat 15 detik terakhir (masa perpanjangan). */
-export function JamMundur({ sisa, status, perpanjangan, maksPerpanjangan }) {
+export function JamMundur({ sisa, diterimaPada, status, perpanjangan, maksPerpanjangan }) {
   const aktif = status === 'AKTIF';
-  const genting = aktif && sisa <= 15;
+  useDetak(aktif);
+  const sisaKini = aktif && diterimaPada ? Math.max(0, Math.round(sisa - (Date.now() - diterimaPada) / 1000)) : sisa;
+  const genting = aktif && sisaKini <= 15;
   return (
     <View style={[s.jam, genting && s.jamGenting, !aktif && s.jamSelesai]}>
       <Text style={[s.labelJam, genting && { color: warna.galat }]}>
         {aktif ? 'Sisa waktu' : 'Lelang selesai'}
       </Text>
       <Text style={[s.angkaJam, genting && { color: warna.galat }, !aktif && { color: warna.teksRedup }]} accessibilityLabel="Sisa waktu">
-        {formatSisa(aktif ? sisa : 0)}
+        {formatSisaSekarang(aktif ? sisa : 0, aktif ? diterimaPada : null)}
       </Text>
       {perpanjangan > 0 ? (
         <Text style={s.perpanjangan}>
@@ -55,9 +83,11 @@ export function JamMundur({ sisa, status, perpanjangan, maksPerpanjangan }) {
  * Panel utama lelang: sisa waktu (kiri) dan harga tertinggi (kanan), tanpa kotak dekoratif.
  * Dipakai Ruang Lelang (pembeli) dan Pantau Sesi (operator).
  */
-export function PanelLelang({ sisa, status, perpanjangan, maksPerpanjangan, labelHarga, harga, bawahHarga, info }) {
+export function PanelLelang({ sisa, diterimaPada, status, perpanjangan, maksPerpanjangan, labelHarga, harga, bawahHarga, info }) {
   const aktif = status === 'AKTIF';
-  const genting = aktif && sisa <= 15;
+  useDetak(aktif);
+  const sisaKini = aktif && diterimaPada ? Math.max(0, Math.round(sisa - (Date.now() - diterimaPada) / 1000)) : sisa;
+  const genting = aktif && sisaKini <= 15;
   return (
     <View>
       <View style={s.panel}>
@@ -67,7 +97,7 @@ export function PanelLelang({ sisa, status, perpanjangan, maksPerpanjangan, labe
             style={[s.angkaPanel, genting && { color: warna.galat }, !aktif && { color: warna.teksRedup }]}
             accessibilityLabel="Sisa waktu"
           >
-            {formatSisa(aktif ? sisa : 0)}
+            {formatSisaSekarang(aktif ? sisa : 0, aktif ? diterimaPada : null)}
           </Text>
           <Text style={s.ketPanel} numberOfLines={2}>
             {perpanjangan > 0

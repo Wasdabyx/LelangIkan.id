@@ -8,7 +8,7 @@ import { PanelLelang } from '../../components/Lelang';
 import { Bagian, Info, Tabel } from '../../components/Tata';
 import { formatKg, formatRupiah } from '../../format';
 import { usePolling } from '../../polling';
-import { JEDA_PENGGANTI, useKanalRealtime, PERISTIWA_RUANG_LELANG } from '../../realtime';
+import { JEDA_PENGGANTI, AMAN_DIAM, useKanalRealtime, PERISTIWA_RUANG_LELANG } from '../../realtime';
 import { ukuran, warna } from '../../tema';
 import { hanyaAngka } from '../../validasi';
 
@@ -37,6 +37,9 @@ export default function RuangLelang({ idSesi, idTpi, onKembali, onLihatTagihan }
   const [mengirim, setMengirim] = useState(false);
   const [tanyaTawaran, setTanyaTawaran] = useState(false);
   const [tanyaAmbil, setTanyaAmbil] = useState(false);
+  // Waktu data terakhir diterima; dipakai jam berdetak supaya sisa waktu terus bergerak
+  // walau peristiwa kanal belum datang (lihat formatSisaSekarang di components/Lelang.js).
+  const diterimaPada = useRef(Date.now());
   const posisiLalu = useRef(null);
   const percobaan = useRef(null); // { harga, kunci } tawaran terakhir yang gagal karena koneksi
   const diubahPengguna = useRef(false);
@@ -48,6 +51,7 @@ export default function RuangLelang({ idSesi, idTpi, onKembali, onLihatTagihan }
       diubahPengguna.current = false; // isian lama sudah usang -> isi ulang dengan minimum baru
     }
     posisiLalu.current = d.posisi;
+    diterimaPada.current = Date.now();
     setData(d);
     // Isi otomatis harga minimum HANYA bila pengguna belum mengetik sendiri.
     // Angka yang sedang diketik tidak pernah ditimpa; bila terlalu rendah, ditolak saat TAWAR ditekan.
@@ -72,6 +76,9 @@ export default function RuangLelang({ idSesi, idTpi, onKembali, onLihatTagihan }
   const tersambung = useKanalRealtime(kanalId, PERISTIWA_RUANG_LELANG, () => muat());
   // Kanal sehat -> tidak ada pengambilan berkala; kanal putus -> polling 2 detik (NFR-10).
   usePolling(muat, JEDA_PENGGANTI, aktif && !tersambung);
+  // Jam berdetak dari angka terakhir; penyegaran ringan ini menjaga angkanya tidak melenceng
+  // bila peristiwa kanal lama tidak datang (mis. sesi diperpanjang di luar layar ini).
+  usePolling(muat, AMAN_DIAM, aktif && tersambung);
 
   function periksa() {
     setPesan(null);
@@ -86,7 +93,7 @@ export default function RuangLelang({ idSesi, idTpi, onKembali, onLihatTagihan }
   async function ambil() {
     setTanyaAmbil(false);
     setMengirim(true); setPesan(null);
-    try { const r = await lelang.ambil(idSesi, buatKunci()); setData(r.data); setPesan({ jenis: 'sukses', teks: r.pesan }); }
+    try { const r = await lelang.ambil(idSesi, buatKunci()); diterimaPada.current = Date.now(); setData(r.data); setPesan({ jenis: 'sukses', teks: r.pesan }); }
     catch (e) { setPesan({ jenis: 'galat', teks: e.message }); muat(); }
     finally { setMengirim(false); }
   }
@@ -101,6 +108,7 @@ export default function RuangLelang({ idSesi, idTpi, onKembali, onLihatTagihan }
       percobaan.current = null;
       diubahPengguna.current = false;
       posisiLalu.current = 'TERTINGGI';
+      diterimaPada.current = Date.now();
       setData(hasil.data);
       setHarga(String(Math.round(hasil.data.harga_minimum_berikut)));
       setPesan({ jenis: 'sukses', teks: `${hasil.pesan} (${formatRupiah(n)}/kg)` });
@@ -158,6 +166,7 @@ export default function RuangLelang({ idSesi, idTpi, onKembali, onLihatTagihan }
           <View style={{ marginTop: 12 }}>
             <PanelLelang
               sisa={data.sisa_detik}
+              diterimaPada={diterimaPada.current}
               status={data.status}
               perpanjangan={data.jumlah_perpanjangan}
               maksPerpanjangan={data.maks_perpanjangan}

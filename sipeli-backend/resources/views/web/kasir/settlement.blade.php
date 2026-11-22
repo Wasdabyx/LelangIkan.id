@@ -115,7 +115,7 @@
                                         </div>
                                         <div>
                                             <label class="block text-xs text-slate-600">Nominal (kosongkan = sisa)</label>
-                                            <input name="nominal" type="number" min="1" step="100" placeholder="{{ (int) $k['pembayaran']['sisa'] }}"
+                                            <input name="nominal" type="number" min="0" step="100" placeholder="{{ (int) $k['pembayaran']['sisa'] }}"
                                                    class="mt-1 w-28 rounded-md border border-slate-500 px-2 py-1 text-xs">
                                         </div>
                                         <div>
