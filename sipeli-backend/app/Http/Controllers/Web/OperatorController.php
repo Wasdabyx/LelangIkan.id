@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Konfigurasi;
 use App\Services\LelangService;
+use App\Services\TerminalLelangService;
 use Illuminate\Http\Request;
 
 /** Dasbor Operator Lelang (UC-03/UC-05): antrean lot siap lelang dan pembukaan sesi. */
 class OperatorController extends Controller
 {
-    public function __construct(private LelangService $lelang)
-    {
+    public function __construct(
+        private LelangService $lelang,
+        private TerminalLelangService $terminal,
+    ) {
     }
 
     /** GET /dasbor/operator/antrean */
@@ -78,9 +81,14 @@ class OperatorController extends Controller
     {
         $pengguna = $request->user();
 
+        $sesi = \App\Models\SesiLelang::findOrFail($id);
+
         return view('web.operator.pantau', [
-            'idSesi' => $id,
-            'awal'   => $this->lelang->status($id, $pengguna, true),
+            'idSesi'        => $id,
+            'awal'          => $this->lelang->status($id, $pengguna, true),
+            // FR-63: daftar pembeli yang boleh ditawarkan di tempat oleh operator.
+            'peserta'       => $this->terminal->peserta($pengguna, $sesi),
+            'jarakJauhAktif' => $this->terminal->jarakJauhAktif(),
         ]);
     }
 
@@ -88,6 +96,25 @@ class OperatorController extends Controller
     public function keadaan(Request $request, int $id)
     {
         return response()->json(['data' => $this->lelang->status($id, $request->user(), true)]);
+    }
+
+    /**
+     * POST /dasbor/operator/sesi/{id}/tawaran
+     * FR-63: operator mencatat penawaran pembeli yang menawar DI TEMPAT.
+     * Aturan harga, daya beli, dan perpanjangan tetap dijalankan LelangService.
+     */
+    public function tawaranDiTempat(Request $request, int $id)
+    {
+        $sesi = \App\Models\SesiLelang::findOrFail($id);
+
+        $hasil = $this->terminal->catatDiTempat(
+            $request->user(),
+            $sesi,
+            $request->only(['id_pembeli', 'harga_per_kg']),
+            $request,
+        );
+
+        return back()->with('sukses', $hasil['pesan']);
     }
 
     /** POST /dasbor/operator/sesi/{id}/tutup */

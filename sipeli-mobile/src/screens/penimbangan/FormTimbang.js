@@ -7,63 +7,18 @@ import { Bagian, Segmen, Tabel } from '../../components/Tata';
 import Ikon from '../../components/Ikon';
 import { formatAngka, formatKg, formatRupiah, keAngka } from '../../format';
 import { ukuran, warna } from '../../tema';
-
-const NAMA_TIMBANGAN = 'Timbangan Simulasi';
-const LAMA_STABIL = 1500; // DPPL UC-02: berat dianggap stabil bila tidak berubah 1,5 detik
-
-/**
- * Timbangan SIMULASI (pengganti timbangan digital Bluetooth).
- * Saat keranjang diletakkan: angka naik, bergoyang, lalu diam di satu nilai.
- * "Stabil" = angka tidak berubah selama 1,5 detik.
- */
-function useTimbanganSimulasi() {
-  const [bacaan, setBacaan] = useState(0);
-  const [stabil, setStabil] = useState(false);
-  const [adaBeban, setAdaBeban] = useState(false);
-  const target = useRef(0);
-  const langkah = useRef(0);
-  const nilaiTerakhir = useRef(0);
-  const waktuBerubah = useRef(Date.now());
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      let nilai = 0;
-      if (target.current > 0) {
-        langkah.current += 1;
-        const n = langkah.current;
-        if (n === 1) nilai = target.current * 0.35;
-        else if (n === 2) nilai = target.current * 0.8;
-        else if (n <= 7) nilai = target.current + (Math.random() - 0.5) * target.current * 0.06 * ((8 - n) / 5);
-        else nilai = target.current;
-        nilai = Math.max(0, Math.round(nilai * 20) / 20); // ketelitian 0,05 kg
-      }
-      if (nilai !== nilaiTerakhir.current) {
-        nilaiTerakhir.current = nilai;
-        waktuBerubah.current = Date.now();
-        setBacaan(nilai);
-      }
-      setStabil(nilai > 0 && Date.now() - waktuBerubah.current >= LAMA_STABIL);
-    }, 200);
-    return () => clearInterval(id);
-  }, []);
-
-  function letakkan(kg) {
-    target.current = Math.round(kg * 20) / 20;
-    langkah.current = 0;
-    setAdaBeban(true);
-  }
-  function angkat() {
-    target.current = 0;
-    setAdaBeban(false);
-  }
-  return { bacaan, stabil, adaBeban, letakkan, angkat };
-}
+import { useTimbangan } from '../../timbangan';
+import PilihTimbangan from './PilihTimbangan';
 
 /**
  * Alur utama UC-02 langkah (3)-(6): timbang per keranjang, cek selisih, isi harga, buat lot
  */
 export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
-  const timbangan = useTimbanganSimulasi();
+  // FR-07: sumber berat ditentukan perangkat keras yang tersedia (BLE / kabel / simulasi).
+  const [perangkatTimbangan, setPerangkatTimbangan] = useState(null);
+  const [portTimbangan, setPortTimbangan] = useState(null);
+  const [pilihTerbuka, setPilihTerbuka] = useState(false);
+  const timbangan = useTimbangan({ perangkat: perangkatTimbangan, port: portTimbangan });
   const [sumber, setSumber] = useState('timbangan'); // 'timbangan' | 'manual'
   const [keranjang, setKeranjang] = useState([]); // [{ berat, manual }]
   const [teksManual, setTeksManual] = useState('');
@@ -183,7 +138,11 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
         id_tangkapan: baris.id_tangkapan,
         berat_keranjang: keranjang.map((k) => k.berat),
         timbang_manual: manualTercatat,
-        perangkat_timbang: semuaManual ? 'Input Manual' : manualTercatat ? `${NAMA_TIMBANGAN} + Manual` : NAMA_TIMBANGAN,
+        // FR-07: catat perangkat apa adanya (Bluetooth/kabel/simulasi) supaya jejak lot
+        // tidak pernah menyebut "simulasi" sebagai timbangan sungguhan.
+        perangkat_timbang: semuaManual
+          ? 'Input Manual'
+          : manualTercatat ? `${timbangan.label} + Manual` : timbangan.label,
         alasan: alasan.trim() || null,
         harga_pembukaan: hargaValid ? hargaAngka : null,
       });
@@ -210,6 +169,18 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
         ? 'Alasan input manual dan selisih berat (wajib)'
         : 'Alasan input manual (wajib)'
       : 'Alasan konfirmasi selisih berat (wajib)';
+
+  if (pilihTerbuka) {
+    return (
+      <PilihTimbangan
+        perangkat={perangkatTimbangan}
+        port={portTimbangan}
+        onPilihPerangkat={setPerangkatTimbangan}
+        onPilihPort={setPortTimbangan}
+        onTutup={() => setPilihTerbuka(false)}
+      />
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>
@@ -240,14 +211,21 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
             />
           </View>
 
+          {sumber === 'timbangan' && timbangan.galat ? (
+            <KotakPesan teks={timbangan.galat} gaya={{ marginBottom: 10 }} />
+          ) : null}
+
           {sumber === 'timbangan' ? (
             <View>
               {/* Layar timbangan: angka besar >= 40pt (DPPL UC-02) */}
+              <Pressable onPress={() => setPilihTerbuka(true)} style={s.gantiSumber} accessibilityRole="button">
+                <Text style={s.teksGantiSumber}>Ganti sumber timbangan</Text>
+              </Pressable>
               <View style={s.kartuBerat}>
                 <View style={s.barisStatus}>
-                  <View style={s.titikHijau} />
+                  <View style={[s.titikHijau, timbangan.sumber === 'SIMULASI' && s.titikKuning]} />
                   <Text style={s.teksTerhubung} numberOfLines={1}>
-                    Terhubung | {NAMA_TIMBANGAN}
+                    {timbangan.sumber === 'SIMULASI' ? 'Simulasi' : 'Terhubung'} | {timbangan.label}
                   </Text>
                   <Text style={[s.teksChip, { color: timbangan.stabil ? '#6CE9A6' : '#FEC84B' }]}>{statusBacaan.teks}</Text>
                 </View>
@@ -276,13 +254,17 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
                   />
                   <Tombol judul="Angkat" jenis="garis" onPress={timbangan.angkat} gaya={{ minWidth: 96 }} />
                 </View>
-              ) : (
+              ) : timbangan.sumber === 'SIMULASI' ? (
                 <Tombol
                   judul="Letakkan Keranjang (Simulasi)"
                   jenis="garis"
                   onPress={letakkanKeranjang}
                   gaya={{ marginTop: 10 }}
                 />
+              ) : (
+                <Text style={s.petunjuk}>
+                  Menunggu beban pada {timbangan.label}. Letakkan keranjang ke-{keranjang.length + 1} di atas timbangan.
+                </Text>
               )}
             </View>
           ) : (
@@ -504,6 +486,9 @@ const s = StyleSheet.create({
   kartuBerat: { backgroundColor: '#102A43', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 12, marginTop: 12 },
   barisStatus: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titikHijau: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#32D583' },
+  titikKuning: { backgroundColor: '#FEC84B' },
+  gantiSumber: { alignSelf: 'flex-end', paddingVertical: 6, paddingHorizontal: 4, marginBottom: 6 },
+  teksGantiSumber: { fontSize: 12, fontWeight: '600', color: warna.utama },
   teksTerhubung: { flex: 1, color: '#BCCCDC', fontSize: 12 },
   teksChip: { fontSize: 12, fontWeight: '700' },
   barisAngka: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginVertical: 6 },

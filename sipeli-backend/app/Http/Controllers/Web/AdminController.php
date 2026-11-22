@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Konfigurasi;
 use App\Models\Pengguna;
 use App\Services\AuditService;
+use App\Services\TerminalLelangService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -18,8 +19,10 @@ use Illuminate\Validation\Rule;
  */
 class AdminController extends Controller
 {
-    public function __construct(private AuditService $audit)
-    {
+    public function __construct(
+        private AuditService $audit,
+        private TerminalLelangService $terminal,
+    ) {
     }
 
     /** GET /dasbor/admin/master */
@@ -136,8 +139,34 @@ class AdminController extends Controller
     public function konfigurasi()
     {
         return view('web.admin.konfigurasi', [
-            'daftar' => Konfigurasi::orderBy('kunci')->get(),
+            'daftar'        => Konfigurasi::orderBy('kunci')->get(),
+            'jarakJauhAktif' => $this->terminal->jarakJauhAktif(),
         ]);
+    }
+
+    /**
+     * POST /dasbor/admin/lelang-jarak-jauh
+     * FR-63 + BT-03: mematikan kanal jarak jauh tidak mengganggu lelang di tempat,
+     * karena penawaran DI_TEMPAT dari dasbor operator tidak melewati saklar ini.
+     */
+    public function saklarJarakJauh(Request $request)
+    {
+        $data = $request->validate([
+            'aktif' => ['required', Rule::in(['0', '1'])],
+        ], [
+            'aktif.required' => 'Pilih keadaan kanal jarak jauh.',
+        ]);
+
+        $sebelum = $this->terminal->jarakJauhAktif();
+        $this->terminal->ubahJarakJauh($request->user(), $data['aktif'] === '1');
+        $this->audit->catat($request->user(), 'UBAH_KANAL_JARAK_JAUH', 'konfigurasi', null,
+            ['aktif' => $sebelum], ['aktif' => $data['aktif'] === '1']);
+
+        $pesan = $data['aktif'] === '1'
+            ? 'Kanal jarak jauh dibuka. Aplikasi mobile dapat menawar lagi.'
+            : 'Kanal jarak jauh dimatikan. Lelang di tempat tetap berjalan dari dasbor operator.';
+
+        return back()->with('sukses', $pesan);
     }
 
     /** POST /dasbor/admin/konfigurasi */

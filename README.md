@@ -27,7 +27,18 @@ masuk, pengguna diarahkan otomatis ke layar sesuai perannya.
 | 2 | Form Kedatangan & Tangkapan | UC-01 | Petugas Pendataan | Mencari kapal, mencatat data pelayaran dan perkiraan tangkapan per jenis ikan dan grade, simpan sebagai draf atau langsung terdaftar, menghasilkan nomor kedatangan beserta QR |
 | 3 | Form Penimbangan & Label Lot | UC-02 | Petugas Timbang | Memilih kedatangan (pindai QR, ketik nomor, atau dari daftar), menimbang per keranjang, memeriksa selisih terhadap estimasi, menetapkan harga pembukaan, membuat lot lelang, dan mencetak label A6 berisi QR |
 
-Catatan: timbangan digital pada tahap ini masih berupa simulasi di aplikasi, dan tersedia juga input berat manual (wajib disertai alasan).
+**Timbangan (FR-07).** Petugas timbang memilih sumber berat pada layar *Ganti sumber timbangan*:
+
+| Sumber | Perangkat | Cara | Label di layar |
+|---|---|---|---|
+| Bluetooth (BLE) | ponsel/tablet dengan Expo dev build | Pindai, pilih timbangan, data dibaca dari notifikasi karakteristik (format teks ASCII, mis. `ST,GS,+ 30.55kg`) | Timbangan Bluetooth |
+| Kabel USB/Serial | Chrome/Edge di laptop (Web Serial, 9600 8N1) | Pilih Port, bacaan dibaca per baris | Timbangan kabel (USB/Serial) |
+| Simulasi | semua perangkat | tanpa perangkat keras | Timbangan **Simulasi** (titik status kuning) |
+
+Berat dianggap **stabil** bila tidak berubah selama 1,5 detik — aturan yang sama untuk ketiga
+sumber. Input manual tetap tersedia dan wajib disertai alasan. Nama perangkat yang dipakai
+tersimpan pada kolom `lot_lelang.perangkat_timbang`, sehingga label lot tidak pernah menyebut
+"simulasi" sebagai timbangan sungguhan.
 
 ## Antarmuka web (operator, kasir, pimpinan, administrator)
 
@@ -36,6 +47,15 @@ mengikuti SKPL v1.1 Bagian I.B: petugas pendataan, petugas timbang, dan pembeli 
 mobile; operator lelang, kasir, pimpinan/dinas, dan administrator sistem memakai web; nelayan
 dilayani **portal baca-saja** melalui `GET /api/nelayan/rekap` dan `GET /api/nelayan/bukti/{id}.pdf`
 dengan token khusus dan kode verifikasi 4 digit; ruang pelelangan memakai papan lelang layar besar.
+
+**Penawaran di tempat dan saklar lelang jarak jauh (FR-63, BT-03).** Operator dapat mencatat
+tawaran pembeli yang mengangkat tangan langsung di ruang lelangan: buka *Pantau Sesi* →
+panel **Catat tawaran di tempat**, pilih pembeli, isi harga per kg. Baris penawaran tersimpan
+dengan kanal `DI_TEMPAT`; aturan harga minimum, daya beli, dan perpanjangan dijalankan
+`LelangService` yang sama dengan aplikasi mobile. Administrator dapat mematikan kanal jarak jauh
+di *Konfigurasi* → **Kanal lelang jarak jauh**; saat dimatikan, aplikasi mobile menolak tawaran
+dengan pesan yang menyebut sebabnya, sedangkan lelang di tempat tetap berjalan (perubahan
+tercatat pada jejak audit sebagai `UBAH_KANAL_JARAK_JAUH`).
 
 | Halaman | Use case | Pengguna |
 |---|---|---|

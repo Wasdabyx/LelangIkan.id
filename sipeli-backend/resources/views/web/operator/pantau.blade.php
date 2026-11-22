@@ -73,6 +73,55 @@
         </div>
 
         <div class="space-y-5">
+            {{-- FR-63: penawaran DI_TEMPAT. Pembeli mengangkat tangan di ruang lelang,
+                 operator mencatat tawarannya di sini. Aturan harga dan daya beli tetap
+                 dijalankan LelangService yang sama dengan aplikasi mobile. --}}
+            <div class="rounded-xl border border-slate-500 bg-white p-5" id="kotak-di-tempat"
+                 @if ($awal['status'] !== 'AKTIF') hidden @endif>
+                <h3 class="text-sm font-semibold text-slate-900">Catat tawaran di tempat</h3>
+                <p class="mt-1 text-xs text-slate-600">
+                    Untuk pembeli yang menawar langsung di ruang lelangan. Tercatat dengan kanal
+                    <span class="font-mono font-semibold">DI_TEMPAT</span>.
+                    Kanal jarak jauh saat ini
+                    <span class="font-semibold {{ $jarakJauhAktif ? 'text-emerald-700' : 'text-rose-700' }}">
+                        {{ $jarakJauhAktif ? 'DIBUKA' : 'DIMATIKAN' }}
+                    </span>.
+                </p>
+                @if (count($peserta) === 0)
+                    <p class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        Belum ada pembeli yang memesan lot ini, jadi belum ada yang bisa ditawarkan.
+                    </p>
+                @else
+                    <form method="POST" action="{{ route('operator.sesi.tawaran', $idSesi) }}" class="mt-3 space-y-2">
+                        @csrf
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600" for="id_pembeli">Pembeli</label>
+                            <select id="id_pembeli" name="id_pembeli" required
+                                    class="mt-1 w-full rounded-lg border border-slate-500 px-3 py-2 text-sm">
+                                @foreach ($peserta as $p)
+                                    <option value="{{ $p['id_pembeli'] }}">
+                                        {{ $p['nama_lengkap'] }} ({{ $p['nama_pengguna'] }}){{ $p['tertinggi'] ? ' - TERTINGGI' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600" for="harga_per_kg">Harga per kg (Rp)</label>
+                            <input id="harga_per_kg" name="harga_per_kg" type="number" min="100" step="1" required
+                                   value="{{ (int) ceil($awal['harga_minimum_berikut']) }}"
+                                   class="mt-1 w-full rounded-lg border border-slate-500 px-3 py-2 text-sm">
+                            <p class="mt-1 text-xs text-slate-600">
+                                Minimum sekarang {{ \App\Support\Tampilan::rupiah($awal['harga_minimum_berikut']) }}/kg
+                                &middot; nilai tawaran = harga &times; {{ \App\Support\Tampilan::kg($awal['lot']['berat_aktual']) }}
+                            </p>
+                        </div>
+                        <button class="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+                            Catat tawaran
+                        </button>
+                    </form>
+                @endif
+            </div>
+
             <div class="rounded-xl border border-slate-500 bg-white p-5" id="kotak-tutup" @if ($awal['status'] !== 'AKTIF') hidden @endif>
                 <h3 class="text-sm font-semibold text-slate-900">Tutup sesi lebih awal</h3>
                 <p class="mt-1 text-xs text-slate-600">Penutupan manual menetapkan pemenang saat itu juga dan tercatat pada jejak audit.</p>
@@ -116,6 +165,8 @@
                 el('harga-berjalan').textContent = rupiah(hargaTampil(data));
                 // Sesi yang sudah ditutup tidak menampilkan formulir penutupan lagi.
                 el('kotak-tutup').hidden = data.status !== 'AKTIF';
+                const panelDiTempat = el('kotak-di-tempat');
+                if (panelDiTempat) panelDiTempat.hidden = data.status !== 'AKTIF';
                 el('kotak-hasil').hidden = data.status === 'AKTIF';
                 el('harga-minimum').textContent = 'Minimum berikutnya ' + rupiah(data.harga_minimum_berikut);
                 el('jumlah-penawar').textContent = data.jumlah_penawar;

@@ -284,6 +284,67 @@ Ini bukan bagian fitur real-time, tetapi cepat dicek dan sering ditanya penguji:
 
 ---
 
+## 10. Coba: penawaran di tempat (FR-63)
+
+**Yang diuji:** operator mencatat tawaran pembeli yang menawar langsung di ruang lelangan,
+dan tawarannya tercatat dengan kanal `DI_TEMPAT`.
+
+1. Di laptop, buka **Sesi Lelang** → pilih sesi yang **AKTIF** → **Pantau Sesi**.
+2. Gulir ke panel **Catat tawaran di tempat**. Di atasnya tertulis keadaan kanal jarak jauh
+   (**DIBUKA**).
+3. Pilih pembeli pada daftar (isi awal: satu pembeli demo), ketik harga = angka
+   **Minimum sekarang** yang tertulis di bawah kolom, tekan **Catat tawaran**.
+4. **Harapan:** muncul pesan *"Tawaran di tempat tercatat untuk …"*, dan pada tabel riwayat
+   tawaran di halaman yang sama muncul baris baru.
+
+Yang membuktikan kanalnya benar: baris itu tersimpan sebagai `DI_TEMPAT`, bukan `JARAK_JAUH`:
+
+```bash
+cd sipeli-backend
+php artisan tinker --execute="echo App\Models\Penawaran::orderByDesc('id_penawaran')->first()->kanal;"
+```
+
+## 11. Coba: mematikan lelang jarak jauh (BT-03)
+
+**Yang diuji:** lelang jarak jauh bersifat opsional dan dapat dimatikan administrator **tanpa**
+mengganggu lelang di tempat.
+
+1. Keluar dari akun operator, masuk sebagai `admin` / `sipeli12345`.
+2. Buka menu **Konfigurasi** → panel **Kanal lelang jarak jauh** → pilih
+   *Dimatikan (hanya lelang di tempat)* → **Simpan**.
+3. Di ponsel (akun `pembeli`, di Ruang Lelang), coba ajukan tawaran.
+   **Harapan:** ditolak dengan pesan *"Lelang jarak jauh sedang dimatikan administrator…"*.
+4. Kembali ke akun **operator** → **Pantau Sesi** → catat tawaran di tempat.
+   **Harapan:** tetap **berhasil** — inilah bukti BT-03.
+5. Buka lagi kanalnya (**Dibuka**), lalu ulangi langkah 3. Tawaran dari ponsel harus diterima
+   kembali.
+
+## 12. Coba: sumber timbangan (FR-07)
+
+**Yang diuji:** aplikasi membedakan timbangan Bluetooth, kabel, dan simulasi — dan tidak
+pernah menyebut simulasi sebagai timbangan sungguhan.
+
+1. Di ponsel, masuk sebagai `timbang` / `sipeli12345`.
+2. Ketik nomor kedatangan yang muncul (mis. `KDT-00046`) → **Buka** → tekan **Timbang**.
+3. Pada layar timbang, lihat label sumber di kiri atas: `Simulasi | Timbangan Simulasi`
+   dengan **titik kuning**, bukan hijau.
+4. Tekan **Ganti sumber timbangan** → layar *Sumber berat*:
+   - **Timbangan Bluetooth** — tombol **Pindai** aktif di ponsel (butuh Expo dev build,
+     bukan Expo Go, karena memakai modul native `react-native-ble-plx`);
+   - **Timbangan kabel (USB/Serial)** — tombol **Pilih Port** aktif bila dibuka di
+     Chrome/Edge di laptop;
+   - **Timbangan Simulasi** — selalu ada.
+5. Pilih **Simulasi** → **Pakai**, lalu **Letakkan Keranjang (Simulasi)** → tunggu tulisan
+   *"Berat stabil"* → **Catat Keranjang**.
+6. Simpan lot, lalu periksa kolom perangkat pada lot yang baru dibuat:
+
+```bash
+php artisan tinker --execute="echo App\Models\LotLelang::orderByDesc('id_lot')->first()->perangkat_timbang;"
+```
+
+Harapan: `Timbangan Simulasi` (atau `Timbangan Bluetooth` / `Timbangan kabel (USB/Serial)`
+bila memakai perangkat keras).
+
 ## Ringkasan: apa yang membuktikan fitur ini berhasil
 
 | Langkah | Peristiwa | Wajib dicoba? |
@@ -294,6 +355,9 @@ Ini bukan bagian fitur real-time, tetapi cepat dicek dan sering ditanya penguji:
 | 8 | Kanal mati → tetap jalan via polling | Ya (menjaga NFR-10) |
 | 5 | `PENAWARAN_BARU` | Hanya bila ada 2 perangkat |
 | 9 | Antrean luring | Opsional |
+| 10 | `DI_TEMPAT` → tawaran tercatat dari operator | Ya, bila menguji FR-63 |
+| 11 | Saklar jarak jauh → di tempat tetap jalan | Ya, bila menguji BT-03 |
+| 12 | Sumber timbangan jelas (BLE/kabel/simulasi) | Ya, bila menguji FR-07 |
 
 ## Bila ada yang tidak sesuai
 

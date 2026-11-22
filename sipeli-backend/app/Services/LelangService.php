@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\KanalPenawaran;
 use App\Enums\StatusLot;
 use App\Events\SesiLelangDimulai;
 use App\Enums\StatusPenawaran;
@@ -168,15 +169,29 @@ class LelangService
      * ALG-01: penawaran atomik. Mengembalikan [penawaran, duplikat?].
      * Hanya pembeli yang punya kode pemesanan (PSN, Tugas 2) pada lot ini yang boleh menawar.
      */
-    public function ajukanTawaran(Pengguna $pembeli, int $idSesi, float $hargaPerKg, string $kunci, ?string $ip): array
-    {
+    public function ajukanTawaran(
+        Pengguna $pembeli,
+        int $idSesi,
+        float $hargaPerKg,
+        string $kunci,
+        ?string $ip,
+        KanalPenawaran $kanal = KanalPenawaran::JARAK_JAUH,
+    ): array {
         // Langkah 2: kunci idempotensi yang sama -> kembalikan hasil tersimpan tanpa memproses ulang (FR-20)
         if ($lama = Penawaran::cariKunci($kunci)) {
             return [$lama, true];
         }
 
+        // BT-03: saat administrator mematikan lelang jarak jauh, hanya penawaran di tempat
+        // yang diterima. Pesannya menyebutkan sebabnya agar petugas tidak menduga kerusakan.
+        if ($kanal === KanalPenawaran::JARAK_JAUH
+            && (string) Konfigurasi::nilai('lelang_jarak_jauh_aktif', '1') !== '1') {
+            $this->tolak('harga_per_kg', 'Lelang jarak jauh sedang dimatikan administrator. '
+                . 'Penawaran hanya dapat dilakukan di tempat melalui petugas operator.');
+        }
+
         try {
-            $hasil = DB::transaction(function () use ($pembeli, $idSesi, $hargaPerKg, $kunci, $ip) {
+            $hasil = DB::transaction(function () use ($pembeli, $idSesi, $hargaPerKg, $kunci, $ip, $kanal) {
                 // Langkah 3: kunci baris sesi
                 $sesi = SesiLelang::with('lot')->whereKey($idSesi)->lockForUpdate()->first();
                 if (! $sesi) {
@@ -242,7 +257,7 @@ class LelangService
                     'nominal'           => (string) round($nilaiTawaran),
                     'waktu_penawaran'   => now(),
                     'status'            => StatusPenawaran::TERTINGGI->value,
-                    'kanal'             => 'JARAK_JAUH',
+                    'kanal'             => $kanal->value,
                     'kunci_idempotensi' => $kunci,
                     'alamat_terminal'   => $ip,
                 ]);
@@ -338,10 +353,21 @@ class LelangService
     }
 
     /** Pembeli pertama yang mengambil harga berjalan memenangkan lelang turun secara atomik. */
-    public function ambilHargaTurun(Pengguna $pembeli, int $idSesi, string $kunci, ?string $ip): array
-    {
+    public function ambilHargaTurun(
+        Pengguna $pembeli,
+        int $idSesi,
+        string $kunci,
+        ?string $ip,
+        KanalPenawaran $kanal = KanalPenawaran::JARAK_JAUH,
+    ): array {
+        if ($kanal === KanalPenawaran::JARAK_JAUH
+            && (string) Konfigurasi::nilai('lelang_jarak_jauh_aktif', '1') !== '1') {
+            $this->tolak('ambil', 'Lelang jarak jauh sedang dimatikan administrator. '
+                . 'Pengambilan harga hanya dapat dilakukan di tempat melalui petugas operator.');
+        }
+
         try {
-            $penawaran = DB::transaction(function () use ($pembeli, $idSesi, $kunci, $ip) {
+            $penawaran = DB::transaction(function () use ($pembeli, $idSesi, $kunci, $ip, $kanal) {
                 $sesi = SesiLelang::with('lot')->whereKey($idSesi)->lockForUpdate()->first();
                 if (! $sesi || $sesi->getMode() !== \App\Enums\ModeLelang::TURUN) {
                     throw new HttpResponseException(response()->json(['message' => 'Sesi lelang turun tidak ditemukan.'], 404));
@@ -363,7 +389,7 @@ class LelangService
                     'id_sesi' => $sesi->getIdSesi(), 'id_pembeli' => $pembeli->getIdPengguna(),
                     'harga_per_kg' => (string) $harga, 'nominal' => (string) round($nominal),
                     'waktu_penawaran' => now(), 'status' => StatusPenawaran::TERTINGGI->value,
-                    'kanal' => 'JARAK_JAUH', 'kunci_idempotensi' => strtolower($kunci), 'alamat_terminal' => $ip,
+                    'kanal' => $kanal->value, 'kunci_idempotensi' => strtolower($kunci), 'alamat_terminal' => $ip,
                 ]);
                 $sesi->harga_berjalan = (string) $harga;
                 $sesi->waktu_selesai_rencana = now();

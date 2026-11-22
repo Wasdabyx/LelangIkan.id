@@ -40,6 +40,7 @@ Route::middleware(['auth', 'web.peran:OPERATOR_LELANG'])->prefix('dasbor/operato
     Route::post('/sesi', [OperatorController::class, 'buka'])->name('operator.sesi.buka');
     Route::get('/sesi/{id}', [OperatorController::class, 'pantau'])->name('operator.sesi.pantau');
     Route::get('/sesi/{id}/keadaan', [OperatorController::class, 'keadaan'])->name('operator.sesi.keadaan');
+    Route::post('/sesi/{id}/tawaran', [OperatorController::class, 'tawaranDiTempat'])->name('operator.sesi.tawaran');
     Route::post('/sesi/{id}/tutup', [OperatorController::class, 'tutup'])->name('operator.sesi.tutup');
 });
 
@@ -77,6 +78,7 @@ Route::middleware(['auth', 'web.peran:ADMINISTRATOR'])->prefix('dasbor/admin')->
 
     Route::get('/konfigurasi', [AdminController::class, 'konfigurasi'])->name('admin.konfigurasi');
     Route::post('/konfigurasi', [AdminController::class, 'ubahKonfigurasi'])->name('admin.konfigurasi.simpan');
+    Route::post('/lelang-jarak-jauh', [AdminController::class, 'saklarJarakJauh'])->name('admin.jarak-jauh');
 
     Route::get('/audit', [AdminController::class, 'audit'])->name('admin.audit');
 });

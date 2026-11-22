@@ -4,6 +4,37 @@
 @section('keterangan', 'Parameter lelang dan TPI yang dapat diubah administrator (FR-50)')
 
 @section('isi')
+    {{-- FR-63 + BT-03: lelang jarak jauh bersifat opsional dan dapat dimatikan administrator.
+         Mematikan kanal ini TIDAK menghentikan lelang di tempat (penawaran DI_TEMPAT). --}}
+    <div class="rounded-xl border border-slate-500 bg-white p-5">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+                <h2 class="text-base font-semibold text-slate-900">Kanal lelang jarak jauh</h2>
+                <p class="mt-1 text-xs text-slate-600">
+                    Menentukan apakah aplikasi mobile boleh mengirim tawaran. Bila dimatikan,
+                    pembeli hanya dapat menawar di tempat melalui operator lelang.
+                </p>
+            </div>
+            <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $jarakJauhAktif ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' }}">
+                {{ $jarakJauhAktif ? 'DIBUKA' : 'DIMATIKAN' }}
+            </span>
+        </div>
+        <form method="POST" action="{{ route('admin.jarak-jauh') }}" class="mt-4 flex flex-wrap items-end gap-3">
+            @csrf
+            <div>
+                <label class="block text-xs font-medium text-slate-600" for="aktif">Keadaan kanal</label>
+                <select id="aktif" name="aktif" class="mt-1 rounded-lg border border-slate-500 px-3 py-2 text-sm">
+                    <option value="1" @selected($jarakJauhAktif)>Dibuka (aplikasi mobile boleh menawar)</option>
+                    <option value="0" @selected(! $jarakJauhAktif)>Dimatikan (hanya lelang di tempat)</option>
+                </select>
+            </div>
+            <button class="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800">Simpan</button>
+        </form>
+        <p class="mt-2 text-xs text-slate-600">
+            Perubahan tercatat pada jejak audit dengan aksi <span class="font-mono">UBAH_KANAL_JARAK_JAUH</span>.
+        </p>
+    </div>
+
     <div class="rounded-xl border border-slate-500 bg-white">
         <div class="border-b border-slate-500 px-5 py-3 text-sm font-semibold text-slate-900">Parameter aktif</div>
         <div class="divide-y divide-slate-100">
