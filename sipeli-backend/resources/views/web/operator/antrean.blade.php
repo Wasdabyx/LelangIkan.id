@@ -57,6 +57,27 @@
                                                class="w-16 rounded-md border border-slate-500 px-1.5 py-1 text-xs" title="Durasi sesi (detik)">
                                         <input name="kenaikan_minimum" type="number" min="100" step="100" value="{{ $lot['usulan_kenaikan'] }}"
                                                class="w-20 rounded-md border border-slate-500 px-1.5 py-1 text-xs" title="Kenaikan minimum per kg">
+                                        <div class="w-full rounded-md bg-slate-50 p-2">
+                                            <p class="mb-1 text-xs font-semibold text-slate-700">
+                                                Hanya untuk mode Turun (abaikan bila memilih Naik)
+                                            </p>
+                                            <div class="flex flex-wrap items-center gap-1.5">
+                                                <label class="text-xs text-slate-600" for="harga-awal-{{ $lot['id_lot'] }}">Harga awal</label>
+                                                <input id="harga-awal-{{ $lot['id_lot'] }}" name="harga_awal" type="number" min="100" step="100"
+                                                       value="{{ (int) $lot['harga_pembukaan'] }}"
+                                                       class="w-24 rounded-md border border-slate-500 px-1.5 py-1 text-xs">
+                                                <label class="text-xs text-slate-600" for="batas-{{ $lot['id_lot'] }}">Batas bawah</label>
+                                                <input id="batas-{{ $lot['id_lot'] }}" name="harga_batas_bawah" type="number" min="100" step="100"
+                                                       value="{{ (int) max(100, $lot['harga_pembukaan'] * 0.5) }}"
+                                                       class="w-24 rounded-md border border-slate-500 px-1.5 py-1 text-xs">
+                                                <label class="text-xs text-slate-600" for="langkah-{{ $lot['id_lot'] }}">Turun/langkah</label>
+                                                <input id="langkah-{{ $lot['id_lot'] }}" name="penurunan_per_langkah" type="number" min="100" step="100" value="500"
+                                                       class="w-20 rounded-md border border-slate-500 px-1.5 py-1 text-xs">
+                                                <label class="text-xs text-slate-600" for="interval-{{ $lot['id_lot'] }}">Interval (dtk)</label>
+                                                <input id="interval-{{ $lot['id_lot'] }}" name="interval_detik" type="number" min="1" max="600" value="5"
+                                                       class="w-16 rounded-md border border-slate-500 px-1.5 py-1 text-xs">
+                                            </div>
+                                        </div>
                                         <button class="rounded-md bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white hover:bg-slate-800">Buka</button>
                                     </form>
                                     <p class="mt-1 text-xs text-slate-600">Usulan kenaikan {{ Tampilan::rupiah($lot['usulan_kenaikan']) }}/kg (ALG-05)</p>
@@ -67,8 +88,9 @@
                 </table>
             </div>
             <p class="border-t border-slate-500 px-5 py-3 text-xs text-slate-600">
-                Mode <strong>Turun</strong> memerlukan harga awal, harga batas bawah, penurunan per langkah, dan interval.
-                Untuk itu gunakan aplikasi mobile atau isi parameter lelang turun melalui formulir lanjutan.
+                Mode <strong>Turun</strong> memakai kolom tambahan pada baris lot: harga awal, harga batas bawah,
+                penurunan per langkah, dan interval. Harga awal harus lebih tinggi dari batas bawah; bila tidak,
+                sistem menolak dengan pesan yang jelas.
             </p>
         @endif
     </div>

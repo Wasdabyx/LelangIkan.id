@@ -210,6 +210,8 @@ function SesiSelesai({ sesi, onPress, terakhir }) {
           <Text style={[s.selKecil, { marginTop: 4 }]}>
             {sesi.harga_tertinggi ? `${formatRupiah(sesi.harga_tertinggi)}/kg` : 'Tidak terjual'}
           </Text>
+          {/* Sesi yang sudah selesai tetap dapat dibuka untuk melihat pemenang dan riwayat tawaran. */}
+          <Text style={[s.selKecil, { marginTop: 4, color: warna.utama }]}>Lihat hasil</Text>
         </View>
       }
     >

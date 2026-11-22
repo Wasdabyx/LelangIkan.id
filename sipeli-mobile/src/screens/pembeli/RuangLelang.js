@@ -185,8 +185,14 @@ export default function RuangLelang({ idSesi, idTpi, idPembeli, onKembali, onLih
               status={data.status}
               perpanjangan={data.jumlah_perpanjangan}
               maksPerpanjangan={data.maks_perpanjangan}
-              labelHarga={data.mode === 'TURUN' ? 'Harga berjalan (Turun)' : (data.harga_tertinggi ? 'Harga tertinggi' : 'Harga pembukaan')}
-              harga={formatRupiah(data.harga_tertinggi ?? data.harga_pembukaan)}
+              labelHarga={data.mode === 'TURUN' ? 'Harga berjalan (turun)' : (data.harga_tertinggi ? 'Harga tertinggi' : 'Harga pembukaan')}
+              harga={formatRupiah(
+                data.mode === 'TURUN'
+                  // Lelang turun: yang berlaku adalah harga berjalan yang sedang ditawarkan,
+                  // bukan harga pembukaan (server sudah mengirimkannya di harga_tertinggi).
+                  ? (data.harga_tertinggi ?? data.harga_awal ?? data.harga_pembukaan)
+                  : (data.harga_tertinggi ?? data.harga_pembukaan),
+              )}
               info={data.mode === 'TURUN' ? `Turun ${formatRupiah(data.penurunan_per_langkah)}/kg tiap ${data.interval_detik} detik | batas ${formatRupiah(data.harga_batas_bawah)}` : `${data.jumlah_penawaran} tawaran | ${data.jumlah_penawar} penawar | kenaikan ${formatRupiah(data.kenaikan_minimum)}`}
             />
           </View>
