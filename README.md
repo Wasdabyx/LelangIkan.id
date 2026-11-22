@@ -10,12 +10,16 @@ Proyek ini dibuat untuk Tugas Besar mata kuliah Implementasi dan Pengujian Peran
 
 | Dokumen | Isi |
 |---|---|
-| [SKPL LelangIkan.id.pdf](SKPL%20LelangIkan.id.pdf) | Spesifikasi Kebutuhan Perangkat Lunak: kebutuhan fungsional, use case, aktor |
-| [DPPL LelangIkan.id.pdf](DPPL%20LelangIkan.id.pdf) | Deskripsi Perancangan Perangkat Lunak: class diagram, ERD, rancangan antarmuka, algoritma |
+| [SKPL LelangIkan-v1.1.pdf](dokumen/hasil/SKPL-LelangIkan-v1.1.pdf) | Spesifikasi Kebutuhan Perangkat Lunak v1.1 (55 hlm): kebutuhan fungsional, use case, aktor |
+| [DPPL LelangIkan-v1.1.pdf](dokumen/hasil/DPPL-LelangIkan-v1.1.pdf) | Deskripsi Perancangan Perangkat Lunak v1.1 (86 hlm): class diagram, ERD, rancangan antarmuka, algoritma |
 
-## Tampilan yang sudah dibuat
+Repositori ini memuat **versi PDF** kedua dokumen. Sumber diagramnya ada di
+[`diagrams/`](diagrams), dan versi DOCX yang dapat disunting disimpan di luar repositori.
 
-Tahap pertama mencakup tiga tampilan pada aplikasi mobile. Setelah login, pengguna diarahkan otomatis ke tampilan sesuai perannya.
+## Aplikasi mobile
+
+Aplikasi mobile memuat layar untuk **petugas pendataan, petugas timbang, dan pembeli**. Setelah
+masuk, pengguna diarahkan otomatis ke layar sesuai perannya.
 
 | No | Tampilan | Use case | Pengguna | Ringkasan |
 |---|---|---|---|---|
@@ -25,6 +29,25 @@ Tahap pertama mencakup tiga tampilan pada aplikasi mobile. Setelah login, penggu
 
 Catatan: timbangan digital pada tahap ini masih berupa simulasi di aplikasi, dan tersedia juga input berat manual (wajib disertai alasan).
 
+## Antarmuka web (operator, kasir, pimpinan, administrator)
+
+Selain aplikasi mobile, sistem memiliki **antarmuka web** pada backend Laravel. Pembagian platform
+mengikuti SKPL v1.1 Bagian I.B: petugas pendataan, petugas timbang, dan pembeli memakai aplikasi
+mobile; operator lelang, kasir, pimpinan/dinas, dan administrator sistem memakai web; nelayan
+dilayani **portal baca-saja** melalui `GET /api/nelayan/rekap` dan `GET /api/nelayan/bukti/{id}.pdf`
+dengan token khusus dan kode verifikasi 4 digit; ruang pelelangan memakai papan lelang layar besar.
+
+| Halaman | Use case | Pengguna |
+|---|---|---|
+| Antrean lot, buka sesi, pemantauan sesi 1 detik, tutup sesi | UC-03, UC-05 | Operator Lelang |
+| Tagihan pembeli & pelunasan, settlement nelayan & pencairan, saldo pembeli | UC-06, UC-07, UC-08 | Kasir TPI |
+| Ringkasan harian, laporan & analitik (+CSV), persetujuan penyesuaian saldo | UC-10, UC-12 | Pimpinan |
+| Data master, pengguna & peran, konfigurasi, jejak audit | UC-11 | Administrator |
+| Papan lelang baca-saja (tanpa masuk) | FR-41, FR-43 | Ruang pelelangan |
+
+Rincian halaman dan rancangan teknisnya ada di
+[`sipeli-backend/WEB-ANTARMUKA.md`](sipeli-backend/WEB-ANTARMUKA.md).
+
 ## Foto lot dan foto contoh jenis ikan
 
 Setiap lot dapat memiliki foto agar Operator Lelang dan Pembeli bisa melihat kondisi ikan.
@@ -33,7 +56,7 @@ Setiap lot dapat memiliki foto agar Operator Lelang dan Pembeli bisa melihat kon
 - **Foto contoh jenis ikan.** Lot yang belum difoto menampilkan foto contoh sesuai jenis ikannya, dengan tanda "Contoh" agar tidak dikira foto lot asli. Foto contoh tersimpan di `sipeli-mobile/assets/ikan/`.
 - **Lokasi tampil:**
   - Petugas Timbang: daftar baris kedatangan dan Label Lot.
-  - Operator Lelang: Antrean Lot, Buka Sesi Lelang, dan pemantauan sesi.
+  - Operator Lelang (antarmuka web): Antrean Lelang dan pemantauan sesi.
   - Pembeli: daftar lot, tab Pesanan, tab Lelang, dan Ruang Lelang.
 - Ketuk foto untuk melihatnya dalam ukuran besar.
 
@@ -65,28 +88,36 @@ Semua foto contoh berasal dari [Wikimedia Commons](https://commons.wikimedia.org
 
 ```
 LelangIkan.id/
-├── SKPL LelangIkan.id.pdf
-├── DPPL LelangIkan.id.pdf
+├── diagrams/                       sumber diagram drawio (use case, ERD, diagram kelas)
+├── dokumen/hasil/                  SKPL dan DPPL v1.1 (PDF)
 ├── sipeli-backend/                 API Laravel
 │   ├── app/Enums/                  status dan kode peran
 │   ├── app/Http/Controllers/Api/   AutentikasiController, KedatanganController, PenimbanganController
-│   ├── app/Http/Middleware/        CekPeran (hak akses per peran)
+│   ├── app/Http/Controllers/Web/   dasbor web: Operator, Kasir, Pimpinan, Admin, Papan, Autentikasi
+│   ├── app/Http/Middleware/        CekPeran (API), WebCekPeran (halaman web)
 │   ├── app/Http/Requests/          validasi isian
 │   ├── app/Models/                 entitas sesuai class diagram DPPL
-│   ├── app/Services/               logika use case (Autentikasi, RegistrasiKedatangan, Penimbangan, Lot)
+│   ├── app/Services/               logika use case (dipakai bersama API dan antarmuka web)
+│   ├── app/Support/                pemformatan rupiah, tanggal, dan lencana status
 │   ├── database/migrations/        struktur tabel sesuai ERD DPPL
 │   ├── database/seeders/           data awal dan data demo
-│   └── routes/api.php              daftar alamat API
+│   ├── resources/views/web/        halaman Blade antarmuka web (layout, operator, kasir, pimpinan, admin)
+│   ├── routes/api.php              daftar alamat API
+│   └── routes/web.php              antarmuka web: masuk, dasbor per peran, papan lelang
 └── sipeli-mobile/                  aplikasi Expo
     ├── App.js                      pemulihan sesi dan pemilihan layar sesuai peran
     └── src/
         ├── config.js               alamat server (IP laptop)
         ├── api.js                  penghubung ke API
         ├── components/             komponen bersama (kolom, tombol, QR, pilih waktu)
+        ├── antrean.js              antrean lokal saat jaringan putus (NFR-09)
+        ├── realtime.js             langganan peristiwa Laravel Reverb
+        ├── polling.js              pengambilan berkala saat kanal real-time putus
         └── screens/
-            ├── LoginScreen.js
-            ├── kedatangan/         tampilan UC-01
-            └── penimbangan/        tampilan UC-02
+            ├── LoginScreen.js      masuk, registrasi, aktivasi surel
+            ├── kedatangan/         UC-01 (petugas pendataan)
+            ├── penimbangan/        UC-02 (petugas timbang)
+            └── pembeli/            UC-04: lelang, pesanan, tagihan, pengambilan
 ```
 
 ## Cara menjalankan
@@ -108,13 +139,28 @@ LelangIkan.id/
    composer install
    copy .env.example .env
    php artisan key:generate
-   php artisan migrate:fresh --seed
+   php artisan migrate --seed
    php artisan serve --host=0.0.0.0 --port=8000
    ```
 
-   Bila memakai Git Bash, ganti `copy` dengan `cp`. Sesuaikan `DB_USERNAME` dan `DB_PASSWORD` di `.env` bila berbeda dari bawaan XAMPP (`root` tanpa kata sandi).
+   Bila memakai Git Bash, ganti `copy` dengan `cp`. Sesuaikan `DB_USERNAME` dan `DB_PASSWORD` di `.env` bila berbeda dari bawaan XAMPP (`root` tanpa kata sandi). Seeder dapat dijalankan ulang dengan `php artisan db:seed` dan tidak menghapus data. Jangan gunakan `migrate:fresh` kecuali memang ingin menghapus seluruh isi database.
 
 3. Buka `http://127.0.0.1:8000/up` di browser. Halaman "Application up" menandakan server berjalan.
+
+### Antarmuka web
+
+Antarmuka web memakai aset Tailwind yang dibangun dengan Vite, sehingga perlu satu kali build:
+
+```
+cd sipeli-backend
+npm install
+npm run build
+```
+
+Setelah server backend berjalan, buka `http://127.0.0.1:8000`. Halaman masuk tersedia untuk peran
+operator lelang, kasir, pimpinan, dan administrator; papan lelang dapat dibuka tanpa masuk pada
+`http://127.0.0.1:8000/papan-lelang`. Petugas pendataan, petugas timbang, pembeli, dan nelayan
+tetap memakai aplikasi mobile.
 
 ### Menjalankan pengujian backend
 
@@ -124,7 +170,10 @@ Setelah dependensi backend terpasang (`composer install`), jalankan seluruh tes 
 php artisan test
 ```
 
-Tes unit saat ini memeriksa usulan kenaikan minimum lelang bertingkat, pembulatan kenaikan, dan aturan perubahan status/harga lot.
+Saat ini **40 tes dengan 311 asersi** mencakup aturan lelang (kenaikan minimum bertingkat,
+pembulatan, status dan harga lot), daya beli, perpanjangan otomatis, paginasi daftar sesi,
+penyandian kata sandi, antarmuka web, dan cakupan endpoint. Tes memerlukan MariaDB/MySQL yang
+sudah dimigrasi dan di-seed (`php artisan migrate:fresh --seed`).
 
 ### 2. Aplikasi mobile
 
@@ -138,13 +187,27 @@ Pastikan ponsel dan laptop berada di jaringan yang sama, backend dijalankan pada
 
 Kata sandi semua akun: `sipeli12345`
 
-| Nama pengguna | Peran | Tampilan setelah login |
-|---|---|---|
-| `pendata` | Petugas Pendataan | Form Kedatangan & Tangkapan |
-| `timbang` | Petugas Timbang | Form Penimbangan & Label Lot |
-| `operator`, `pembeli`, `kasir`, `pimpinan`, `admin` | Peran lain | Beranda sementara (belum dikembangkan) |
+| Nama pengguna | Peran | Platform | Tampilan setelah login |
+|---|---|---|---|
+| `pendata` | Petugas Pendataan | mobile | Form Kedatangan & Tangkapan |
+| `timbang` | Petugas Timbang | mobile | Form Penimbangan & Label Lot |
+| `pembeli` | Pembeli | mobile | Pemesanan lot, lelang real-time, tagihan, dan pengambilan |
+| `operator` | Operator Lelang | **web** | Antrean lot, buka sesi, pantau sesi, tutup sesi |
+| `kasir` | Kasir TPI | **web** | Tagihan & pelunasan, settlement nelayan, saldo pembeli |
+| `pimpinan` | Pimpinan | **web** | Ringkasan harian, laporan & analitik, persetujuan saldo |
+| `admin` | Administrator | **web** | Data master, pengguna & peran, konfigurasi, jejak audit |
 
-`php artisan migrate:fresh --seed` juga mengisi data demo: riwayat lelang 30 hari terakhir dan 6 kedatangan hari ini.
+Aplikasi mobile hanya memuat layar untuk peran **pendata, timbang, dan pembeli** (UC-01, UC-02,
+UC-04). Akun `operator`, `kasir`, atau `pimpinan` **ditolak saat masuk** di aplikasi mobile:
+aplikasi langsung mencabut token yang baru diterbitkan, tidak menyimpan sesi, dan menampilkan
+pesan bahwa peran tersebut dilayani dasbor web. Sesi lama milik peran web yang masih tersimpan di
+perangkat juga dibuang saat aplikasi dibuka.
+
+Yang **tidak** berubah: rute API tetap lengkap sesuai **SKPL Tabel IV.6**, termasuk `/api/operator`,
+`/api/kasir`, dan `/api/pimpinan`. Penolakan hanya pada lapisan tampilan aplikasi mobile, sehingga
+pengujian wewenang per peran (`uji_rute_resmi.py`) dan integrasi lain tetap berjalan.
+
+`php artisan migrate --seed` mengisi riwayat lot 30 hari, enam kedatangan hari ini, serta skenario lelang hari ini: satu sesi aktif, dua sesi terjual (satu tagihan lunas dan satu dibayar sebagian), dan satu sesi tidak terjual. Menjalankan `php artisan db:seed` lagi tidak menggandakan data demo.
 
 | Nomor | Status | Kegunaan saat demo |
 |---|---|---|
@@ -154,11 +217,24 @@ Kata sandi semua akun: `sipeli12345`
 
 ## Pembayaran dan pengambilan hasil lelang
 
-Penawaran tidak lagi memerlukan pemeriksaan daya beli. Pembeli mengonfirmasi setiap tawaran sebelum dikirim; bila menang, tagihan harus dilunasi maksimal 2 jam setelah sesi ditutup. Tagihan tanpa pembayaran yang melewati batas waktu dibatalkan dan lot kembali berstatus tidak terjual. Pembeli dapat melunasi dari saldo aplikasi atau membayar melalui Kasir TPI dengan tunai, transfer, atau QRIS (simulasi). Setelah lunas, pembeli memilih pengambilan hari ini atau besok.
+Setiap penawaran diperiksa terhadap **daya beli** pembeli, yaitu saldo ditambah limit kredit
+(FR-21). Tawaran yang melebihi daya beli ditolak dengan pesan yang menyebutkan batas tersebut.
+Pembeli mengonfirmasi setiap tawaran sebelum dikirim; bila menang, tagihan harus dilunasi
+maksimal 2 jam setelah sesi ditutup. Tagihan tanpa pembayaran yang melewati batas waktu dibatalkan dan lot kembali berstatus tidak terjual. Pembeli dapat melunasi dari saldo aplikasi atau membayar melalui Kasir TPI dengan tunai, transfer, atau QRIS (simulasi). Setelah lunas, pembeli memilih pengambilan hari ini atau besok.
+
+## Ringkasan Pimpinan
+
+Pimpinan dapat melihat ringkasan sesi aktif dan ditutup, sesi yang menghasilkan penjualan atau tidak terjual (termasuk transaksi yang dibatalkan), nilai penjualan, pembayaran yang diterima, serta jumlah dan sisa tagihan belum lunas. Ringkasan dibatasi ke TPI pengguna yang masuk dan dapat difilter berdasarkan tanggal. Tanggal sesi memakai waktu mulai/penutupan, transaksi memakai waktu transaksi, dan pembayaran memakai waktu bayar.
 
 ## Daftar API
 
-Semua alamat berawalan `/api`. Selain `/masuk` dan `/foto-lot/{nama}`, setiap permintaan wajib menyertakan header `Authorization: Bearer <token>`.
+Semua alamat berawalan `/api`; totalnya **85 rute** (128 pasangan metode–URI). Tabel di bawah
+memuat rute yang dipakai langsung oleh aplikasi mobile. Rute untuk antarmuka web (operator,
+kasir, pimpinan, administrator) dan portal nelayan dapat dilihat lengkap dengan
+`php artisan route:list --path=api`; ringkasan resminya ada pada **SKPL Tabel IV.6**.
+
+Selain `/masuk`, `/aktivasi`, `/foto-lot/{nama}`, dan `/nelayan/*`, setiap permintaan wajib
+menyertakan header `Authorization: Bearer <token>`.
 
 | Metode | Alamat | Peran | Fungsi |
 |---|---|---|---|
@@ -179,3 +255,4 @@ Semua alamat berawalan `/api`. Selain `/masuk` dan `/foto-lot/{nama}`, setiap pe
 | GET | `/foto-lot/{nama}` | Tanpa token | Menampilkan foto lot (nama berkas acak) |
 | POST | `/pembeli/tagihan/{id}/bayar-saldo` | Pembeli | Melunasi sisa tagihan dari saldo aplikasi |
 | POST | `/pembeli/tagihan/{id}/pengambilan` | Pembeli | Menjadwalkan pengambilan hari ini atau besok setelah lunas |
+| GET | `/pimpinan/ringkasan?tanggal=YYYY-MM-DD` | Pimpinan | Ringkasan operasional dan keuangan untuk tanggal tertentu (tanggal opsional, default hari ini) |
