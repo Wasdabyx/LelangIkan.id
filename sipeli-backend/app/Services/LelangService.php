@@ -603,6 +603,8 @@ class LelangService
                 'harga_per_kg' => $p->getHargaPerKg(),
                 'waktu'        => $p->getWaktuPenawaran()->format('H:i:s'),
                 'tertinggi'    => $p->status === StatusPenawaran::TERTINGGI->value,
+                // FR-63: operator perlu tahu tawaran ini masuk lewat aplikasi atau dicatat di tempat.
+                'kanal'        => $p->kanal ?? 'JARAK_JAUH',
             ])->values()->all(),
         ];
 

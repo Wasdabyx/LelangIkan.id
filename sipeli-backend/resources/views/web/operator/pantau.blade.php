@@ -54,7 +54,7 @@
                 <div class="border-b border-slate-500 px-5 py-3 text-sm font-semibold text-slate-900">Sepuluh penawaran terakhir</div>
                 <table class="w-full text-sm">
                     <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-600">
-                        <tr><th class="px-5 py-2">Waktu</th><th class="px-5 py-2">Penawar</th><th class="px-5 py-2 text-right">Harga/kg</th><th class="px-5 py-2">Status</th></tr>
+                        <tr><th class="px-5 py-2">Waktu</th><th class="px-5 py-2">Penawar</th><th class="px-5 py-2 text-right">Harga/kg</th><th class="px-5 py-2">Kanal</th><th class="px-5 py-2">Status</th></tr>
                     </thead>
                     <tbody id="riwayat" class="divide-y divide-slate-100">
                         @forelse ($awal['riwayat'] as $r)
@@ -62,10 +62,17 @@
                                 <td class="px-5 py-2 font-mono text-xs text-slate-600">{{ $r['waktu'] }}</td>
                                 <td class="px-5 py-2">{{ $r['penawar'] }}</td>
                                 <td class="px-5 py-2 text-right font-medium">{{ Tampilan::rupiah($r['harga_per_kg']) }}</td>
+                                <td class="px-5 py-2 text-xs">
+                                    @if ($r['kanal'] === 'DI_TEMPAT')
+                                        <span class="rounded bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-800">Di tempat</span>
+                                    @else
+                                        <span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">Aplikasi</span>
+                                    @endif
+                                </td>
                                 <td class="px-5 py-2 text-xs">{{ $r['tertinggi'] ? 'Tertinggi' : 'Tersalip' }}</td>
                             </tr>
                         @empty
-                            <tr id="riwayat-kosong"><td colspan="4" class="px-5 py-6 text-center text-sm text-slate-600">Belum ada penawaran.</td></tr>
+                            <tr id="riwayat-kosong"><td colspan="5" class="px-5 py-6 text-center text-sm text-slate-600">Belum ada penawaran.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -183,9 +190,12 @@
                         + '<td class="px-5 py-2 font-mono text-xs text-slate-600">' + r.waktu + '</td>'
                         + '<td class="px-5 py-2">' + r.penawar + '</td>'
                         + '<td class="px-5 py-2 text-right font-medium">' + rupiah(r.harga_per_kg) + '</td>'
+                        + '<td class="px-5 py-2 text-xs">' + (r.kanal === 'DI_TEMPAT'
+                            ? '<span class="rounded bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-800">Di tempat</span>'
+                            : '<span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700">Aplikasi</span>') + '</td>'
                         + '<td class="px-5 py-2 text-xs">' + (r.tertinggi ? 'Tertinggi' : 'Tersalip') + '</td>'
                         + '</tr>').join('')
-                    : '<tr><td colspan="4" class="px-5 py-6 text-center text-sm text-slate-600">Belum ada penawaran.</td></tr>';
+                    : '<tr><td colspan="5" class="px-5 py-6 text-center text-sm text-slate-600">Belum ada penawaran.</td></tr>';
 
                 if (data.hasil) {
                     el('kotak-hasil').hidden = false;
