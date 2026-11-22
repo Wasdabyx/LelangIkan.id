@@ -424,6 +424,18 @@ Dua hal yang Anda laporkan pada percobaan pertama sudah diperbaiki dan diuji ula
 | "Please enter a valid value. The two nearest valid values are 4999901 and 5000001" saat mengisi saldo | Atribut `min="1"` dengan `step="100"` membuat peramban hanya menerima 1, 101, 201, … sehingga angka bulat seperti 5000000 ditolak sebelum sampai ke server | `min` disetel `0` (server tetap menolak Rp0) di Saldo Pembeli, Tagihan, dan dua formulir Settlement |
 | Sisa waktu lelang tidak bergerak | Angka `sisa_detik` hanya diperbarui saat data baru tiba (tiap 2 detik saat kanal putus, atau hanya saat ada peristiwa saat kanal sehat) | Jam kini berdetak sendiri tiap detik dari angka terakhir + waktu terima, dan dicocokkan ulang tiap detik. Saat kanal sehat, peristiwa tetap terasa seketika |
 
+### Peran yang memang hanya ada di web
+
+Bila Anda mencoba masuk ke aplikasi ponsel dengan akun `operator`, `kasir`, `pimpinan`,
+atau `admin`, layar akan menolak dengan pesan:
+
+> Peran Operator Lelang dilayani antarmuka web LelangIkan.id, bukan aplikasi mobile.
+> Buka dasbor web pada peramban di alamat server yang sama.
+
+Itu **bukan kegagalan**: keempat peran itu memang bekerja di antarmuka web (Sudah diuji
+13/13 alur tulis pada bagian di bawah). Aplikasi ponsel melayani `pendata`, `timbang`,
+dan `pembeli`.
+
 ### Yang saya temukan dan perbaiki sendiri saat menulis panduan ini
 
 | Temuan | Sebab | Perbaikan |
