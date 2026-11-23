@@ -14,7 +14,7 @@ Proyek ini dibuat untuk Tugas Besar mata kuliah Implementasi dan Pengujian Peran
 | [DPPL LelangIkan-v1.1.pdf](dokumen/DPPL-LelangIkan-v1.1.pdf) | Deskripsi Perancangan Perangkat Lunak v1.1 (86 hlm): class diagram, ERD, rancangan antarmuka, algoritma |
 
 Repositori ini memuat **versi PDF** kedua dokumen. Sumber diagramnya ada di
-[`diagrams/`](diagrams), dan versi DOCX yang dapat disunting disimpan di luar repositori.
+[`diagrams/`](diagrams).
 
 ## Aplikasi mobile
 
