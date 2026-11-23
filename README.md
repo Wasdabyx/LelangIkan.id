@@ -10,11 +10,11 @@ Proyek ini dibuat untuk Tugas Besar mata kuliah Implementasi dan Pengujian Peran
 
 | Dokumen | Isi |
 |---|---|
-| [SKPL LelangIkan-v1.1.pdf](dokumen/SKPL-LelangIkan-v1.1.pdf) | Spesifikasi Kebutuhan Perangkat Lunak v1.1 (55 hlm): kebutuhan fungsional, use case, aktor |
-| [DPPL LelangIkan-v1.1.pdf](dokumen/DPPL-LelangIkan-v1.1.pdf) | Deskripsi Perancangan Perangkat Lunak v1.1 (86 hlm): class diagram, ERD, rancangan antarmuka, algoritma |
+| [SKPL LelangIkan.id.pdf](SKPL-LelangIkan.id.pdf) | Spesifikasi Kebutuhan Perangkat Lunak (55 hlm): kebutuhan fungsional, use case, aktor |
+| [DPPL LelangIkan.id.pdf](DPPL-LelangIkan.id.pdf) | Deskripsi Perancangan Perangkat Lunak (86 hlm): class diagram, ERD, rancangan antarmuka, algoritma |
 
 Repositori ini memuat **versi PDF** kedua dokumen. Sumber diagramnya ada di
-[`diagrams/`](diagrams).
+[`diagrams/`](diagrams), dan versi DOCX yang dapat disunting disimpan di luar repositori.
 
 ## Aplikasi mobile
 
@@ -48,6 +48,15 @@ mobile; operator lelang, kasir, pimpinan/dinas, dan administrator sistem memakai
 dilayani **portal baca-saja** melalui `GET /api/nelayan/rekap` dan `GET /api/nelayan/bukti/{id}.pdf`
 dengan token khusus dan kode verifikasi 4 digit; ruang pelelangan memakai papan lelang layar besar.
 
+**Tautan portal nelayan bersifat sekali pakai (FR-59).** Tautan membawa token dan kode verifikasi
+4 digit serta berlaku maksimal 72 jam. Saat dibuka pertama kali dengan kode yang benar, tautan
+ditandai terpakai (`dipakai_pada`) dan nelayan memperoleh **sesi baca-saja 30 menit** yang juga
+dipakai untuk mengunduh bukti PDF tanpa mengirim token lagi. Pembukaan kedua ditolak dengan pesan
+"Tautan sudah dipakai", dan unduhan memakai token lama juga ditolak. Kode yang salah **tidak**
+menghanguskan tautan, jadi nelayan boleh salah ketik. Fitur ini tidak menambah tabel: penanda
+pemakaian dan sesi disimpan sebagai kolom pada `tautan_akses_nelayan`, sehingga struktur tetap
+27 tabel sesuai ERD fisik DPPL.
+
 **Penawaran di tempat dan saklar lelang jarak jauh (FR-63, BT-03).** Operator dapat mencatat
 tawaran pembeli yang mengangkat tangan langsung di ruang lelangan: buka *Pantau Sesi* →
 panel **Catat tawaran di tempat**, pilih pembeli, isi harga per kg. Baris penawaran tersimpan
@@ -61,7 +70,7 @@ tercatat pada jejak audit sebagai `UBAH_KANAL_JARAK_JAUH`).
 |---|---|---|
 | Antrean lot, buka sesi, pemantauan sesi 1 detik, tutup sesi | UC-03, UC-05 | Operator Lelang |
 | Tagihan pembeli & pelunasan, settlement nelayan & pencairan, saldo pembeli | UC-06, UC-07, UC-08 | Kasir TPI |
-| Ringkasan harian, laporan & analitik (+CSV), persetujuan penyesuaian saldo | UC-10, UC-12 | Pimpinan |
+| Ringkasan harian, laporan & analitik (+CSV dan PDF), persetujuan penyesuaian saldo | UC-10, UC-12 | Pimpinan |
 | Data master, pengguna & peran, konfigurasi, jejak audit | UC-11 | Administrator |
 | Papan lelang baca-saja (tanpa masuk) | FR-41, FR-43 | Ruang pelelangan |
 
@@ -263,7 +272,7 @@ Pimpinan dapat melihat ringkasan sesi aktif dan ditutup, sesi yang menghasilkan 
 
 ## Daftar API
 
-Semua alamat berawalan `/api`; totalnya **85 rute** (128 pasangan metode–URI). Tabel di bawah
+Semua alamat berawalan `/api`; totalnya **86 rute** dari **132 rute** aplikasi (46 rute antarmuka web). Tabel di bawah
 memuat rute yang dipakai langsung oleh aplikasi mobile. Rute untuk antarmuka web (operator,
 kasir, pimpinan, administrator) dan portal nelayan dapat dilihat lengkap dengan
 `php artisan route:list --path=api`; ringkasan resminya ada pada **SKPL Tabel IV.6**.
@@ -290,4 +299,5 @@ menyertakan header `Authorization: Bearer <token>`.
 | GET | `/foto-lot/{nama}` | Tanpa token | Menampilkan foto lot (nama berkas acak) |
 | POST | `/pembeli/tagihan/{id}/bayar-saldo` | Pembeli | Melunasi sisa tagihan dari saldo aplikasi |
 | POST | `/pembeli/tagihan/{id}/pengambilan` | Pembeli | Menjadwalkan pengambilan hari ini atau besok setelah lunas |
+| GET | `/pembeli/saldo` | Pembeli | Saldo, limit kredit, daya beli efektif, tagihan terbuka, dan riwayat mutasi milik sendiri (FR-33) |
 | GET | `/pimpinan/ringkasan?tanggal=YYYY-MM-DD` | Pimpinan | Ringkasan operasional dan keuangan untuk tanggal tertentu (tanggal opsional, default hari ini) |
