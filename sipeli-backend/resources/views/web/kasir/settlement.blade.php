@@ -98,10 +98,16 @@
                                     <button class="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800">Hitung settlement</button>
                                 </form>
                             @else
-                                <a href="{{ route('kasir.settlement.rincian', $k['pembayaran']['id_bayar_nelayan']) }}"
-                                   class="rounded-md border border-slate-500 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
-                                    Buka bukti {{ $k['pembayaran']['kode_bukti'] }}
-                                </a>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <a href="{{ route('kasir.settlement.rincian', $k['pembayaran']['id_bayar_nelayan']) }}"
+                                       class="rounded-md border border-slate-500 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+                                        Buka bukti {{ $k['pembayaran']['kode_bukti'] }}
+                                    </a>
+                                    <a href="{{ route('kasir.settlement.bukti', $k['pembayaran']['id_bayar_nelayan']) }}"
+                                       class="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800">
+                                        PDF
+                                    </a>
+                                </div>
                                 @if ((float) $k['pembayaran']['sisa'] > 0)
                                     <form method="POST" action="{{ route('kasir.settlement.cairkan', $k['pembayaran']['id_bayar_nelayan']) }}" class="flex flex-wrap items-end gap-2">
                                         @csrf

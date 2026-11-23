@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\PembayaranNelayan;
 use App\Models\TransaksiPenjualan;
 use App\Services\DepositService;
 use App\Services\PembayaranService;
+use App\Services\PortalNelayanService;
 use App\Services\SettlementService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -20,7 +23,22 @@ class KasirController extends Controller
         private PembayaranService $pembayaran,
         private SettlementService $settlement,
         private DepositService $deposit,
+        private PortalNelayanService $portal,
     ) {
+    }
+
+    /**
+     * Kasir hanya boleh menyentuh settlement TPI-nya sendiri. Tanpa pemeriksaan ini,
+     * id pada URL dapat diganti untuk melihat/mengunduh data TPI lain.
+     */
+    private function pembayaranMilikTpi(int $id, Request $request): PembayaranNelayan
+    {
+        $pembayaran = PembayaranNelayan::findOrFail($id);
+        $idTpi = $pembayaran->kedatangan?->getIdTpi();
+        abort_unless($idTpi !== null && (int) $idTpi === (int) $request->user()->getIdTpi(), 403,
+            'Bukti settlement ini milik TPI lain.');
+
+        return $pembayaran;
     }
 
     /** GET /dasbor/kasir/tagihan */
@@ -92,14 +110,56 @@ class KasirController extends Controller
     }
 
     /** GET /dasbor/kasir/settlement/{id} */
-    public function rincianSettlement(int $id)
+    public function rincianSettlement(Request $request, int $id)
     {
-        $pembayaran = \App\Models\PembayaranNelayan::findOrFail($id);
+        $pembayaran = $this->pembayaranMilikTpi($id, $request);
+        $pemilik = $pembayaran->kedatangan?->kapal?->pemilik;
 
         return view('web.kasir.settlement-rincian', [
             'rincian'  => $this->settlement->rincianPembayaran($pembayaran),
             'caraCair' => SettlementService::CARA_CAIR,
+            'pemilik'  => $pemilik,
+            // Tautan yang baru terbit hanya tampil sekali (token + kode 4 digit) lewat session.
+            'tautanBaru' => $request->session()->get('tautan_nelayan'),
         ]);
+    }
+
+    /** GET /dasbor/kasir/settlement/{id}/bukti.pdf  (FR-60) */
+    public function buktiPdf(Request $request, int $id)
+    {
+        $pembayaran = $this->pembayaranMilikTpi($id, $request);
+
+        $pdf = Pdf::loadView('pdf.bukti-nelayan', [
+            'p'       => $this->settlement->rincianPembayaran($pembayaran),
+            'dicetak' => now(),
+        ])->setPaper('a5', 'portrait');
+
+        return $pdf->download($pembayaran->getKodeBukti() . '.pdf');
+    }
+
+    /** POST /dasbor/kasir/settlement/{id}/tautan  (FR-59) */
+    public function terbitkanTautanNelayan(Request $request, int $id)
+    {
+        $pembayaran = $this->pembayaranMilikTpi($id, $request);
+        $pemilik = $pembayaran->kedatangan?->kapal?->pemilik;
+
+        if (! $pemilik) {
+            return back()->withErrors(['id_pemilik' => 'Kapal pada kedatangan ini belum memiliki data pemilik, tautan portal tidak dapat diterbitkan.']);
+        }
+
+        $data = $request->validate([
+            'umur_jam' => ['nullable', 'integer', 'min:1', 'max:72'],
+        ], [
+            'umur_jam.min' => 'Masa berlaku tautan minimal 1 jam.',
+            'umur_jam.max' => 'Masa berlaku tautan paling lama 72 jam.',
+        ]);
+
+        $hasil = $this->portal->terbitkanTautan($pemilik, $request->user(), $data['umur_jam'] ?? null);
+
+        return redirect()
+            ->route('kasir.settlement.rincian', $id)
+            ->with('tautan_nelayan', $hasil)
+            ->with('sukses', 'Tautan portal nelayan untuk ' . $hasil['nama_pemilik'] . ' diterbitkan. Sampaikan kode verifikasi secara terpisah.');
     }
 
     /** POST /dasbor/kasir/settlement/{id}/cairkan */

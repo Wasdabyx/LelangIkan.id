@@ -5,6 +5,7 @@ use App\Http\Controllers\Web\AutentikasiWebController;
 use App\Http\Controllers\Web\KasirController;
 use App\Http\Controllers\Web\OperatorController;
 use App\Http\Controllers\Web\PapanController;
+use App\Http\Controllers\Web\PortalNelayanWebController;
 use App\Http\Controllers\Web\PimpinanController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +29,10 @@ Route::get('/masuk', [AutentikasiWebController::class, 'formulir'])->name('web.m
 Route::post('/masuk', [AutentikasiWebController::class, 'masuk'])->name('web.masuk.kirim');
 Route::post('/keluar', [AutentikasiWebController::class, 'keluar'])->name('web.keluar');
 Route::get('/beranda', fn () => redirect()->route(app(AutentikasiWebController::class)->beranda()))->name('web.beranda');
+
+// ---- portal nelayan (baca-saja, tanpa masuk; token + kode 4 digit, FR-59) ----
+Route::get('/portal-nelayan', [PortalNelayanWebController::class, 'formulir'])->name('web.portal');
+Route::post('/portal-nelayan', [PortalNelayanWebController::class, 'tampil'])->name('web.portal.buka');
 
 // ---- papan lelang (baca-saja, tanpa masuk) ------------------------------
 Route::get('/papan-lelang', [PapanController::class, 'papan'])->name('web.papan');
@@ -54,6 +59,10 @@ Route::middleware(['auth', 'web.peran:KASIR'])->prefix('dasbor/kasir')->group(fu
     Route::post('/settlement/{idKedatangan}', [KasirController::class, 'hitungSettlement'])->name('kasir.settlement.hitung');
     Route::get('/settlement/rincian/{id}', [KasirController::class, 'rincianSettlement'])->name('kasir.settlement.rincian');
     Route::post('/settlement/{id}/cairkan', [KasirController::class, 'cairkan'])->name('kasir.settlement.cairkan');
+    // FR-60: unduh bukti pembayaran nelayan (PDF) langsung dari dasbor kasir
+    Route::get('/settlement/{id}/bukti.pdf', [KasirController::class, 'buktiPdf'])->whereNumber('id')->name('kasir.settlement.bukti');
+    // FR-59: terbitkan tautan portal nelayan (token + kode 4 digit, ditampilkan sekali)
+    Route::post('/settlement/{id}/tautan', [KasirController::class, 'terbitkanTautanNelayan'])->whereNumber('id')->name('kasir.settlement.tautan');
 
     Route::get('/saldo', [KasirController::class, 'saldo'])->name('kasir.saldo');
     Route::post('/saldo/{id}/mutasi', [KasirController::class, 'mutasi'])->name('kasir.saldo.mutasi');
