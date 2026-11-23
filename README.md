@@ -10,8 +10,8 @@ Proyek ini dibuat untuk Tugas Besar mata kuliah Implementasi dan Pengujian Peran
 
 | Dokumen | Isi |
 |---|---|
-| [SKPL LelangIkan-v1.1.pdf](dokumen/hasil/SKPL-LelangIkan-v1.1.pdf) | Spesifikasi Kebutuhan Perangkat Lunak v1.1 (55 hlm): kebutuhan fungsional, use case, aktor |
-| [DPPL LelangIkan-v1.1.pdf](dokumen/hasil/DPPL-LelangIkan-v1.1.pdf) | Deskripsi Perancangan Perangkat Lunak v1.1 (86 hlm): class diagram, ERD, rancangan antarmuka, algoritma |
+| [SKPL LelangIkan-v1.1.pdf](dokumen/SKPL-LelangIkan-v1.1.pdf) | Spesifikasi Kebutuhan Perangkat Lunak v1.1 (55 hlm): kebutuhan fungsional, use case, aktor |
+| [DPPL LelangIkan-v1.1.pdf](dokumen/DPPL-LelangIkan-v1.1.pdf) | Deskripsi Perancangan Perangkat Lunak v1.1 (86 hlm): class diagram, ERD, rancangan antarmuka, algoritma |
 
 Repositori ini memuat **versi PDF** kedua dokumen. Sumber diagramnya ada di
 [`diagrams/`](diagrams), dan versi DOCX yang dapat disunting disimpan di luar repositori.
@@ -109,7 +109,7 @@ Semua foto contoh berasal dari [Wikimedia Commons](https://commons.wikimedia.org
 ```
 LelangIkan.id/
 ├── diagrams/                       sumber diagram drawio (use case, ERD, diagram kelas)
-├── dokumen/hasil/                  SKPL dan DPPL v1.1 (PDF)
+├── dokumen/                  SKPL dan DPPL v1.1 (PDF)
 ├── sipeli-backend/                 API Laravel
 │   ├── app/Enums/                  status dan kode peran
 │   ├── app/Http/Controllers/Api/   AutentikasiController, KedatanganController, PenimbanganController
