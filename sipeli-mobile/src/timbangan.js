@@ -83,13 +83,23 @@ function usePelacakStabil() {
   return { berat, stabil, adaBeban, terima, kosongkan };
 }
 
-/** Timbangan tiruan — hanya dipakai bila tidak ada perangkat keras. */
-function useTimbanganSimulasi(pelacak) {
+/**
+ * Timbangan tiruan — hanya dipakai bila tidak ada perangkat keras.
+ *
+ * `aktif` wajib diperhatikan: bila petugas sudah terhubung ke timbangan BLE atau kabel,
+ * simulasi HARUS berhenti mengirim angka. Tanpa penjagaan ini interval simulasi terus
+ * menulis 0 kg setiap 200 ms dan menimpa bacaan timbangan sungguhan, sehingga layar
+ * tampak "macet di 0 kg" walaupun perangkatnya sehat.
+ */
+function useTimbanganSimulasi(pelacak, aktif = true) {
   const target = useRef(0);
   const langkah = useRef(0);
+  const aktifRef = useRef(aktif);
+  aktifRef.current = aktif;
 
   useEffect(() => {
     const id = setInterval(() => {
+      if (!aktifRef.current) return;   // sumber lain yang sedang dipakai
       let nilai = 0;
       if (target.current > 0) {
         langkah.current += 1;
@@ -234,15 +244,16 @@ export function useTimbangan({ perangkat = null, port = null, paksaSimulasi = fa
   const pelacak = usePelacakStabil();
   const [galat, setGalat] = useState(null);
 
-  const simulasi = useTimbanganSimulasi(pelacak);
-  const ble = useTimbanganBle(perangkat, pelacak, setGalat);
-  const serial = useTimbanganSerial(port, pelacak, setGalat);
-
+  // Tentukan sumber lebih dulu supaya simulasi bisa dimatikan saat perangkat keras dipakai.
   let sumber = 'SIMULASI';
   if (!paksaSimulasi) {
     if (perangkat?.id) sumber = 'BLE';
     else if (port) sumber = 'SERIAL_WEB';
   }
+
+  const simulasi = useTimbanganSimulasi(pelacak, sumber === 'SIMULASI');
+  const ble = useTimbanganBle(perangkat, pelacak, setGalat);
+  const serial = useTimbanganSerial(port, pelacak, setGalat);
 
   const kendali = sumber === 'BLE' ? ble : sumber === 'SERIAL_WEB' ? serial : simulasi;
 

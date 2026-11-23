@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Antarmuka web memakai halaman masuk tersendiri; papan lelang tetap dapat dibuka tanpa masuk.
         $middleware->redirectGuestsTo(fn ($request) => $request->is('api/*') ? null : '/masuk');
 
+        // Di balik proksi HTTPS (mis. preview/penerapan), percayai header X-Forwarded-*
+        // agar tautan aset dan redirect memakai skema https.
+        $middleware->trustProxies(at: '*');
+
         // Alias middleware hak akses berbasis peran: ->middleware('peran:1,2')
         $middleware->alias([
             'peran' => \App\Http\Middleware\CekPeran::class,
@@ -32,4 +36,28 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn ($request, $e) => $request->is('api/*')
         );
+
+        // Token CSRF kedaluwarsa ("419 Page Expired"): penyebab tersering adalah tab lama
+        // yang dibiarkan terbuka, sesi hilang (migrate:fresh / session:clear), atau masuk
+        // dengan peran lain di browser yang sama sehingga sesi di-regenerate.
+        // Pengguna web dialihkan ke halaman masuk dengan pesan, bukan halaman buntu.
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e, $request) {
+            // Laravel mengubah TokenMismatchException menjadi HttpException 419 sebelum
+            // callback render dipanggil, jadi status 419 yang diperiksa di sini.
+            if ($e->getStatusCode() !== 419) {
+                return null;
+            }
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'pesan' => 'Sesi kedaluwarsa. Muat ulang halaman lalu masuk kembali.',
+                    'kode'  => 'SESI_KEDALUWARSA',
+                ], 419);
+            }
+
+            return redirect()->route('web.masuk')->withErrors([
+                'nama_pengguna' => 'Sesi Anda berakhir (halaman dibiarkan terlalu lama, data di-reset, '
+                    . 'atau Anda masuk dengan peran lain di browser ini tanpa keluar). Silakan masuk kembali.',
+            ]);
+        });
     })->create();

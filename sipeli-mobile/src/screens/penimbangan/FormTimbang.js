@@ -32,6 +32,9 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
   const [menyimpan, setMenyimpan] = useState(false);
   const [tanyaBatal, setTanyaBatal] = useState(false);
   const [tanyaUlang, setTanyaUlang] = useState(false);
+  // Batas keranjang: jumlah keranjang pada catatan pendataan adalah patokan.
+  // Kelebihan hanya boleh atas kesadaran petugas dan wajib beralasan.
+  const [keranjangTambahan, setKeranjangTambahan] = useState(false);
 
   // ---- Perhitungan ----
   const estimasi = Number(baris.berat_estimasi);
@@ -39,10 +42,16 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
   const total = Math.round(keranjang.reduce((n, k) => n + k.berat, 0) * 100) / 100;
   const selisih = estimasi > 0 && total > 0 ? Math.round((Math.abs(total - estimasi) / estimasi) * 10000) / 100 : 0;
   const lewatAmbang = total > 0 && selisih > ambang;
-  const lengkap = keranjang.length >= baris.jumlah_keranjang;
+  const batasKeranjang = Math.max(1, Number(baris.jumlah_keranjang) || 1);
+  const lengkap = keranjang.length >= batasKeranjang;
+  const penuhKeranjang = keranjang.length >= batasKeranjang;
+  const lebihKeranjang = keranjang.length > batasKeranjang;
+  // Tombol pencatatan hanya dibuka bila masih di bawah catatan, atau petugas sudah
+  // menyatakan sadar menambah keranjang di luar catatan.
+  const bolehCatat = !penuhKeranjang || keranjangTambahan;
   const tampilPanelSelisih = lewatAmbang && (lengkap || total > estimasi || mencobaSimpan);
   const adaManual = keranjang.some((k) => k.manual) || sumber === 'manual';
-  const perluAlasan = adaManual || tampilPanelSelisih;
+  const perluAlasan = adaManual || tampilPanelSelisih || lebihKeranjang;
   const hargaAngka = keAngka(harga);
   const hargaValid = harga.trim() !== '' && !isNaN(hargaAngka) && hargaAngka >= 100;
 
@@ -63,19 +72,30 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
   }
 
   // ---- Timbangan ----
+  function tolakKelebihan() {
+    setPesan(
+      `Catatan pendataan baris ini ${batasKeranjang} keranjang dan semuanya sudah ditimbang. ` +
+        'Bila ikan benar-benar memerlukan keranjang tambahan, tekan "Tambah keranjang di luar catatan" lalu isi alasannya.'
+    );
+    return true;
+  }
+
   function letakkanKeranjang() {
+    if (!bolehCatat) return tolakKelebihan();
     const rata = estimasi / Math.max(1, baris.jumlah_keranjang);
     timbangan.letakkan(rata * (0.9 + Math.random() * 0.2)); // +-10% dari rata-rata estimasi
   }
 
   function catatDariTimbangan() {
-    if (!timbangan.stabil || timbangan.bacaan <= 0) return;
-    setKeranjang((d) => [...d, { berat: timbangan.bacaan, manual: false }]);
+    if (!bolehCatat) return tolakKelebihan();
+    if (!timbangan.stabil || timbangan.berat <= 0) return;
+    setKeranjang((d) => [...d, { berat: timbangan.berat, manual: false }]);
     timbangan.angkat();
     setPesan(null);
   }
 
   function tambahManual() {
+    if (!bolehCatat) return tolakKelebihan();
     const n = keAngka(teksManual);
     if (isNaN(n) || n <= 0) {
       setGalatManual('Berat harus angka lebih dari 0 kg. Contoh: 30,5');
@@ -121,7 +141,9 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
       return;
     }
     const manualTercatat = keranjang.some((k) => k.manual);
-    if (manualTercatat && !alasan.trim()) g.alasan = 'Alasan input manual wajib diisi.';
+    if (lebihKeranjang && !alasan.trim())
+      g.alasan = `Keranjang tercatat ${keranjang.length}, melebihi catatan pendataan ${batasKeranjang}. Isi alasan kelebihan keranjang.`;
+    else if (manualTercatat && !alasan.trim()) g.alasan = 'Alasan input manual wajib diisi.';
     else if (lewatAmbang && !alasan.trim())
       g.alasan = `Selisih ${formatAngka(selisih, 1)}% melebihi ${ambang}%. Isi alasan konfirmasi atau Timbang Ulang.`;
     if (harga.trim() !== '' && !hargaValid) g.harga = 'Harga pembukaan minimal Rp100 per kg (angka saja).';
@@ -150,8 +172,12 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
     } catch (e) {
       if (e.status === 401) return;
       const gk = e.galatKolom || {};
-      setGalat({ alasan: gk.alasan, harga: gk.harga_pembukaan });
-      setPesan(gk.alasan || gk.harga_pembukaan ? 'Periksa kembali isian yang ditandai merah.' : e.message);
+      setGalat({ alasan: gk.alasan || gk.berat_keranjang, harga: gk.harga_pembukaan });
+      setPesan(
+        gk.alasan || gk.berat_keranjang || gk.harga_pembukaan
+          ? 'Periksa kembali isian yang ditandai merah.'
+          : e.message
+      );
       setMenyimpan(false);
     }
   }
@@ -163,8 +189,9 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
       ? { teks: 'Membaca...', latar: '#FEF0C7', warna: warna.peringatan }
       : { teks: 'Kosong', latar: '#E4EBF1', warna: '#344054' };
 
-  const labelAlasan =
-    keranjang.some((k) => k.manual) || sumber === 'manual'
+  const labelAlasan = lebihKeranjang
+    ? 'Alasan kelebihan keranjang (wajib)'
+    : keranjang.some((k) => k.manual) || sumber === 'manual'
       ? tampilPanelSelisih
         ? 'Alasan input manual dan selisih berat (wajib)'
         : 'Alasan input manual (wajib)'
@@ -230,13 +257,15 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
                   <Text style={[s.teksChip, { color: timbangan.stabil ? '#6CE9A6' : '#FEC84B' }]}>{statusBacaan.teks}</Text>
                 </View>
                 <View style={s.barisAngka}>
-                  <Text style={s.angkaBerat} accessibilityLabel={`Berat ${formatAngka(timbangan.bacaan)} kilogram`}>
-                    {formatAngka(timbangan.bacaan)}
+                  <Text style={s.angkaBerat} accessibilityLabel={`Berat ${formatAngka(timbangan.berat)} kilogram`}>
+                    {formatAngka(timbangan.berat)}
                   </Text>
                   <Text style={s.satuan}>kg</Text>
                 </View>
                 <Text style={s.petunjuk}>
-                  {timbangan.stabil
+                  {!bolehCatat
+                    ? `Catatan ${batasKeranjang} keranjang sudah lengkap. Tekan Buat Lot dan Cetak.`
+                    : timbangan.stabil
                     ? 'Berat stabil. Tekan Catat Keranjang.'
                     : timbangan.adaBeban
                       ? 'Tunggu angka berhenti berubah...'
@@ -249,7 +278,7 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
                   <Tombol
                     judul="Catat Keranjang"
                     onPress={catatDariTimbangan}
-                    nonaktif={!timbangan.stabil}
+                    nonaktif={!timbangan.stabil || !bolehCatat}
                     gaya={{ flex: 1 }}
                   />
                   <Tombol judul="Angkat" jenis="garis" onPress={timbangan.angkat} gaya={{ minWidth: 96 }} />
@@ -259,6 +288,7 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
                   judul="Letakkan Keranjang (Simulasi)"
                   jenis="garis"
                   onPress={letakkanKeranjang}
+                  nonaktif={!bolehCatat}
                   gaya={{ marginTop: 10 }}
                 />
               ) : (
@@ -297,8 +327,8 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
         <Bagian
           judul="Keranjang tercatat"
           kanan={
-            <Text style={[s.hitungan, lengkap && { color: warna.sukses }]}>
-              {keranjang.length} dari {baris.jumlah_keranjang}
+            <Text style={[s.hitungan, lengkap && { color: lebihKeranjang ? warna.galat : warna.sukses }]}>
+              {keranjang.length} dari {batasKeranjang}
             </Text>
           }
         >
@@ -340,7 +370,38 @@ export default function FormTimbang({ kedatangan, baris, onBatal, onSelesai }) {
             </View>
           </View>
           {!lengkap && keranjang.length > 0 && !tampilPanelSelisih ? (
-            <Text style={s.info}>Masih {baris.jumlah_keranjang - keranjang.length} keranjang lagi sesuai catatan pendataan.</Text>
+            <Text style={s.info}>Masih {batasKeranjang - keranjang.length} keranjang lagi sesuai catatan pendataan.</Text>
+          ) : null}
+          {lebihKeranjang ? (
+            <Text style={[s.info, { color: warna.galat, fontWeight: '600' }]}>
+              {keranjang.length - batasKeranjang} keranjang di luar catatan pendataan. Alasan wajib diisi sebelum lot dibuat.
+            </Text>
+          ) : null}
+          {penuhKeranjang && !keranjangTambahan ? (
+            <View style={s.panelTambahan}>
+              <Text style={s.judulTambahan}>
+                Catatan pendataan {batasKeranjang} keranjang sudah lengkap
+              </Text>
+              <Text style={s.teksTambahan}>
+                Timbangan terkunci agar jumlah keranjang tidak melebihi catatan pendataan. Bila ikan memang
+                memerlukan keranjang tambahan, buka kuncinya di sini - alasan wajib diisi dan tercatat pada lot.
+              </Text>
+              <Tombol
+                judul="Tambah keranjang di luar catatan"
+                jenis="garis"
+                kecil
+                onPress={() => {
+                  setKeranjangTambahan(true);
+                  setPesan(null);
+                }}
+                gaya={{ marginTop: 10, alignSelf: 'flex-start' }}
+              />
+            </View>
+          ) : null}
+          {keranjangTambahan ? (
+            <Text style={[s.info, { color: warna.peringatan }]}>
+              Mode keranjang tambahan aktif: {Math.max(0, keranjang.length - batasKeranjang)} keranjang di luar catatan.
+            </Text>
           ) : null}
         </Bagian>
 
@@ -506,6 +567,13 @@ const s = StyleSheet.create({
   total: { fontSize: 22, fontWeight: '700', color: warna.utama, marginTop: 2, fontVariant: ['tabular-nums'] },
   selisih: { fontSize: 16, fontWeight: '700', color: warna.teks, marginTop: 2 },
   info: { fontSize: 12, color: warna.teksRedup, marginTop: 6 },
+  panelTambahan: {
+    backgroundColor: warna.putih, borderLeftWidth: 3, borderLeftColor: warna.peringatan,
+    paddingHorizontal: 14, paddingVertical: 12, marginTop: 10,
+    borderTopWidth: 1, borderBottomWidth: 1, borderColor: warna.garisHalus,
+  },
+  judulTambahan: { fontSize: 15, fontWeight: '700', color: warna.teks },
+  teksTambahan: { fontSize: 13, color: warna.teks, marginTop: 4, lineHeight: 18 },
   panelSelisih: {
     backgroundColor: warna.putih, borderLeftWidth: 3, borderLeftColor: warna.galat,
     paddingHorizontal: 14, paddingVertical: 12, marginTop: 8,

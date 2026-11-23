@@ -86,6 +86,19 @@ class PenimbanganService
                 ]);
             }
 
+            // 2b. Jumlah keranjang: catatan pendataan adalah patokan, bukan angka mutlak.
+            //     Kelebihan keranjang boleh, tetapi wajib beralasan (sama seperti input manual
+            //     dan selisih berat) supaya jejak lot tetap dapat dipertanggungjawabkan.
+            $batasKeranjang = max(1, (int) $t->getJumlahKeranjang());
+            $jumlahKeranjang = count($data['berat_keranjang']);
+            if ($jumlahKeranjang > $batasKeranjang && trim((string) ($data['alasan'] ?? '')) === '') {
+                throw ValidationException::withMessages([
+                    'berat_keranjang' => "Catatan pendataan baris ini {$batasKeranjang} keranjang, "
+                        . "tetapi Anda mengirim {$jumlahKeranjang}. Isi alasan kelebihan keranjang "
+                        . 'atau kurangi jumlah keranjang.',
+                ]);
+            }
+
             // 3. Lot baru (DRAFT_HARGA) dengan data identitas yang tidak berubah lagi
             $lot = new LotLelang([
                 'kode_lot'           => $this->lotService->buatKodeLot($kedatangan->tpi),
