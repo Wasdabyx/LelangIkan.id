@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\TransaksiPenjualan;
+use App\Services\DepositService;
 use App\Services\LelangService;
 use App\Services\PembayaranService;
 use Illuminate\Http\Request;
@@ -11,8 +12,20 @@ use Illuminate\Http\Request;
 /** UC-04 Penawaran real-time dan tagihan milik Pembeli (A4). */
 class LelangPembeliController extends Controller
 {
-    public function __construct(private LelangService $lelang, private PembayaranService $pembayaran)
+    public function __construct(
+        private LelangService $lelang,
+        private PembayaranService $pembayaran,
+        private DepositService $deposit,
+    ) {
+    }
+
+    /**
+     * GET /api/pembeli/saldo  (FR-33)
+     * Pembeli melihat saldo, limit kredit, daya beli efektif, tagihan terbuka, dan 10 mutasi terakhir.
+     */
+    public function saldo(Request $request)
     {
+        return response()->json(['data' => $this->deposit->rincianSendiri($request->user())]);
     }
 
     /** GET /api/pembeli/lelang */

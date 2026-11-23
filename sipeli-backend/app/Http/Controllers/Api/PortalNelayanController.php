@@ -54,13 +54,23 @@ class PortalNelayanController extends Controller
         $tautan = $this->layanan->buka($data['token'], $data['kode']);
         $hasil = $this->layanan->rekap($tautan->pemilik, $data['dari'] ?? null, $data['sampai'] ?? null);
 
-        return response()->json(['data' => $hasil]);
+        // FR-59: tautan hanya sekali pakai; panggilan berikutnya memakai `sesi` ini.
+        return response()->json([
+            'data'            => $hasil,
+            'sesi'            => $tautan->sesi_token,
+            'sesi_kedaluwarsa' => $tautan->sesi_kedaluwarsa?->format('Y-m-d H:i'),
+        ]);
     }
 
     /** GET /api/nelayan/bukti/{id}.pdf?token=&kode= : unduhan bukti pembayaran (FR-60). */
     public function buktiPdf(Request $request, int $id)
     {
-        $tautan = $this->layanan->buka((string) $request->query('token'), (string) $request->query('kode'));
+        // FR-59: utamakan sesi portal (tautan sudah tidak bisa dipakai dua kali).
+        $sesi = trim((string) $request->query('sesi', ''));
+        $tautan = $sesi !== ''
+            ? $this->layanan->bukaSesi($sesi)
+            : $this->layanan->buka((string) $request->query('token'), (string) $request->query('kode'));
+
         $pembayaran = PembayaranNelayan::findOrFail($id);
 
         $kedatangan = $pembayaran->kedatangan;

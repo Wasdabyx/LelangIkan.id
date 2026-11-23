@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Services\DepositService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\LaporanService;
 use App\Services\RingkasanPimpinanService;
 use Illuminate\Http\Request;
@@ -75,6 +76,27 @@ class PimpinanController extends Controller
             }
             fclose($keluaran);
         }, "laporan-{$jenis}-{$dari}-{$sampai}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /** GET /dasbor/pimpinan/laporan/{jenis}/pdf  (FR-47: ekspor PDF) */
+    public function unduhPdf(Request $request, string $jenis)
+    {
+        abort_unless(in_array($jenis, ['harga', 'retribusi'], true), 404);
+
+        $dari = $request->query('dari', now()->subDays(29)->toDateString());
+        $sampai = $request->query('sampai', now()->toDateString());
+        $laporan = $this->laporan->semua((int) $request->user()->getIdTpi(), $dari, $sampai);
+
+        $pdf = Pdf::loadView('pdf.laporan', [
+            'jenis'    => $jenis,
+            'laporan'  => $laporan,
+            'dari'     => $dari,
+            'sampai'   => $sampai,
+            'dicetak'  => now(),
+            'pencetak' => $request->user()->getNamaLengkap(),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("laporan-{$jenis}-{$dari}-{$sampai}.pdf");
     }
 
     /** GET /dasbor/pimpinan/penyesuaian */

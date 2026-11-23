@@ -83,10 +83,12 @@ class PantauanController extends Controller
             ]);
         }
 
-        $pantauan = DaftarPantauan::firstOrCreate(
-            ['id_pembeli' => $request->user()->getIdPengguna(), 'id_lot' => $lot->getIdLot()],
+        // Kode pemesanan dibuat berurutan di dalam transaksi (lihat DaftarPantauan::daftarkan)
+        // agar 100 pembeli yang mendaftar bersamaan tidak saling menabrak indeks unik.
+        $pantauan = DaftarPantauan::daftarkan(
+            $request->user()->getIdPengguna(),
+            $lot->getIdLot(),
             [
-                'kode_pemesanan'   => 'PNT-' . now()->format('ymd') . '-' . str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT),
                 'harga_maksimum'   => $data['batas_harga'] ?? null,
                 'notifikasi_aktif' => $data['notifikasi_aktif'] ?? true,
             ],

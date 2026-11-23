@@ -62,10 +62,22 @@ class PortalNelayanService
         if (! $tautan->verifikasiEmpatDigit($kodeVerifikasi)) {
             throw ValidationException::withMessages(['kode_verifikasi' => 'Kode verifikasi tidak sesuai.']);
         }
+        // FR-59: tautan sekali pakai. Kode yang salah tidak menghanguskan tautan,
+        // tetapi pembukaan yang berhasil langsung menandainya terpakai.
+        if ($tautan->sudahDipakai()) {
+            throw ValidationException::withMessages([
+                'token' => 'Tautan akses ini sudah dipakai (sekali pakai). Minta kasir menerbitkan tautan baru.',
+            ]);
+        }
 
-        $tautan->tambahPemakaian();
+        $tautan->tandaiDipakai();
+        $tautan->buatSesi();
         $this->audit->catat(null, 'BUKA_PORTAL_NELAYAN', 'tautan_akses_nelayan', $tautan->getIdTautan(),
-            null, ['jumlah_akses' => (int) $tautan->jumlah_akses]);
+            null, [
+                'jumlah_akses'    => (int) $tautan->jumlah_akses,
+                'dipakai_pada'    => $tautan->dipakai_pada?->toDateTimeString(),
+                'sesi_kedaluwarsa' => $tautan->sesi_kedaluwarsa?->toDateTimeString(),
+            ]);
 
         return $tautan;
     }
@@ -74,6 +86,27 @@ class PortalNelayanService
      * FR-56 dan FR-57: rekap seluruh lelang per kapal milik nelayan pada rentang tanggal,
      * lengkap dengan rincian per lot dan status pembayaran (FR-58).
      */
+    /**
+     * FR-59: lanjutkan akses portal memakai sesi (30 menit) yang terbit saat tautan dibuka.
+     * Dipakai halaman rekap dan unduhan bukti supaya tautan tetap benar-benar sekali pakai.
+     */
+    public function bukaSesi(string $sesi): TautanAksesNelayan
+    {
+        $tautan = TautanAksesNelayan::cariDariSesi($sesi);
+        if (! $tautan) {
+            throw ValidationException::withMessages([
+                'sesi' => 'Sesi portal tidak dikenali. Buka lagi tautan dari kasir.',
+            ]);
+        }
+        if (! $tautan->sesiMasihBerlaku()) {
+            throw ValidationException::withMessages([
+                'sesi' => 'Sesi portal sudah berakhir (30 menit). Minta kasir menerbitkan tautan baru.',
+            ]);
+        }
+
+        return $tautan;
+    }
+
     public function rekap(PemilikKapal $pemilik, ?string $dari = null, ?string $sampai = null): array
     {
         $dari ??= now()->subDays(30)->toDateString();

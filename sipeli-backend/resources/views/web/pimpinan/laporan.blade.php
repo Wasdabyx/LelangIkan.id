@@ -19,6 +19,10 @@
            href="{{ route('pimpinan.laporan.csv', ['jenis' => 'harga', 'dari' => $dari, 'sampai' => $sampai]) }}">Unduh CSV harga</a>
         <a class="rounded-lg border border-slate-500 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
            href="{{ route('pimpinan.laporan.csv', ['jenis' => 'retribusi', 'dari' => $dari, 'sampai' => $sampai]) }}">Unduh CSV retribusi</a>
+        <a class="rounded-lg border border-slate-500 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+           href="{{ route('pimpinan.laporan.pdf', ['jenis' => 'harga', 'dari' => $dari, 'sampai' => $sampai]) }}">Unduh PDF harga</a>
+        <a class="rounded-lg border border-slate-500 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+           href="{{ route('pimpinan.laporan.pdf', ['jenis' => 'retribusi', 'dari' => $dari, 'sampai' => $sampai]) }}">Unduh PDF retribusi</a>
     </form>
 
     @php

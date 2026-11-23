@@ -43,6 +43,20 @@ class DepositService
             abort(404, 'Pembeli tidak ditemukan pada TPI Anda.');
         }
 
+        return $this->rangkumanSaldo($pembeli);
+    }
+
+    /**
+     * FR-33: pembeli memeriksa saldo, limit kredit, daya beli, dan riwayat mutasinya sendiri
+     * tanpa harus lewat kasir. Perhitungannya satu sumber dengan tampilan kasir.
+     */
+    public function rincianSendiri(Pengguna $pembeli): array
+    {
+        return $this->rangkumanSaldo($pembeli);
+    }
+
+    private function rangkumanSaldo(Pengguna $pembeli): array
+    {
         $saldo = SaldoPembeli::firstOrCreate(
             ['id_pembeli' => $pembeli->getIdPengguna()],
             ['saldo' => 0, 'limit_kredit' => 0, 'status' => 'AKTIF'],

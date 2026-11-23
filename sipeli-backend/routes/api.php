@@ -85,6 +85,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/lelang/{id}', [LelangPembeliController::class, 'status'])->whereNumber('id');
         Route::post('/lelang/{id}/tawar', [LelangPembeliController::class, 'tawar'])->whereNumber('id');
         Route::post('/lelang/{id}/ambil', [LelangPembeliController::class, 'ambil'])->whereNumber('id');
+        // FR-33: saldo, limit kredit, dan riwayat mutasi milik pembeli sendiri
+        Route::get('/saldo', [LelangPembeliController::class, 'saldo']);
         Route::get('/tagihan', [LelangPembeliController::class, 'tagihan']);
         Route::get('/tagihan/{id}', [LelangPembeliController::class, 'detailTagihan'])->whereNumber('id');
         Route::post('/tagihan/{id}/bayar-saldo', [LelangPembeliController::class, 'bayarSaldo'])->whereNumber('id');
